@@ -4,6 +4,7 @@ import "./styles/main.css";
 const canvas = document.querySelector("#game-canvas");
 const game = new Game(canvas);
 const startButton = document.querySelector("#start-button");
+const pauseButton = document.querySelector("#pause-button");
 const restartButton = document.querySelector("#restart-button");
 const modeButton = document.querySelector("#mode-button");
 const message = document.querySelector("#message");
@@ -37,6 +38,7 @@ window.addEventListener("keydown", (event) => {
     updateKeyboardInput();
   }
   if (event.code === "Space" && !game.running) game.start();
+  if (event.code === "KeyP" || event.code === "Escape") game.togglePause();
 });
 
 window.addEventListener("keyup", (event) => {
@@ -47,6 +49,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 startButton.addEventListener("click", () => game.start());
+pauseButton.addEventListener("click", () => game.togglePause());
 restartButton.addEventListener("click", () => game.restart());
 modeButton.addEventListener("click", () => {
   game.setMode(game.mode === "single" ? "two-player" : "single");
@@ -68,12 +71,17 @@ function updateUI() {
   } else if (game.pauseRemaining > 0) {
     message.textContent = `PLAYER ${game.lastScorer} SCORES`;
     message.classList.add("visible");
+  } else if (game.paused) {
+    message.textContent = "GAME PAUSED";
+    message.classList.add("visible");
   } else if (!game.running) {
     message.textContent = "PRESS START";
     message.classList.add("visible");
   } else {
     message.classList.remove("visible");
   }
+  pauseButton.textContent = game.paused ? "RESUME" : "PAUSE";
+  pauseButton.disabled = !game.running || game.gameOver || game.pauseRemaining > 0;
 }
 
 function celebrateGoal() {

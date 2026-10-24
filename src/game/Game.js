@@ -18,6 +18,7 @@ export class Game {
     this.scores = { 1: 0, 2: 0 };
     this.inputs = { 1: 0, 2: 0 };
     this.running = false;
+    this.paused = false;
     this.gameOver = false;
     this.winner = null;
     this.pauseRemaining = 0;
@@ -46,11 +47,18 @@ export class Game {
   start() {
     if (this.gameOver) this.reset();
     this.running = true;
+    this.paused = false;
   }
 
   restart() {
     this.reset();
     this.running = true;
+  }
+
+  togglePause() {
+    if (!this.running || this.gameOver || this.pauseRemaining > 0) return this.paused;
+    this.paused = !this.paused;
+    return this.paused;
   }
 
   setMode(mode) {
@@ -71,7 +79,7 @@ export class Game {
       if (this.pauseRemaining === 0 && !this.gameOver) this.running = true;
       return;
     }
-    if (!this.running || this.gameOver) return;
+    if (!this.running || this.gameOver || this.paused) return;
     this.movePaddle(1, this.inputs[1], delta);
     if (this.mode === "two-player") {
       this.movePaddle(2, this.inputs[2], delta);
@@ -146,6 +154,7 @@ export class Game {
     }
     this.serve(playerId === 1 ? 1 : -1);
     this.running = false;
+    this.paused = false;
     this.pauseRemaining = this.goalPauseDuration;
   }
 
