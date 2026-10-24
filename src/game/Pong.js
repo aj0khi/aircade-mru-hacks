@@ -68,6 +68,7 @@ export class Game {
   togglePause() {
     if (!this.running || this.gameOver || this.pauseRemaining > 0) return this.paused;
     this.paused = !this.paused;
+    this.emit(this.paused ? "pause" : "resume");
     return this.paused;
   }
 
