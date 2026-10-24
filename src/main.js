@@ -244,8 +244,10 @@ function updateKeyboardInput() {
 window.addEventListener("keydown", (event) => {
   if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code)) {
     event.preventDefault();
+    unlockAudio();
     const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d", Digit4: "breakout", Digit5: "tank" };
     selectGame(gameByKey[event.code]);
+    arcadeAudio.play("ui", "select");
     return;
   }
   if (gameType === "pong" && keyToInput[event.code]) {
@@ -345,24 +347,42 @@ motionCalibrateButton.addEventListener("click", () => {
   }
 });
 modeButton.addEventListener("click", () => {
+  unlockAudio();
+  arcadeAudio.play("ui", "click");
   pong.setMode(pong.mode === "single" ? "two-player" : "single");
   updateModeUI();
 });
 menuButton.addEventListener("click", () => {
+  unlockAudio();
   selectGame(null);
+  arcadeAudio.play("ui", "back");
 });
 gameButton.addEventListener("click", () => {
+  unlockAudio();
   const gameOrder = ["pong", "snake", "bowling-3d", "breakout", "tank"];
   const nextIndex = (gameOrder.indexOf(gameType) + 1) % gameOrder.length;
   selectGame(gameOrder[nextIndex]);
+  arcadeAudio.play("ui", "select");
 });
-gameChoices.forEach((choice) => {
-  choice.addEventListener("click", () => selectGame(choice.dataset.game));
+gameChoices.forEach((choice, index) => {
+  choice.addEventListener("pointerenter", () => {
+    arcadeAudio.play("ui", "hover", { index, pan: ((index - 2) / 2) * 0.55 });
+  });
+  choice.addEventListener("click", () => {
+    unlockAudio();
+    selectGame(choice.dataset.game);
+    arcadeAudio.play("ui", "select", { index, pan: ((index - 2) / 2) * 0.55 });
+  });
 });
+window.addEventListener("pointerdown", () => {
+  unlockAudio();
+  if (!gameType) arcadeAudio.play("ui", "menu-start");
+}, { once: false });
 controls.addEventListener("pointerdown", () => unlockAudio());
 muteButton.addEventListener("click", () => {
   unlockAudio();
   arcadeAudio.toggleMute();
+  if (!arcadeAudio.muted) arcadeAudio.play("ui", "click");
   updateMuteUI();
 });
 

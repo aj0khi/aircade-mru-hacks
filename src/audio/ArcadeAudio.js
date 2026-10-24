@@ -14,6 +14,10 @@ export class ArcadeAudio {
     this.bowlingMusicStep = 0;
     this.breakoutMusicTimer = null;
     this.breakoutMusicStep = 0;
+    this.pongMusicTimer = null;
+    this.pongMusicStep = 0;
+    this.menuMusicTimer = null;
+    this.menuMusicStep = 0;
   }
 
   ensureContext() {
@@ -62,6 +66,8 @@ export class ArcadeAudio {
     this.stopSnakeMusic();
     this.stopBowlingMusic();
     this.stopBreakoutMusic();
+    this.stopPongMusic();
+    this.stopMenuMusic();
     for (const voice of this.voices) {
       try {
         voice.stop();
@@ -78,6 +84,10 @@ export class ArcadeAudio {
   }
 
   play(game, type, detail = {}) {
+    if (game === "pong" && (type === "pause" || type === "win")) {
+      this.stopPongMusic();
+      if (type === "pause") return;
+    }
     if (game === "snake" && (type === "pause" || type === "die")) {
       this.stopSnakeMusic();
       if (type === "pause") return;
@@ -89,6 +99,10 @@ export class ArcadeAudio {
     if (game === "breakout" && (type === "pause" || type === "lose-life" || type === "die" || type === "win")) {
       this.stopBreakoutMusic();
       if (type === "pause") return;
+    }
+    if (game === "ui" && type === "menu-stop") {
+      this.stopMenuMusic();
+      return;
     }
     if (this.muted) return;
     const context = this.ensureContext();
@@ -109,6 +123,7 @@ export class ArcadeAudio {
     if (game === "snake") this.playSnake(type, detail);
     if (game === "bowling") this.playBowling(type, detail);
     if (game === "breakout") this.playBreakout(type, detail);
+    if (game === "ui") this.playUI(type, detail);
   }
 
   playPong(type, detail) {
@@ -159,10 +174,17 @@ export class ArcadeAudio {
       return;
     }
     if (type === "win") {
+      this.stopPongMusic();
       this.playPongWin(pan);
       return;
     }
+    if (type === "resume") {
+      this.startPongMusic();
+      return;
+    }
     if (type === "start" || type === "serve") {
+      this.stopMenuMusic();
+      this.startPongMusic();
       this.tone({
         frequency: type === "start" ? 330 : 370,
         duration: 0.11,
@@ -172,6 +194,124 @@ export class ArcadeAudio {
         pan: 0,
       });
     }
+  }
+
+  startPongMusic() {
+    this.stopPongMusic();
+    this.pongMusicStep = 0;
+    const bass = [165, 165, 196, 220, 147, 147, 175, 196];
+    const pulse = [330, 0, 392, 440, 294, 0, 349, 392];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.pongMusicStep % bass.length;
+      const stepPan = step % 2 === 0 ? -0.3 : 0.3;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.16,
+        type: "triangle",
+        gain: 0.036,
+        pan: -stepPan * 0.5,
+      });
+      if (pulse[step]) {
+        this.tone({
+          frequency: pulse[step],
+          duration: 0.1,
+          type: "sine",
+          gain: 0.02,
+          delay: 0.03,
+          pan: stepPan,
+        });
+      }
+      this.pongMusicStep += 1;
+    };
+    tick();
+    this.pongMusicTimer = window.setInterval(tick, 240);
+  }
+
+  stopPongMusic() {
+    if (!this.pongMusicTimer) return;
+    window.clearInterval(this.pongMusicTimer);
+    this.pongMusicTimer = null;
+  }
+
+  playUI(type, detail = {}) {
+    const pan = this.panFromDetail(detail);
+    if (type === "menu-start") {
+      this.startMenuMusic();
+      return;
+    }
+    if (type === "hover") {
+      const index = Number(detail.index) || 0;
+      this.tone({
+        frequency: 520 + index * 55,
+        duration: 0.04,
+        type: "sine",
+        gain: 0.03,
+        slide: 45,
+        pan,
+      });
+      return;
+    }
+    if (type === "click") {
+      this.tone({
+        frequency: 660,
+        duration: 0.05,
+        type: "triangle",
+        gain: 0.05,
+        slide: 90,
+        pan,
+      });
+      return;
+    }
+    if (type === "select") {
+      this.stopMenuMusic();
+      this.tone({ frequency: 523, duration: 0.08, type: "square", gain: 0.075, slide: 60, pan: -0.25 });
+      this.tone({ frequency: 784, duration: 0.13, type: "triangle", gain: 0.08, delay: 0.06, slide: 110, pan: 0.25 });
+      return;
+    }
+    if (type === "back") {
+      this.tone({ frequency: 587, duration: 0.07, type: "triangle", gain: 0.06, slide: -60, pan: 0.2 });
+      this.tone({ frequency: 392, duration: 0.11, type: "sine", gain: 0.06, delay: 0.05, slide: -50, pan: -0.2 });
+      this.startMenuMusic();
+    }
+  }
+
+  startMenuMusic() {
+    if (this.menuMusicTimer) return;
+    this.menuMusicStep = 0;
+    const pad = [220, 262, 330, 294, 196, 247, 294, 262];
+    const bell = [659, 0, 784, 0, 587, 0, 659, 0];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.menuMusicStep % pad.length;
+      const pan = step % 2 === 0 ? -0.3 : 0.3;
+      this.tone({
+        frequency: pad[step],
+        duration: 0.34,
+        type: "sine",
+        gain: 0.024,
+        pan: -pan * 0.5,
+      });
+      if (bell[step]) {
+        this.tone({
+          frequency: bell[step],
+          duration: 0.22,
+          type: "triangle",
+          gain: 0.015,
+          delay: 0.05,
+          pan,
+        });
+      }
+      this.menuMusicStep += 1;
+    };
+    tick();
+    this.menuMusicTimer = window.setInterval(tick, 380);
+  }
+
+  stopMenuMusic() {
+    if (!this.menuMusicTimer) return;
+    window.clearInterval(this.menuMusicTimer);
+    this.menuMusicTimer = null;
   }
 
   playSnake(type, detail) {
