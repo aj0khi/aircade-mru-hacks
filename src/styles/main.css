@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Arcade Normal";
+  src: url("/fonts/arcade-normal.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root {
   color: #f7f3ff;
   background: #090817;
@@ -97,6 +105,7 @@ body::after {
 .motion-panel h2 {
   margin: 0;
   color: var(--yellow);
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-size: 1rem;
   text-transform: uppercase;
 }
@@ -249,7 +258,7 @@ body::after {
 .eyebrow,
 .mode-label {
   color: var(--blue);
-  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-weight: 900;
   font-size: 0.76rem;
   letter-spacing: 0.1em;
@@ -262,11 +271,11 @@ body::after {
 h1 {
   margin: 0;
   color: var(--yellow);
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-weight: 900;
-  font-size: clamp(2.8rem, 7vw, 5.4rem);
-  line-height: 0.84;
-  letter-spacing: 0.015em;
+  font-size: clamp(2.25rem, 6vw, 4.8rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
   transform: skew(-4deg);
@@ -377,7 +386,7 @@ h1.marquee-sign {
 .game-menu h2 {
   margin: 11px 0 24px;
   color: var(--yellow);
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -509,10 +518,10 @@ h1.marquee-sign {
 .game-choice strong {
   margin-top: 0;
   color: #fff8d2;
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
-  font-size: 1.08rem;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
+  font-size: 0.94rem;
   font-weight: 900;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.42);
 }
@@ -530,8 +539,8 @@ h1.marquee-sign {
   left: 25px;
   z-index: 2;
   color: #1d1824;
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
-  font-size: 0.66rem;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
+  font-size: 0.52rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-shadow: none;
@@ -582,7 +591,8 @@ h1.marquee-sign {
   content: " AIRCADE";
   display: block;
   margin-top: 2px;
-  font-size: 0.42rem;
+  font-family: Tahoma, Geneva, sans-serif;
+  font-size: 0.38rem;
   letter-spacing: 0.04em;
   opacity: 0.72;
 }
@@ -713,7 +723,7 @@ button[hidden],
   left: 50%;
   transform: translateX(-50%) skew(-5deg);
   color: #fff;
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-weight: 900;
   font-size: clamp(2.7rem, 7vw, 5rem);
   letter-spacing: 0.12em;
@@ -736,7 +746,7 @@ button[hidden],
   display: grid;
   place-items: center;
   color: var(--yellow);
-  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-weight: 900;
   font-size: clamp(1.2rem, 4vw, 2rem);
   letter-spacing: 0.1em;
@@ -815,7 +825,7 @@ button[hidden],
 
 .soundbar-label {
   color: var(--blue);
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -885,7 +895,7 @@ button[hidden],
 .soundbar-value {
   min-width: 36px;
   color: var(--yellow);
-  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -902,7 +912,7 @@ button {
   padding: 10px 16px;
   color: #fff;
   background: var(--panel-light);
-  font: inherit;
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
   font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.08em;
