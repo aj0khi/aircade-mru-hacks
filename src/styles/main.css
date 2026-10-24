@@ -369,7 +369,7 @@ h1.marquee-sign {
 }
 
 .game-menu::after {
-  bottom: 12%;
+  bottom: 10%;
   animation-delay: -2.1s;
 }
 
