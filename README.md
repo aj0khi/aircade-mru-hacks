@@ -1,12 +1,12 @@
-# GYRO PONG — HeadPilot Arcade
+# HeadPilot Arcade
 
 **A motion-controlled arcade revival powered by AirPods**
 
 ## 1. Project Overview
 
-Gyro Pong is a modern, multiplayer revival of classic Pong. Instead of relying exclusively on a keyboard or physical game controller, players can use AirPods head-motion tracking to control their paddles.
+HeadPilot Arcade is a browser-based arcade collection that revitalizes familiar games with a new input method: AirPods head-motion tracking. Players can tilt, roll, and swing naturally, while keyboard controls keep every cabinet playable without special hardware.
 
-The goal is to transform a familiar arcade game into a new, accessible, social gaming experience using consumer hardware that players may already own.
+The goal is to transform familiar arcade games into an accessible, social gaming experience using consumer hardware that players may already own. The shared cabinet brings together classic Pong, Snake, and Breakout presentations with 3D Bowling and Neon Tanks.
 
 **Hackathon theme:** Revitalization
 

@@ -78,6 +78,27 @@
         </div>
       </section>
 
+      <section class="motion-panel" aria-labelledby="motion-title">
+        <div>
+          <p class="motion-kicker">HEADPILOT INPUT // AIRPODS MOTION</p>
+          <h2 id="motion-title">Play with your movement</h2>
+          <p id="motion-help">Keyboard fallback is ready. Connect the macOS motion bridge to steer with tilt and swing.</p>
+        </div>
+        <div class="motion-actions">
+          <span id="motion-status" class="motion-status" role="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            Keyboard fallback
+          </span>
+          <button id="motion-connect-button" type="button">Connect motion</button>
+          <button id="motion-calibrate-button" type="button" disabled>Calibrate</button>
+        </div>
+        <div class="motion-meter" aria-label="Live motion input">
+          <span>tilt</span>
+          <div class="motion-track"><span id="motion-meter-fill"></span></div>
+          <span id="motion-meter-value">0.00</span>
+        </div>
+      </section>
+
       <p id="instructions" class="instructions">
         <span><strong>Player 1</strong> W / S</span>
         <span aria-hidden="true">·</span>
@@ -88,7 +109,7 @@
         First to 7 wins
       </p>
       <footer class="footer-note">
-        <span>HeadPilot Arcade · keep your hands on the controls</span>
+        <span>HeadPilot Arcade · revive the classics with motion</span>
         <span>INSERT COIN // 2026</span>
       </footer>
     </main>
