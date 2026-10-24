@@ -466,26 +466,14 @@ is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where
 Player 1's paddle through
 `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
 
-## HeadPilot Bowling prototype
-
-The optional **HEADPILOT BOWLING // PROTOTYPE** cabinet is our own lightweight Canvas
-prototype. It uses a perspective lane, ten pins, aim control, rolling
-animation, frame progression, scoring, mouse/trackpad drag input, keyboard
-arrows, and AirPods roll/swing input.
-
-- Use **Left/Right** to aim.
-- Press **Space** or drag upward on the lane to roll.
-- Use **Start game**, **Pause**, and **Restart** like the other cabinets.
-- The first roll uses the current aim to knock down more pins when centered.
-
-This prototype is intentionally separate from the borrowed lane's iframe and
-assets. It can be removed or promoted without changing the fallback.
-
 ## 3D Bowling mode
 
-The arcade keeps one bowling experience: **3D BOWLING**. It is a local,
-HeadPilot-styled physics lane with mouse/trackpad and AirPods-ready motion
-controls. The browser integration point is:
+The arcade's **HEADPILOT BOWLING** cabinet is a deeply customized 3D lane. We
+kept the proven Ammo/Bullet rigid-body and scoring foundations, then rebuilt the
+experience around them: HeadPilot HUD and frame display, neon rails and foul
+line, custom lighting and camera composition, power feedback, keyboard aiming,
+keyboard roll, pointer drag input, AirPods motion, and a non-blocking game-over
+flow. The browser integration point is:
 
 ```js
 window.gyroBowling.setMotionInput(rollValue, swingValue)
@@ -511,21 +499,22 @@ window.gyroBowling.setMotionSample({
 `horizontal` and `forward` are still accepted as compatibility aliases for
 `roll` and `swing`.
 
-The 3D physics foundation is a local port of the open-source
+The remaining physics foundation is a local port of the open-source
 [iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling) project.
-The HeadPilot-specific shell, HUD, colors, status system, pause lifecycle, and
+The HeadPilot-specific scene dressing, HUD, controls, status lifecycle, and
 motion forwarding are maintained in this repository. The original project is
 GPLv3; its license and attribution remain included at
 `public/bowling-3d/LICENSE`.
 
-The **3D BOWLING** mode includes the ported physics lane from
-[iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling), including
-its Three.js rendering and Ammo.js/Bullet physics. It is vendored under
-`public/bowling-3d/` so the normal Vite server can load it without a second
-server or npm dependency.
+The customized lane is vendored under `public/bowling-3d/` so the normal Vite
+server can load it without a second server or npm dependency. The main files
+are `index.html` for the HeadPilot cabinet layer, `js/bowlchallenge.js` for
+scene composition, HUD, input, and game flow, `js/bowlphysics.js` for the
+adapted rigid-body simulation, and `js/scores.js` for frame scoring.
 
 Use the mouse or trackpad to drag the ball left/right, then flick forward to
-release it. **START GAME** resumes the lane, **PAUSE** freezes physics, and
+release it. **Left/Right** aims and **Space** performs a controlled keyboard
+roll. **START GAME** resumes the lane, **PAUSE** freezes physics, and
 **RESTART** loads a fresh frame. Because this mode includes GPLv3 software,
 review the license obligations before distributing the combined application.
 AirPods motion is supported through the parent

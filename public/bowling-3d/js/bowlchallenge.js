@@ -18,7 +18,7 @@ const IMITATION_THROW_TIME_MAX = 7.0;
 const IMITATION_THROW_POSITION_MAX = 0.3;
 const IMITATION_THROW_ANGLE_MAX = Math.PI / 18.0;
 
-var container, scene, camera, clock, renderer, ppi, statusLabel;
+var container, scene, camera, clock, renderer, ppi, statusLabel, scoreLabel, powerMeter;
 var touchPoint, raycaster, pickPoint, dragPoint, releaseVector, pickSphere;
 var trackProtoMesh, ballProtoMesh, pinProtoMesh;
 var players, imitations, scoresDiv;
@@ -33,6 +33,8 @@ var pickOffset = 0.0;
 var pickTime = 0;
 var gyroSwingArmed = true;
 var gamePaused = false;
+var keyboardAim = 0.0;
+var lastFrameNumber = 0;
 
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
@@ -55,17 +57,17 @@ class Imitation {
 
 function init() {
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color(0.035, 0.025, 0.09);
+	scene.background = new THREE.Color(0.018, 0.012, 0.05);
 
 	camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight,
 			CAMERA_NEAR, CAMERA_FAR);
-	camera.position.set(0.0, 1.7, 5.0);
+	camera.position.set(0.0, 1.78, 5.15);
 	camera.rotation.x = -25.0 / 180.0 * Math.PI;
 
-	var ambient = new THREE.AmbientLight(0xaaa0ff, 0.7);
+	var ambient = new THREE.AmbientLight(0x8b7dff, 0.55);
 	scene.add(ambient);
 
-	var light = new THREE.DirectionalLight(0x64f4ff, 1.05);
+	var light = new THREE.DirectionalLight(0x64f4ff, 1.25);
 	light.position.set(-0.4, 0.8, 1.0);
 	scene.add(light);
 
@@ -75,6 +77,10 @@ function init() {
 	var railLight = new THREE.PointLight(0xffe44a, 0.35, 4.0);
 	railLight.position.set(-1.2, 1.2, 0.4);
 	scene.add(railLight);
+
+	var overheadLight = new THREE.PointLight(0xff3fba, 0.6, 5.5);
+	overheadLight.position.set(0.0, 2.8, -1.2);
+	scene.add(overheadLight);
 
 	touchPoint = new THREE.Vector2();
 	pickPoint = new THREE.Vector3();
@@ -87,16 +93,18 @@ function init() {
 
 	container = document.getElementById("container");
 
-	renderer = new THREE.WebGLRenderer({ antialias: true });
-	renderer.setPixelRatio(window.devicePixelRatio);
+	renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.gammaOutput = true;
 	container.appendChild(renderer.domElement);
 
 	scoresDiv = document.createElement("div");
-	scoresDiv.style = "position: fixed; left: 50%; top: 58px; transform: translate(-50%, 0); padding: 8px 12px; color: #f7f3ff; background: rgba(13, 10, 30, 0.86); border: 2px solid #41356e; border-radius: 2px; box-shadow: 3px 3px 0 #080614, 0 0 12px rgba(34, 216, 255, 0.22); white-space: pre; font: 700 12px/1.3 Tahoma, Geneva, sans-serif; letter-spacing: 0.12em;";
+	scoresDiv.style = "display: none;";
 	container.appendChild(scoresDiv);
 	statusLabel = document.getElementById("headpilot-status");
+	scoreLabel = document.getElementById("headpilot-score");
+	powerMeter = document.getElementById("headpilot-power");
 
 	// XXX How to get pixel density?
 	ppi = 96 * window.devicePixelRatio;
@@ -122,11 +130,40 @@ function init() {
 		setAnisotropy(trackProtoMesh, maxAnisotropy);
 		setAnisotropy(ballProtoMesh, maxAnisotropy);
 		setAnisotropy(pinProtoMesh, maxAnisotropy);
+		styleImportedMeshes();
+		addLaneAccents();
 
 		Ammo().then((Ammo) => {
 			initScene();
 		});
 	});
+}
+
+function styleImportedMeshes() {
+	[trackProtoMesh, ballProtoMesh, pinProtoMesh].forEach((root) => {
+		root.traverse((object) => {
+			if (!object.isMesh || !object.material) return;
+			object.material.needsUpdate = true;
+			if (object.material.color) {
+				object.material.color.multiplyScalar(1.08);
+			}
+		});
+	});
+}
+
+function addLaneAccents() {
+	var railMaterial = new THREE.MeshBasicMaterial({ color: 0x22d8ff });
+	var goldMaterial = new THREE.MeshBasicMaterial({ color: 0xffe44a });
+	var railGeometry = new THREE.BoxGeometry(0.025, 0.035, TRACK_LENGTH);
+	[-TRACK_HALF_WIDTH - 0.02, TRACK_HALF_WIDTH + 0.02].forEach((x) => {
+		var rail = new THREE.Mesh(railGeometry, railMaterial);
+		rail.position.set(x, TOP_HEIGHT + 0.025, TRACK_MID_Z);
+		scene.add(rail);
+	});
+	var foulLine = new THREE.Mesh(
+			new THREE.BoxGeometry(LANE_WIDTH, 0.008, 0.018), goldMaterial);
+	foulLine.position.set(0.0, BASE_HEIGHT + 0.006, BALL_LINE - 0.08);
+	scene.add(foulLine);
 }
 
 function setAnisotropy(parent, anisotropy) {
@@ -166,6 +203,7 @@ function onHeadPilotMotion(sample) {
 	if (forward <= 0.28) {
 		gyroSwingArmed = true;
 		setBowlingStatus("AIMING");
+		updatePowerMeter(0.0);
 	}
 	if (gyroSwingArmed && forward >= 0.68) {
 		gyroSwingArmed = false;
@@ -174,12 +212,30 @@ function onHeadPilotMotion(sample) {
 		var angle = clampMotionValue(horizontal, -1.0, 1.0) * BALL_ANGLE_MAX * 0.35;
 		localPlayer.physics.releaseBall(velocity, angle);
 		setBowlingStatus("ROLLING");
+		updatePowerMeter(clampMotionValue(forward, 0.0, 1.0));
 	}
 }
 
 function setBowlingStatus(label) {
 	if (statusLabel) {
 		statusLabel.textContent = label;
+	}
+
+	function updateHud(player) {
+		if (!player || !scoreLabel) return;
+		var frame = Math.min(player.scores.frameNumber + 1, FRAME_COUNT);
+		scoreLabel.innerHTML = "FRAME " + String(frame).padStart(2, "0")
+				+ " &nbsp;·&nbsp; SCORE <strong>" + player.scores.totalScore + "</strong>";
+		if (frame !== lastFrameNumber) {
+			lastFrameNumber = frame;
+			setBowlingStatus("AIMING");
+		}
+	}
+
+	function updatePowerMeter(value) {
+		if (powerMeter) {
+			powerMeter.style.width = (clampMotionValue(value, 0.0, 1.0) * 100.0) + "%";
+		}
 	}
 }
 
@@ -211,6 +267,7 @@ function addPlayer(id, local, slot) {
 		players = new Array();
 	}
 	players.push(player);
+	updateHud(player);
 
 	return player;
 }
@@ -299,7 +356,25 @@ function initScene() {
 	renderer.domElement.addEventListener("touchend", onDocumentTouchEnd, false);
 
 	animate();
+	window.addEventListener("keydown", onKeyboardInput, false);
 	window.parent.postMessage({ type: "headpilot-bowling-ready" }, window.location.origin);
+}
+
+function onKeyboardInput(event) {
+	var localPlayer = getLocalPlayer();
+	if (!localPlayer || localPlayer.physics.simulationActive) return;
+	if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+		event.preventDefault();
+		keyboardAim = clampMotionValue(keyboardAim + (event.code === "ArrowLeft" ? -0.08 : 0.08), -1.0, 1.0);
+		localPlayer.physics.positionBall(keyboardAim * BALL_POSITION_MAX);
+		setBowlingStatus("AIMING");
+	}
+	if (event.code === "Space") {
+		event.preventDefault();
+		localPlayer.physics.releaseBall(BALL_VELOCITY_MAX * 0.78, keyboardAim * BALL_ANGLE_MAX * 0.35);
+		setBowlingStatus("ROLLING");
+		updatePowerMeter(0.78);
+	}
 }
 
 window.addEventListener("message", (event) => {
@@ -344,13 +419,15 @@ function updateGame(player, dt) {
 				pinsMask = standingPinsMask;
 			}
 			player.physics.resetPhysics(false, pinsMask);
+			updatePowerMeter(0.0);
 		} else if (player.local) {
-			alert("Game over");
+			setBowlingStatus("GAME OVER");
 			player.scores = new Scores();
 			player.physics.resetPhysics();
 		}
 	}
 
+	updateHud(player);
 	syncView(player);
 }
 
@@ -503,6 +580,7 @@ function onActionMove(clientX, clientY, time) {
 	if (positioningBall) {
 		var position = dragPoint.x - pickOffset;
 		localPlayer.physics.positionBall(position);
+		keyboardAim = clampMotionValue(position / BALL_POSITION_MAX, -1.0, 1.0);
 	}
 }
 
@@ -523,6 +601,8 @@ function onActionUp(clientX, clientY, time) {
 				: BALL_VELOCITY_MAX;
 		var angle = Math.atan2(-releaseVector.x, -releaseVector.z);
 		localPlayer.physics.releaseBall(velocity, angle);
+		updatePowerMeter(clampMotionValue(velocity / BALL_VELOCITY_MAX, 0.0, 1.0));
+		setBowlingStatus("ROLLING");
 	}
 
 	pickingBall = false;
