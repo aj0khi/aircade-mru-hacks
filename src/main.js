@@ -11,6 +11,8 @@ const startButton = document.querySelector("#start-button");
 const pauseButton = document.querySelector("#pause-button");
 const restartButton = document.querySelector("#restart-button");
 const muteButton = document.querySelector("#mute-button");
+const volumeSlider = document.querySelector("#volume-slider");
+const volumeValue = document.querySelector("#volume-value");
 const modeButton = document.querySelector("#mode-button");
 const menuButton = document.querySelector("#menu-button");
 const gameButton = document.querySelector("#game-button");
@@ -652,6 +654,13 @@ muteButton.addEventListener("click", () => {
   updateMuteUI();
 });
 
+volumeSlider?.addEventListener("input", (event) => {
+  unlockAudio();
+  const percent = Number(event.target.value);
+  arcadeAudio.setVolume(percent / 100);
+  updateMuteUI();
+});
+
 function unlockAudio() {
   void arcadeAudio.unlock();
 }
@@ -669,6 +678,17 @@ function updateMuteUI() {
     "muted",
     arcadeAudio.muted
   );
+
+  const displayPercent = arcadeAudio.muted
+    ? 0
+    : Math.round(arcadeAudio.volume * 100);
+
+  if (volumeSlider) {
+    volumeSlider.value = String(displayPercent);
+  }
+  if (volumeValue) {
+    volumeValue.textContent = `${displayPercent}%`;
+  }
 }
 
 function selectGame(nextGame) {

@@ -6,6 +6,8 @@ export class ArcadeAudio {
     this.master = null;
     this.bus = null;
     this.muted = false;
+    this.volume = 0.85;
+    this.maxGain = 0.65;
     this.voices = new Set();
     this.unlocked = false;
     this.snakeMusicTimer = null;
@@ -30,13 +32,17 @@ export class ArcadeAudio {
     const master = context.createGain();
     const bus = context.createGain();
     bus.gain.value = 1;
-    master.gain.value = this.muted ? 0 : 0.22;
+    master.gain.value = this.effectiveGain();
     bus.connect(master);
     master.connect(context.destination);
     this.context = context;
     this.master = master;
     this.bus = bus;
     return context;
+  }
+
+  effectiveGain() {
+    return this.muted ? 0 : this.volume * this.maxGain;
   }
 
   async unlock() {
@@ -53,10 +59,24 @@ export class ArcadeAudio {
     return this.unlocked;
   }
 
+  setVolume(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return this.volume;
+    this.volume = clamp(numeric, 0, 1);
+    this.muted = this.volume === 0;
+    if (this.master && this.context) {
+      this.master.gain.setTargetAtTime(this.effectiveGain(), this.context.currentTime, 0.02);
+    }
+    return this.volume;
+  }
+
   setMuted(muted) {
     this.muted = Boolean(muted);
+    if (!this.muted && this.volume === 0) {
+      this.volume = 0.85;
+    }
     if (!this.master || !this.context) return this.muted;
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 0.22, this.context.currentTime, 0.02);
+    this.master.gain.setTargetAtTime(this.effectiveGain(), this.context.currentTime, 0.02);
     return this.muted;
   }
 

@@ -68,6 +68,11 @@
 
       <section id="game-controls" class="controls" aria-label="Game controls">
         <div class="control-group primary-actions">
+          <label class="soundbar" for="volume-slider" aria-label="Game volume">
+            <span class="soundbar-label">VOL</span>
+            <input id="volume-slider" class="soundbar-slider" type="range" min="0" max="100" value="85" />
+            <span id="volume-value" class="soundbar-value">85%</span>
+          </label>
           <button id="start-button" class="primary" type="button">Start game</button>
           <button id="pause-button" type="button">Pause</button>
           <button id="restart-button" type="button">Restart</button>
