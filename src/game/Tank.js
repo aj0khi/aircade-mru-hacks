@@ -125,7 +125,12 @@ export class Tank {
     this.height = WORLD_HEIGHT;
     // Hull and barrel collide using the same oriented rectangles that are drawn.
     this.keys = new Set();
+    this.onEvent = null;
     this.reset();
+  }
+
+  emit(type, detail = {}) {
+    this.onEvent?.(type, { ...detail, width: this.width, height: this.height });
   }
 
   makeTank(player, x, y, rotation, color) {
@@ -151,20 +156,27 @@ export class Tank {
   }
 
   start() {
+    const alreadyRunning = this.running && !this.gameOver;
     if (this.gameOver) this.reset();
     this.running = true;
     this.paused = false;
+    if (!alreadyRunning) {
+      this.emit("start");
+    }
   }
 
   restart() {
     this.reset();
-    this.start();
+    this.running = true;
+    this.paused = false;
+    this.emit("start");
   }
 
   togglePause() {
     if (!this.running || this.gameOver) return this.paused;
     this.paused = !this.paused;
     this.keys.clear();
+    this.emit(this.paused ? "pause" : "resume");
     return this.paused;
   }
 
@@ -255,6 +267,11 @@ export class Tank {
     });
     tank.cooldown = 0.65;
     tank.flash = 0.1;
+    this.emit("fire", {
+      playerId: tank.player,
+      x: tank.x + Math.cos(tank.rotation) * muzzle,
+      y: tank.y + Math.sin(tank.rotation) * muzzle,
+    });
   }
 
   advanceBullet(b, dt) {
@@ -267,15 +284,21 @@ export class Tank {
       let nextY = b.y + b.vy * step;
       const radius = 4;
 
+      let bouncedBorder = false;
       if (nextX < radius || nextX > this.width - radius) {
         b.vx *= -1;
         b.bounces++;
+        bouncedBorder = true;
         nextX = clamp(nextX, radius, this.width - radius);
       }
       if (nextY < radius || nextY > this.height - radius) {
         b.vy *= -1;
         b.bounces++;
+        bouncedBorder = true;
         nextY = clamp(nextY, radius, this.height - radius);
+      }
+      if (bouncedBorder) {
+        this.emit("ricochet", { x: nextX, y: nextY, bounces: b.bounces });
       }
 
       let reflected = false;
@@ -286,7 +309,12 @@ export class Tank {
         if (wall.breakable) {
           wall.hp--;
           this.addParticles(nextX, nextY, "#ffc178", 8);
-          if (wall.hp <= 0) this.walls.splice(i, 1);
+          if (wall.hp <= 0) {
+            this.walls.splice(i, 1);
+            this.emit("cover-break", { x: nextX, y: nextY });
+          } else {
+            this.emit("cover-hit", { x: nextX, y: nextY, hp: wall.hp });
+          }
           return true; // Bullet absorbed by breakable wall.
         }
 
@@ -304,6 +332,7 @@ export class Tank {
         }
         b.bounces++;
         reflected = true;
+        this.emit("ricochet", { x: nextX, y: nextY, bounces: b.bounces });
         break;
       }
 
@@ -325,6 +354,12 @@ export class Tank {
           this.running = false;
           this.winSequence++;
           this.addParticles(tank.x, tank.y, tank.color, 35);
+          this.emit("explode", {
+            playerId: tank.player,
+            winner: this.winner,
+            x: tank.x,
+            y: tank.y,
+          });
           return true;
         }
       }
