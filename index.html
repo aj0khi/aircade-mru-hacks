@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HeadPilot Arcade</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
   </head>
   <body>
     <main class="arcade">
@@ -47,12 +48,8 @@
               <span class="choice-number">05</span>
               <span><strong>Neon Tanks</strong><small>Ricochet. Reload. Dominate.</small></span>
             </button>
-            <button class="game-choice choice-bowling" type="button" data-game="bowling-3d">
-              <span class="choice-number">06</span>
-              <span><strong>3D Bowling // Fallback</strong><small>Borrowed physics lane.</small></span>
-            </button>
           </div>
-          <p class="menu-hint">Use the buttons or press 1, 2, 3, 4, 5, or 6</p>
+          <p class="menu-hint">Use the buttons or press 1, 2, 3, 4, or 5</p>
         </div>
         <div class="scoreboard" aria-live="polite">
           <span id="player-score">0</span>
@@ -74,6 +71,7 @@
           <button id="start-button" class="primary" type="button">Start game</button>
           <button id="pause-button" type="button">Pause</button>
           <button id="restart-button" type="button">Restart</button>
+          <button id="mute-button" type="button" aria-pressed="false">Mute</button>
         </div>
         <div class="control-group mode-actions">
           <button id="menu-button" type="button">Arcade menu</button>
@@ -110,14 +108,13 @@
         <span aria-hidden="true">·</span>
         P / Esc pauses
         <span aria-hidden="true">·</span>
-        First to 7 wins
+        First to 3 wins
       </p>
       <footer class="footer-note">
         <span>HeadPilot Arcade · revive the classics with motion</span>
         <span>INSERT COIN // 2026</span>
       </footer>
     </main>
-    <script src="/bowling-3d/js/ammo.js"></script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
