@@ -234,7 +234,7 @@ h1.marquee-sign {
 
 .game-menu-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   width: min(920px, 100%);
   margin: 0 auto 22px;
