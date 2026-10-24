@@ -361,12 +361,14 @@ function updateUI() {
     startButton.disabled = true;
     pauseButton.disabled = true;
     restartButton.disabled = true;
+    document.querySelector(".scoreboard").hidden = true;
     return;
   }
   const isSnake = gameType === "snake";
   const isBreakout = gameType === "breakout";
   const isTank = gameType === "tank";
   if (gameType === "bowling-3d") {
+    document.querySelector(".scoreboard").hidden = true;
     startButton.disabled = false;
     pauseButton.disabled = false;
     restartButton.disabled = false;
@@ -376,6 +378,8 @@ function updateUI() {
   }
   startButton.disabled = false;
   restartButton.disabled = false;
+  const showScoreboard = activeGame.paused || activeGame.gameOver;
+  document.querySelector(".scoreboard").hidden = !showScoreboard;
   playerScore.textContent = isSnake ? snake.score : isBreakout ? breakout.score : isTank ? tank.scores[1] : pong.scores[1];
   opponentScore.textContent = isSnake || isBreakout ? "" : isTank ? tank.scores[2] : pong.scores[2];
   scoreDivider.textContent = isSnake || isBreakout ? "" : ":";
