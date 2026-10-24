@@ -401,6 +401,23 @@ When `forwardValue` exceeds the throw threshold, the ball rolls. A bridge can
 also call `window.gyroBowling.setAimInput(horizontalValue)` continuously and
 `window.gyroBowling.throwBall(power)` once a swing is detected.
 
+For a bridge that sends timestamped samples, use the flick-style adapter:
+
+```js
+window.gyroBowling.calibrate({ horizontal: 0, forward: 0 });
+window.gyroBowling.setMotionSample({
+  horizontal: normalizedRoll,
+  forward: normalizedForwardSwing,
+  timestamp: performance.now()
+});
+```
+
+This follows the open-source [`iliagrigorevdev/bowling`](https://github.com/iliagrigorevdev/bowling)
+interaction idea: position the ball laterally, then release it with a forward flick.
+That repository is GPLv3 and uses touch input plus Three.js/Ammo.js physics; this
+project does not copy its source or assets. The adapter reuses the interaction
+concept while keeping this arcade's Canvas engine and existing license boundary.
+
 The bowling engine remains independent of AirPods, Swift, and the UI. The future
 macOS bridge only needs to translate CoreMotion samples into this contract.
 

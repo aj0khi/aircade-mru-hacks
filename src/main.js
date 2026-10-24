@@ -1,6 +1,7 @@
 import { Game } from "./game/Game.js";
 import { Snake } from "./game/Snake.js";
 import { Bowling } from "./game/Bowling.js";
+import { BowlingMotionAdapter } from "./input/BowlingMotionAdapter.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
@@ -22,6 +23,7 @@ const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
 const bowling = new Bowling(canvas);
+const bowlingMotion = new BowlingMotionAdapter(bowling);
 let activeGame = pong;
 let gameType = "pong";
 let lastTime = performance.now();
@@ -81,6 +83,7 @@ gameButton.addEventListener("click", () => {
   gameType = gameType === "pong" ? "snake" : gameType === "snake" ? "bowling" : "pong";
   activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : bowling;
   activeGame.reset();
+  bowlingMotion.reset();
   updateModeUI();
 });
 
@@ -177,5 +180,7 @@ window.gyroBowling = {
   game: bowling,
   setAimInput: (horizontalValue) => bowling.setAimInput(horizontalValue),
   setMotionInput: (horizontalValue, forwardValue) => bowling.setMotionInput(horizontalValue, forwardValue),
+  setMotionSample: (sample) => bowlingMotion.setSample(sample),
+  calibrate: (sample) => bowlingMotion.calibrate(sample),
   throwBall: (power) => bowling.throwBall(power),
 };
