@@ -662,13 +662,13 @@ export class ArcadeAudio {
       return;
     }
     if (type === "lose-life") {
-      this.noise({ duration: 0.12, gain: 0.045, pan });
-      this.tone({ frequency: 392, duration: 0.12, type: "sawtooth", gain: 0.09, slide: -90, pan });
-      this.tone({ frequency: 262, duration: 0.18, type: "sawtooth", gain: 0.085, delay: 0.1, slide: -80, pan: 0 });
+      this.tone({ frequency: 680, duration: 0.16, type: "sine", gain: 0.08, slide: -460, pan });
+      this.tone({ frequency: 240, duration: 0.14, type: "triangle", gain: 0.075, delay: 0.15, slide: 180, pan: -pan * 0.6 });
+      this.tone({ frequency: 310, duration: 0.18, type: "sine", gain: 0.07, delay: 0.27, slide: -150, pan: 0 });
       return;
     }
     if (type === "die") {
-      this.playSnakeGameOver(pan);
+      this.playBreakoutLose(pan);
       return;
     }
     if (type === "win") {
@@ -679,40 +679,73 @@ export class ArcadeAudio {
   startBreakoutMusic() {
     this.stopBreakoutMusic();
     this.breakoutMusicStep = 0;
-    const bass = [147, 147, 175, 196, 220, 220, 196, 165];
-    const arp = [587, 740, 880, 0, 659, 784, 988, 0];
+    const pad = [262, 294, 330, 294, 247, 262, 294, 220];
+    const chime = [523, 0, 659, 0, 587, 0, 494, 0];
     const tick = () => {
       if (this.muted || !this.context || this.context.state !== "running") return;
-      const step = this.breakoutMusicStep % bass.length;
-      const stepPan = step % 2 === 0 ? -0.36 : 0.36;
+      const step = this.breakoutMusicStep % pad.length;
+      const stepPan = step % 2 === 0 ? -0.25 : 0.25;
       this.tone({
-        frequency: bass[step],
-        duration: 0.15,
-        type: "triangle",
-        gain: 0.04,
+        frequency: pad[step],
+        duration: 0.32,
+        type: "sine",
+        gain: 0.024,
         pan: -stepPan * 0.5,
       });
-      if (arp[step]) {
+      if (chime[step]) {
         this.tone({
-          frequency: arp[step],
-          duration: 0.09,
-          type: "square",
-          gain: 0.022,
-          delay: 0.02,
-          slide: 20,
+          frequency: chime[step],
+          duration: 0.26,
+          type: "triangle",
+          gain: 0.015,
+          delay: 0.04,
           pan: stepPan,
         });
       }
       this.breakoutMusicStep += 1;
     };
     tick();
-    this.breakoutMusicTimer = window.setInterval(tick, 200);
+    this.breakoutMusicTimer = window.setInterval(tick, 360);
   }
 
   stopBreakoutMusic() {
     if (!this.breakoutMusicTimer) return;
     window.clearInterval(this.breakoutMusicTimer);
     this.breakoutMusicTimer = null;
+  }
+
+  playBreakoutLose(pan) {
+    // Silly slide-whistle drop + "wah-wah-wah-waaaah" sad trombone + cartoon boing
+    this.tone({ frequency: 880, duration: 0.18, type: "sine", gain: 0.085, slide: -620, pan });
+    const wahNotes = [
+      { freq: 392, slide: -28, delay: 0.18, dur: 0.22, pan: -0.45 },
+      { freq: 370, slide: -28, delay: 0.42, dur: 0.22, pan: 0.45 },
+      { freq: 349, slide: -28, delay: 0.66, dur: 0.22, pan: -0.45 },
+      { freq: 330, slide: -120, delay: 0.9, dur: 0.52, pan: 0 },
+    ];
+    wahNotes.forEach(({ freq, slide, delay, dur, pan: notePan }) => {
+      this.tone({
+        frequency: freq,
+        duration: dur,
+        type: "sawtooth",
+        gain: 0.075,
+        delay,
+        slide,
+        pan: notePan,
+      });
+      this.tone({
+        frequency: freq * 0.5,
+        duration: dur,
+        type: "triangle",
+        gain: 0.055,
+        delay,
+        slide: slide * 0.5,
+        pan: -notePan * 0.5,
+      });
+    });
+    // Goofy spring boing at the end
+    this.tone({ frequency: 190, duration: 0.12, type: "sine", gain: 0.08, delay: 1.44, slide: 340, pan: -0.3 });
+    this.tone({ frequency: 530, duration: 0.14, type: "sine", gain: 0.07, delay: 1.54, slide: -280, pan: 0.3 });
   }
 
   playPongWin(pan) {
