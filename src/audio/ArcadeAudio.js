@@ -12,6 +12,8 @@ export class ArcadeAudio {
     this.snakeMusicStep = 0;
     this.bowlingMusicTimer = null;
     this.bowlingMusicStep = 0;
+    this.breakoutMusicTimer = null;
+    this.breakoutMusicStep = 0;
   }
 
   ensureContext() {
@@ -59,6 +61,7 @@ export class ArcadeAudio {
   silence() {
     this.stopSnakeMusic();
     this.stopBowlingMusic();
+    this.stopBreakoutMusic();
     for (const voice of this.voices) {
       try {
         voice.stop();
@@ -83,6 +86,10 @@ export class ArcadeAudio {
       this.stopBowlingMusic();
       return;
     }
+    if (game === "breakout" && (type === "pause" || type === "lose-life" || type === "die" || type === "win")) {
+      this.stopBreakoutMusic();
+      if (type === "pause") return;
+    }
     if (this.muted) return;
     const context = this.ensureContext();
     if (!context) return;
@@ -101,6 +108,7 @@ export class ArcadeAudio {
     if (game === "pong") this.playPong(type, detail);
     if (game === "snake") this.playSnake(type, detail);
     if (game === "bowling") this.playBowling(type, detail);
+    if (game === "breakout") this.playBreakout(type, detail);
   }
 
   playPong(type, detail) {
@@ -570,6 +578,308 @@ export class ArcadeAudio {
     this.tone({ frequency: 523, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: -0.25 });
     this.tone({ frequency: 784, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: 0.25 });
     this.tone({ frequency: 1047, duration: 0.55, type: "square", gain: 0.09, delay: 0.62, slide: 50, pan: 0 });
+  }
+
+  playBreakout(type, detail) {
+    const pan = this.panFromDetail(detail);
+    if (type === "start") {
+      this.startBreakoutMusic();
+      this.tone({
+        frequency: 370,
+        duration: 0.12,
+        type: "triangle",
+        gain: 0.06,
+        slide: 190,
+        pan: 0,
+      });
+      return;
+    }
+    if (type === "resume") {
+      this.startBreakoutMusic();
+      return;
+    }
+    if (type === "wall") {
+      this.tone({
+        frequency: 280,
+        duration: 0.05,
+        type: "square",
+        gain: 0.065,
+        slide: -45,
+        pan,
+      });
+      this.tone({
+        frequency: 760,
+        duration: 0.03,
+        type: "triangle",
+        gain: 0.035,
+        pan,
+      });
+      return;
+    }
+    if (type === "paddle") {
+      const edge = Math.abs(Number(detail.hit) || 0);
+      const base = 460 + edge * 160;
+      this.tone({
+        frequency: base,
+        duration: 0.085,
+        type: "square",
+        gain: 0.1,
+        slide: 110,
+        pan,
+      });
+      this.tone({
+        frequency: base * 2,
+        duration: 0.045,
+        type: "triangle",
+        gain: 0.045,
+        delay: 0.012,
+        pan,
+      });
+      return;
+    }
+    if (type === "brick") {
+      const row = clamp(Number(detail.row) || 0, 0, 4);
+      const rowScale = [880, 784, 659, 587, 523];
+      const base = rowScale[row] || 659;
+      this.noise({ duration: 0.045, gain: 0.032, pan });
+      this.tone({
+        frequency: base,
+        duration: 0.09,
+        type: "square",
+        gain: 0.095,
+        slide: 120,
+        pan,
+      });
+      this.tone({
+        frequency: base * 1.5,
+        duration: 0.07,
+        type: "triangle",
+        gain: 0.05,
+        delay: 0.035,
+        slide: 90,
+        pan: -pan * 0.5,
+      });
+      return;
+    }
+    if (type === "lose-life") {
+      this.playSillyEwww(pan, false);
+      return;
+    }
+    if (type === "die") {
+      this.playBreakoutLose(pan);
+      return;
+    }
+    if (type === "win") {
+      this.playPongWin(pan);
+    }
+  }
+
+  startBreakoutMusic() {
+    this.stopBreakoutMusic();
+    this.breakoutMusicStep = 0;
+    const pad = [262, 294, 330, 294, 247, 262, 294, 220];
+    const chime = [523, 0, 659, 0, 587, 0, 494, 0];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.breakoutMusicStep % pad.length;
+      const stepPan = step % 2 === 0 ? -0.25 : 0.25;
+      this.tone({
+        frequency: pad[step],
+        duration: 0.32,
+        type: "sine",
+        gain: 0.024,
+        pan: -stepPan * 0.5,
+      });
+      if (chime[step]) {
+        this.tone({
+          frequency: chime[step],
+          duration: 0.26,
+          type: "triangle",
+          gain: 0.015,
+          delay: 0.04,
+          pan: stepPan,
+        });
+      }
+      this.breakoutMusicStep += 1;
+    };
+    tick();
+    this.breakoutMusicTimer = window.setInterval(tick, 360);
+  }
+
+  stopBreakoutMusic() {
+    if (!this.breakoutMusicTimer) return;
+    window.clearInterval(this.breakoutMusicTimer);
+    this.breakoutMusicTimer = null;
+  }
+
+  playSillyEwww(pan = 0, full = false) {
+    const context = this.context;
+    if (!context || !this.bus) return;
+    const now = context.currentTime;
+    const duration = full ? 0.68 : 0.48;
+
+    // Formant-filtered sawtooth vocal synth: morphs from nasal "Ehhh" (/i/ /e/) -> "uuuuw" (/u/)
+    const carrier = context.createOscillator();
+    const sub = context.createOscillator();
+    const vibrato = context.createOscillator();
+    const vibratoGain = context.createGain();
+    const f1 = context.createBiquadFilter();
+    const f2 = context.createBiquadFilter();
+    const voiceGain = context.createGain();
+    const panner = context.createStereoPanner();
+
+    carrier.type = "sawtooth";
+    sub.type = "square";
+    // Nasal cartoon pitch: starts high "Eeee", bends down into "uuuuw"
+    carrier.frequency.setValueAtTime(340, now);
+    carrier.frequency.linearRampToValueAtTime(395, now + 0.07);
+    carrier.frequency.exponentialRampToValueAtTime(185, now + duration);
+
+    sub.frequency.setValueAtTime(170, now);
+    sub.frequency.linearRampToValueAtTime(197.5, now + 0.07);
+    sub.frequency.exponentialRampToValueAtTime(92.5, now + duration);
+
+    // Goofy wobble vibrato
+    vibrato.frequency.setValueAtTime(9.5, now);
+    vibratoGain.gain.setValueAtTime(14, now);
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(carrier.frequency);
+
+    // Formant 1: 420 Hz -> 290 Hz
+    f1.type = "bandpass";
+    f1.Q.setValueAtTime(7, now);
+    f1.frequency.setValueAtTime(430, now);
+    f1.frequency.exponentialRampToValueAtTime(280, now + duration);
+
+    // Formant 2: 2250 Hz ("eee") -> 780 Hz ("uuu")
+    f2.type = "bandpass";
+    f2.Q.setValueAtTime(9, now);
+    f2.frequency.setValueAtTime(2250, now);
+    f2.frequency.exponentialRampToValueAtTime(760, now + duration * 0.78);
+
+    voiceGain.gain.setValueAtTime(0.0001, now);
+    voiceGain.gain.exponentialRampToValueAtTime(0.24, now + 0.025);
+    voiceGain.gain.setValueAtTime(0.22, now + duration * 0.65);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    panner.pan.setValueAtTime(clamp(pan, -0.8, 0.8), now);
+
+    carrier.connect(f1);
+    carrier.connect(f2);
+    sub.connect(f1);
+    f1.connect(voiceGain);
+    f2.connect(voiceGain);
+    voiceGain.connect(panner);
+    panner.connect(this.bus);
+
+    carrier.start(now);
+    sub.start(now);
+    vibrato.start(now);
+    carrier.stop(now + duration + 0.03);
+    sub.stop(now + duration + 0.03);
+    vibrato.stop(now + duration + 0.03);
+    this.track(carrier);
+    this.track(sub);
+    this.track(vibrato);
+
+    // Quick cartoon nose-pinch "nyeh" harmonic on top
+    this.tone({
+      frequency: 1180,
+      duration: duration * 0.7,
+      type: "triangle",
+      gain: 0.045,
+      slide: -620,
+      pan: -pan * 0.5,
+    });
+  }
+
+  playRaspberrySplat(delay = 0, duration = 0.36, pan = 0) {
+    const context = this.context;
+    if (!context || !this.bus) return;
+    const startAt = context.currentTime + delay;
+
+    // Sputtering low sawtooth + flutter LFO ("pbbbbt!" raspberry/fart splat)
+    const osc = context.createOscillator();
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    const filter = context.createBiquadFilter();
+    const env = context.createGain();
+    const panner = context.createStereoPanner();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(92, startAt);
+    osc.frequency.exponentialRampToValueAtTime(46, startAt + duration);
+
+    lfo.type = "square";
+    lfo.frequency.setValueAtTime(28, startAt);
+    lfo.frequency.exponentialRampToValueAtTime(15, startAt + duration);
+    lfoGain.gain.setValueAtTime(320, startAt);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(420, startAt);
+    filter.Q.setValueAtTime(5, startAt);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    env.gain.setValueAtTime(0.0001, startAt);
+    env.gain.exponentialRampToValueAtTime(0.14, startAt + 0.015);
+    env.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+    panner.pan.setValueAtTime(clamp(pan, -0.8, 0.8), startAt);
+
+    osc.connect(filter);
+    filter.connect(env);
+    env.connect(panner);
+    panner.connect(this.bus);
+
+    osc.start(startAt);
+    lfo.start(startAt);
+    osc.stop(startAt + duration + 0.02);
+    lfo.stop(startAt + duration + 0.02);
+    this.track(osc);
+    this.track(lfo);
+
+    this.noise({ duration: duration * 0.75, gain: 0.045, delay, pan });
+  }
+
+  playBreakoutLose(pan) {
+    // 1. Nasal cartoon "Ewwwww!" groan
+    this.playSillyEwww(pan, true);
+
+    // 2. Wet sputtering raspberry / fart splat ("pbbbbt!")
+    this.playRaspberrySplat(0.62, 0.42, -pan * 0.6);
+
+    // 3. Goofy "wah-wah-waaaah" sad horn + spring boing
+    const wahNotes = [
+      { freq: 370, slide: -35, delay: 1.06, dur: 0.19, pan: -0.5 },
+      { freq: 349, slide: -35, delay: 1.26, dur: 0.19, pan: 0.5 },
+      { freq: 311, slide: -145, delay: 1.46, dur: 0.48, pan: 0 },
+    ];
+    wahNotes.forEach(({ freq, slide, delay, dur, pan: notePan }) => {
+      this.tone({
+        frequency: freq,
+        duration: dur,
+        type: "sawtooth",
+        gain: 0.08,
+        delay,
+        slide,
+        pan: notePan,
+      });
+      this.tone({
+        frequency: freq * 0.5,
+        duration: dur,
+        type: "triangle",
+        gain: 0.055,
+        delay,
+        slide: slide * 0.5,
+        pan: -notePan * 0.5,
+      });
+    });
+
+    // 4. Final silly cartoon boing-oing
+    this.tone({ frequency: 180, duration: 0.13, type: "sine", gain: 0.085, delay: 1.96, slide: 420, pan: -0.35 });
+    this.tone({ frequency: 600, duration: 0.15, type: "sine", gain: 0.075, delay: 2.07, slide: -360, pan: 0.35 });
   }
 
   playPongWin(pan) {

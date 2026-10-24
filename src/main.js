@@ -39,6 +39,10 @@ const tank = new Tank(canvas);
 const arcadeAudio = new ArcadeAudio();
 pong.onEvent = (type, detail) => arcadeAudio.play("pong", type, detail);
 snake.onEvent = (type, detail) => arcadeAudio.play("snake", type, detail);
+breakout.onEvent = (type, detail) => {
+  arcadeAudio.play("breakout", type, detail);
+  if (type === "win") celebrateGoal();
+};
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
