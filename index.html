@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Soccer Pong</title>
+    <title>HeadPilot Arcade</title>
   </head>
   <body>
     <main class="arcade">
       <header class="header">
         <div>
           <p class="eyebrow">HEADPILOT ARCADE</p>
-          <h1>SOCCER PONG</h1>
+          <h1 id="game-title">SOCCER PONG</h1>
         </div>
         <div id="mode-label" class="mode-label">1P // VS AI</div>
       </header>
@@ -18,7 +18,7 @@
       <section class="game-shell" aria-label="Soccer Pong game">
         <div class="scoreboard" aria-live="polite">
           <span id="player-score">0</span>
-          <span class="score-divider">:</span>
+          <span id="score-divider" class="score-divider">:</span>
           <span id="opponent-score">0</span>
         </div>
         <canvas id="game-canvas" width="960" height="540" aria-label="Horizontal soccer pitch"></canvas>
@@ -30,9 +30,10 @@
         <button id="pause-button" type="button">PAUSE</button>
         <button id="restart-button" type="button">RESTART</button>
         <button id="mode-button" type="button">2P MODE</button>
+        <button id="game-button" type="button">SNAKE</button>
       </section>
 
-      <p class="instructions">
+      <p id="instructions" class="instructions">
         <strong>Player 1</strong> W / S
         <span aria-hidden="true">·</span>
         <strong>Player 2</strong> ↑ / ↓

@@ -141,6 +141,10 @@ button:disabled {
   opacity: 0.45;
 }
 
+button[hidden] {
+  display: none;
+}
+
 button.primary {
   color: #03050d;
   background: var(--cyan);
