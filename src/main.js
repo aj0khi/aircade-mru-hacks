@@ -38,6 +38,7 @@ const breakout = new Breakout(canvas);
 const tank = new Tank(canvas);
 const arcadeAudio = new ArcadeAudio();
 pong.onEvent = (type, detail) => arcadeAudio.play("pong", type, detail);
+snake.onEvent = (type, detail) => arcadeAudio.play("snake", type, detail);
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
@@ -358,7 +359,7 @@ function updateMuteUI() {
 }
 
 function selectGame(nextGame) {
-  if (gameType === "pong" && nextGame !== "pong") {
+  if (gameType && nextGame !== gameType) {
     arcadeAudio.silence();
   }
   if (nextGame === "bowling") nextGame = "bowling-3d";
