@@ -706,9 +706,9 @@ function updateModeUI() {
     snakeMode || bowling3dMode || breakoutMode || tankMode;
 
   modeLabel.textContent =
-    snakeMode || bowling3dMode || breakoutMode
+    snakeMode || breakoutMode
       ? "1P // SOLO"
-      : twoPlayer || tankMode
+      : twoPlayer || tankMode || bowling3dMode
         ? "2P // LOCAL BATTLE"
         : "1P // VS COMPUTER";
 

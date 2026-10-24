@@ -57,9 +57,14 @@ export class Bowling {
   }
 
   reset() {
-    this.score = 0;
-    this.frame = 1;
-    this.rolls = 0;
+    this.players = [
+      { name: "PLAYER 1", score: 0 },
+      { name: "PLAYER 2", score: 0 }
+    ];
+
+    this.currentPlayer = 0;
+    this.targetScore = 50;
+    this.winner = null;
     this.running = false;
     this.paused = false;
     this.gameOver = false;
@@ -67,6 +72,7 @@ export class Bowling {
     this.power = 0;
     this.ball = null;
     this.scoredPins = 0;
+    this.lastSwing = 0;
     this.pins = this.createPins();
     if (this.physicsReady) this.resetPhysicsBodies();
     this.message = "PRESS START";
@@ -166,7 +172,7 @@ export class Bowling {
     this.ball.rotation += delta * (12 + this.power * 18);
     this.updateFallenPins(delta);
     if (!this.ball.impact && this.ball.z >= 0.76) this.hitPins();
-    if (this.ball.impact && this.ball.z >= 1.08) this.finishRoll();
+    if (this.ball.z >= 1.08) this.finishRoll();
   }
 
   createBody(shape, mass, position, friction, rollingFriction) {
@@ -252,7 +258,9 @@ export class Bowling {
       this.ball.z = (LANE_START_Z - origin.z()) / (LANE_START_Z - LANE_END_Z);
       this.ball.rotation += delta * (12 + this.power * 18);
       if (this.ball.z > 0.76 && !this.ball.impact) this.hitPhysicsPins();
-      if (this.ball.z > 1.08) this.finishRoll();
+      if (this.ball.z > 1.08 && this.ball.settleRemaining == null) {
+        this.ball.settleRemaining = 0.8;
+      }
     }
     this.pins.forEach((pin, index) => {
       const pinTransform = new ammo.btTransform();
@@ -265,9 +273,12 @@ export class Bowling {
     });
     const fallenPins = this.pins.filter((pin) => pin.fallen).length;
     if (fallenPins > this.scoredPins) {
-      this.score += fallenPins - this.scoredPins;
+      const newPins = fallenPins - this.scoredPins;
+      this.players[this.currentPlayer].score += newPins;
       this.scoredPins = fallenPins;
-      this.message = fallenPins === 10 ? "STRIKE!" : `${fallenPins} PINS DOWN`;
+      this.message = fallenPins === 10
+        ? "STRIKE!"
+        : `${fallenPins} PINS DOWN`;
     }
   }
 
@@ -296,7 +307,7 @@ export class Bowling {
     const hitCount = this.pins.filter((pin) => pin.fallen).length;
     const newPins = hitCount - this.pins.filter((pin) => pin.fallen && pin.counted).length;
     this.pins.forEach((pin) => { if (pin.fallen) pin.counted = true; });
-    this.score += newPins;
+    this.players[this.currentPlayer].score += newPins;
     this.ball.impact = true;
     this.message = newPins >= 10 ? "STRIKE!" : `${newPins} PINS DOWN`;
   }
@@ -323,22 +334,29 @@ export class Bowling {
   }
 
   finishRoll() {
-    this.rolls += 1;
     this.ball = null;
-    if (this.rolls >= 2 || this.pins.every((pin) => !pin.standing)) {
-      this.frame += 1;
-      this.rolls = 0;
-      if (this.frame > 10) {
-        this.running = false;
-        this.gameOver = true;
-        this.message = `GAME OVER · ${this.score} PINS`;
-        return;
-      }
-      this.pins = this.createPins();
-      this.message = "NEW FRAME";
-    } else {
-      this.message = "SECOND ROLL";
+
+    const player = this.players[this.currentPlayer];
+    if (player.score >= this.targetScore) {
+      this.winner = player.name;
+      this.gameOver = true;
+      this.running = false;
+      this.message = `${player.name} WINS!`;
+      return;
     }
+
+    this.nextTurn();
+  }
+
+  nextTurn() {
+    this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+    this.pins = this.createPins();
+    this.scoredPins = 0;
+    this.ball = null;
+    this.aim = 0;
+    this.power = 0;
+    if (this.physicsReady) this.resetPhysicsBodies();
+    this.message = `${this.players[this.currentPlayer].name} TURN`;
   }
 
   lanePoint(progress, laneX = 0) {
@@ -371,6 +389,18 @@ export class Bowling {
     this.drawAim(ctx);
     this.drawBall(ctx);
     this.drawHud(ctx);
+
+    if (this.gameOver && this.winner) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 36px Arial";
+      ctx.fillText(`${this.winner} WINS!`, this.width / 2 - 100, this.height / 2);
+
+      ctx.font = "700 18px Arial";
+      ctx.fillStyle = "#22d8ff";
+      ctx.fillText("for a new game, press START", this.width / 2 - 140, this.height / 2 + 40);
+    }
   }
 
   drawBackdrop(ctx) {
@@ -512,15 +542,22 @@ export class Bowling {
   }
 
   drawHud(ctx) {
-    ctx.fillStyle = "rgba(7, 6, 20, 0.88)";
-    ctx.fillRect(700, 22, 220, 50);
-    ctx.strokeStyle = "#41356e";
-    ctx.strokeRect(700, 22, 220, 50);
-    ctx.fillStyle = "#ffe44a";
-    ctx.font = "900 16px Arial";
-    ctx.fillText(`FRAME ${Math.min(this.frame, 10)}`, 716, 43);
-    ctx.fillStyle = "#f7f3ff";
-    ctx.font = "700 13px Arial";
-    ctx.fillText(`${this.score} PINS  ·  ${this.message}`, 716, 61);
-  }
+  ctx.fillStyle = "#ffe44a";
+  ctx.font = "bold 24px Arial";
+
+  ctx.fillText(
+    `P1: ${this.players[0].score}`,
+    30, 110
+  );
+
+  ctx.fillText(
+    `P2: ${this.players[1].score}`,
+    30, 145
+  );
+
+  ctx.fillText(
+    `TURN: ${this.currentPlayer + 1}`,
+    30, 180
+  );
+}
 }
