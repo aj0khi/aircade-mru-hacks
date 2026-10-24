@@ -127,6 +127,7 @@ function sendBowling3dMotion(sample) {
 const MOTION_DEADZONE = 0.08;
 let motionNeedsCalibrate = true;
 let tankFireArmed = true;
+let rollStartArmed = true;
 
 function clampAxis(value) {
   const numeric = Number(value);
@@ -153,6 +154,25 @@ function calibrateBowlingMotion(sample = {}) {
   };
 }
 
+function tiltValue(sample) {
+  return clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
+}
+
+function tryStartWithRoll(tilt) {
+  if (Math.abs(tilt) <= 0.22) {
+    rollStartArmed = true;
+    return false;
+  }
+  if (!rollStartArmed || Math.abs(tilt) < 0.36) return false;
+  if (!gameType || gameType === "bowling-3d") return false;
+  if (!activeGame || (activeGame.running && !activeGame.gameOver)) return false;
+
+  rollStartArmed = false;
+  unlockAudio();
+  activeGame.start();
+  return true;
+}
+
 function forwardBowlingMotion(sample = {}) {
   const axes = rawAxes(sample);
   if (motionNeedsCalibrate) {
@@ -163,6 +183,11 @@ function forwardBowlingMotion(sample = {}) {
   const y = clampAxis(Number(axes.y) - motionNeutral.pitch);
   const z = clampAxis(Number(axes.z) - motionNeutral.swing);
   const timestamp = sample.timestamp ?? performance.now();
+  const tilt = tiltValue(sample);
+  if (tryStartWithRoll(tilt)) {
+    updateMotionPanel(tilt);
+    return true;
+  }
 
   if (gameType === "tank") {
     const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
