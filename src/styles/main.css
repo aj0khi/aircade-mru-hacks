@@ -1,7 +1,7 @@
 :root {
   color: #f7f3ff;
   background: #090817;
-  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-family: Tahoma, Geneva, sans-serif;
   --ink: #f7f3ff;
   --muted: #aaa5c5;
   --purple: #7b4dff;
@@ -71,16 +71,18 @@ body {
   border: 3px solid #fff19a;
   border-radius: 4px;
   box-shadow: 3px 3px 0 var(--pink);
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
   font-size: 0.72rem;
   letter-spacing: -0.08em;
   transform: rotate(-4deg);
+  animation: neon-hum 4.8s ease-in-out infinite;
 }
 
 .eyebrow,
 .mode-label {
   color: var(--blue);
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-weight: 900;
   font-size: 0.76rem;
   letter-spacing: 0.1em;
 }
@@ -92,13 +94,15 @@ body {
 h1 {
   margin: 0;
   color: var(--yellow);
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-weight: 900;
   font-size: clamp(2.8rem, 7vw, 5.4rem);
   line-height: 0.84;
   letter-spacing: 0.015em;
   text-transform: uppercase;
   text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
   transform: skew(-4deg);
+  animation: sign-hum 5.6s steps(4, end) infinite;
 }
 
 .subtitle {
@@ -118,10 +122,12 @@ h1 {
   background: var(--blue);
   border: 2px solid #8aeeff;
   box-shadow: 3px 3px 0 #116086;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-weight: 900;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   white-space: nowrap;
+  animation: neon-hum 4.2s steps(5, end) infinite;
 }
 
 .status-dot {
@@ -143,6 +149,7 @@ h1 {
     0 0 0 4px #0c0a1c,
     0 0 22px rgba(34, 216, 255, 0.22),
     0 8px 0 #05040d;
+  animation: cabinet-hum 6.5s ease-in-out infinite;
 }
 
 .game-shell::after {
@@ -196,7 +203,8 @@ button[hidden] {
   left: 50%;
   transform: translateX(-50%) skew(-5deg);
   color: #fff;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-weight: 900;
   font-size: clamp(2.7rem, 7vw, 5rem);
   letter-spacing: 0.12em;
   text-shadow: 3px 3px 0 #271447;
@@ -218,7 +226,8 @@ button[hidden] {
   display: grid;
   place-items: center;
   color: var(--yellow);
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-weight: 900;
   font-size: clamp(1.2rem, 4vw, 2rem);
   letter-spacing: 0.1em;
   text-shadow: 3px 3px 0 var(--pink);
@@ -315,7 +324,8 @@ button.primary {
   padding-top: 14px;
   border-top: 2px solid var(--line);
   color: #8179a4;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-family: "Arial Narrow", "Franklin Gothic Medium", Arial, sans-serif;
+  font-weight: 900;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
 }
@@ -331,6 +341,54 @@ button.primary {
 @keyframes confetti-fall {
   0% { opacity: 1; transform: translate(-50%, -50%) rotate(0); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--x)), var(--y)) rotate(var(--r)); }
+}
+
+@keyframes neon-hum {
+  0%, 18%, 21%, 64%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  19%, 20%, 65% {
+    opacity: 0.82;
+    filter: brightness(0.86);
+  }
+  66% {
+    opacity: 0.94;
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes sign-hum {
+  0%, 16%, 20%, 100% {
+    text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
+  }
+  17%, 19% {
+    text-shadow: 4px 4px 0 #bd2d8e, 7px 7px 0 #351c64;
+  }
+  63%, 65% {
+    text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64, 0 0 14px rgba(255, 228, 74, 0.55);
+  }
+}
+
+@keyframes cabinet-hum {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #0c0a1c, 0 0 22px rgba(34, 216, 255, 0.2), 0 8px 0 #05040d;
+  }
+  48% {
+    box-shadow: 0 0 0 4px #0c0a1c, 0 0 27px rgba(34, 216, 255, 0.31), 0 8px 0 #05040d;
+  }
+  51% {
+    box-shadow: 0 0 0 4px #0c0a1c, 0 0 13px rgba(34, 216, 255, 0.13), 0 8px 0 #05040d;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark,
+  h1,
+  .status,
+  .game-shell {
+    animation: none;
+  }
 }
 
 @media (max-width: 620px) {
