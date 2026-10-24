@@ -166,7 +166,7 @@ export class Breakout {
     ctx.textBaseline = "middle";
     ctx.font = "900 11px Tahoma, sans-serif";
     ctx.fillStyle = "#f7f3ff";
-    ctx.fillText("BALLS", startX, y);
+    ctx.fillText("BALLS", startX, y + 2);
     for (let index = 0; index < 3; index += 1) {
       const x = startX + 52 + index * 20;
       const available = index < this.lives;
@@ -180,7 +180,7 @@ export class Breakout {
     }
     ctx.font = "900 11px Tahoma, sans-serif";
     ctx.fillStyle = "#22d8ff";
-    ctx.fillText(`x${this.lives}`, startX + 118, y);
+    ctx.fillText(`x${this.lives}`, startX + 118, y + 2);
     ctx.restore();
   }
 
