@@ -17,6 +17,58 @@ The goal is to transform familiar arcade games into an accessible, social gaming
 
 **Core idea:** Revitalize a classic arcade game by reinventing how people physically interact with it.
 
+## Current project status
+
+This is a macOS-first prototype. The browser games can be played with a
+keyboard, but live AirPods motion requires a Mac, Xcode, compatible AirPods,
+CoreMotion, and the local motion bridge. Windows and Linux support are not
+project goals right now.
+
+### Current weak points
+
+These are the main limitations to address before calling the project
+production-ready:
+
+1. **Motion setup is still technical.** The bridge requires a local WebSocket
+   relay and a macOS development environment; first-time players need clearer
+   pairing and calibration guidance.
+2. **The games are not equally motion-enabled.** Pong, Snake, Breakout, and
+   Bowling accept motion input, while Tanks currently relies mainly on
+   keyboard controls.
+3. **Bowling has the most fragile lifecycle.** It loads separate Three.js,
+   Ammo.js, and GLTF assets inside an iframe, so asset or WebGL failures need
+   clearer player-facing error states.
+4. **The arcade is mostly local play.** It has local multiplayer in selected
+   games, but no persistent scores, tournament flow, player profiles, or
+   online multiplayer yet.
+5. **Automated coverage is limited.** Build validation exists, but browser
+   smoke tests for game switching, motion connection, and Bowling startup are
+   still needed.
+6. **The integration layer is centralized.** [`src/main.js`](./src/main.js)
+   currently coordinates game selection, motion, Bowling, controls, and UI,
+   which makes larger team changes more conflict-prone.
+7. **Third-party Bowling code is vendored.** The project must preserve the
+   included GPLv3 license and attribution when the combined application is
+   distributed.
+
+These limitations do not invalidate the revitalization concept. They define
+the next polish and reliability milestones.
+
+## Platform scope
+
+HeadPilot Arcade is intentionally **macOS-only for live motion controls**.
+
+- **Required for AirPods motion:** macOS, Xcode, compatible AirPods, and
+  `CMHeadphoneMotionManager`.
+- **Browser:** a modern browser on macOS running the local Vite app.
+- **Fallback:** keyboard, mouse, and trackpad controls allow development and
+  demonstration without AirPods.
+- **Not currently supported:** Windows or Linux motion bridges.
+
+Do not plan cross-platform motion support for the current milestone. Keeping
+the native bridge focused on macOS lets the team validate the core experience
+without adding unrelated platform complexity.
+
 ## 2. Core Features
 
 ### MVP — Must Have
@@ -27,7 +79,8 @@ The goal is to transform familiar arcade games into an accessible, social gaming
 - AirPods head-motion input for at least one player.
 - Keyboard controls as a fallback.
 - Start screen, score display, win condition, and restart button.
-- Motion simulation mode so development can continue without AirPods connected.
+- Keyboard and browser motion APIs so development can continue without AirPods
+  connected.
 
 ### Stretch Goals — If Time Allows
 
@@ -62,7 +115,8 @@ The goal is to transform familiar arcade games into an accessible, social gaming
 - Node.js and npm
 - macOS for live AirPods motion testing
 
-The game is hosted and demonstrated on macOS for this project. Live AirPods motion tracking runs through the native Mac bridge; Windows-native motion compatibility is out of scope.
+The game is developed and demonstrated on macOS for this project. Live AirPods
+motion tracking runs through the native Mac bridge.
 
 ## 4. System Architecture
 
@@ -372,7 +426,7 @@ The project is ready to demonstrate when:
 
 The ideal demonstration:
 
-1. Launch Gyro Pong.
+1. Launch HeadPilot Arcade.
 2. Show the normal keyboard-controlled game.
 3. Connect AirPods and demonstrate head-controlled paddle movement.
 4. Challenge a teammate to a match.
