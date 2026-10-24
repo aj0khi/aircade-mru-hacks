@@ -152,7 +152,7 @@ body::after {
 
 .motion-track {
   position: relative;
-  flex: 1;
+  flex: 0 0 auto;
   height: 6px;
   border: 1px solid var(--line);
   background: linear-gradient(90deg, rgba(34, 216, 255, 0.18), rgba(255, 63, 186, 0.18));
@@ -398,10 +398,10 @@ h1.marquee-sign {
   position: relative;
   overflow: hidden;
   display: flex;
-  min-height: 204px;
+  min-height: 230px;
   align-items: stretch;
   gap: 10px;
-  padding: 31px 14px 30px;
+  padding: 31px 18px 32px;
   color: #fff;
   border: 2px solid #726d79;
   border-radius: 18px 18px 7px 7px;
@@ -483,11 +483,13 @@ h1.marquee-sign {
   position: relative;
   z-index: 1;
   display: flex;
+  width: 86%;
   min-width: 0;
-  flex: 1;
+  min-height: 112px;
+  flex: 0 0 auto;
   flex-direction: column;
   justify-content: center;
-  align-self: stretch;
+  align-self: center;
   padding: 18px 10px 12px;
   border: 3px solid #17151d;
   border-radius: 5px;
@@ -524,7 +526,7 @@ h1.marquee-sign {
 .choice-number {
   position: absolute;
   top: 24px;
-  left: 22px;
+  left: 25px;
   z-index: 2;
   color: #1d1824;
   font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
@@ -582,6 +584,18 @@ h1.marquee-sign {
   font-size: 0.42rem;
   letter-spacing: 0.04em;
   opacity: 0.72;
+}
+
+.game-choice > span:last-child::before {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+  height: 3px;
+  content: "";
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .choice-snake strong {
