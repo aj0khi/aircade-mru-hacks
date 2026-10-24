@@ -8,10 +8,11 @@ HeadPilot Arcade is a browser-based arcade collection that revitalizes familiar 
 
 The goal is to transform familiar arcade games into an accessible, social gaming experience using consumer hardware that players may already own. The shared cabinet brings together classic Pong, Snake, and Breakout presentations with 3D Bowling and Neon Tanks.
 
-The default bowling cabinet is the higher-quality borrowed Three.js/Ammo.js
-lane, **3D Bowling**. Our first-party Canvas experiment,
-**HeadPilot Bowling // Prototype**, remains available from the menu as a
-separate evaluation build.
+The default bowling cabinet is our first-party Canvas game, **HeadPilot
+Bowling**. It takes inspiration from the borrowed Three.js/Ammo.js lane's
+perspective, roll sequence, pin formation, and physics timing without using
+that implementation as its game engine. The borrowed lane remains available
+as **3D Bowling // Fallback** while the original design is evaluated.
 
 **Hackathon theme:** Revitalization
 
