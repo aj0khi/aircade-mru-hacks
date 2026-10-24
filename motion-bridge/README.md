@@ -32,19 +32,23 @@ Values are normalized to `-1...1`. Each game uses only the axes it needs:
 
 ## Run the Mac sender
 
-Pair AirPods to the **Mac**, then start the sender and the arcade:
+The built `.app` is not in git. On a fresh Mac, build from the Xcode project:
 
 ```bash
-open motion-bridge/DerivedData/Build/Products/Release/HeadPilotSender.app
+cd revitilization-hacks
+npm install
 npm run dev
+open motion-bridge/HeadPilotSender.xcodeproj
 ```
 
-Allow Motion if macOS asks. The sender window should show samples increasing once AirPods are in-ear. In the arcade, click **Connect motion**.
+In Xcode: scheme **HeadPilotSender**, destination **My Mac**, select your signing team, then Run. Pair AirPods to this Mac, allow Motion, wear them. In the arcade at `http://localhost:5173/`, click **Connect motion**.
 
-To rebuild from Xcode:
+Optional command-line rebuild:
 
 ```bash
-open motion-bridge/HeadPilotSender.xcodeproj
+cd motion-bridge
+xcodebuild -project HeadPilotSender.xcodeproj -scheme HeadPilotSender -configuration Release -destination 'platform=macOS' CODE_SIGN_IDENTITY="-" ENABLE_DEBUG_DYLIB=NO -derivedDataPath ./DerivedData build
+open DerivedData/Build/Products/Release/HeadPilotSender.app
 ```
 
 The browser listens by default at `ws://127.0.0.1:8787`. Connect it with:

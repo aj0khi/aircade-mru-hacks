@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSMotionUsageDescription</key>
-	<string>Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local HeadPilot Arcade game.</string>
+	<string>Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local AIRCADE game.</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 </dict>

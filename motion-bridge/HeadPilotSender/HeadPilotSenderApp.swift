@@ -20,7 +20,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("HeadPilot Mac Sender")
+            Text("AIRCADE motion sender")
                 .font(.title2.weight(.semibold))
             Text(model.status)
                 .font(.body)
