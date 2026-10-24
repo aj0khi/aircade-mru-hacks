@@ -1,6 +1,7 @@
 import { Game } from "./game/Pong.js";
 import { Snake } from "./game/Snake.js";
 import { Breakout } from "./game/Breakout.js";
+import { Tank } from "./game/Tank.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
@@ -27,6 +28,7 @@ const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
 const breakout = new Breakout(canvas);
+const tank = new Tank(canvas);
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
@@ -174,9 +176,9 @@ function updateKeyboardInput() {
 }
 
 window.addEventListener("keydown", (event) => {
-  if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4"].includes(event.code)) {
+  if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code)) {
     event.preventDefault();
-    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d", Digit4: "breakout" };
+    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d", Digit4: "breakout", Digit5: "tank" };
     selectGame(gameByKey[event.code]);
     return;
   }
@@ -192,6 +194,10 @@ window.addEventListener("keydown", (event) => {
   if (gameType === "breakout" && ["ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
     breakout.setPaddleInput(event.code === "ArrowLeft" ? -1 : 1);
+  }
+  if (gameType === "tank" && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyW", "KeyS", "KeyA", "KeyD", "KeyF"].includes(event.code)) {
+    event.preventDefault();
+    tank.handleKeyDown(event.code);
   }
   if (event.code === "Space" && gameType !== "bowling-3d" && !activeGame.running) {
     activeGame.start();
@@ -213,6 +219,9 @@ window.addEventListener("keyup", (event) => {
   }
   if (gameType === "breakout" && ["ArrowLeft", "ArrowRight"].includes(event.code)) {
     breakout.setPaddleInput(0);
+  }
+  if (gameType === "tank") {
+    tank.handleKeyUp(event.code);
   }
 });
 
@@ -256,7 +265,9 @@ gameButton.addEventListener("click", () => {
       ? "bowling-3d"
       : gameType === "bowling-3d"
         ? "breakout"
-        : "pong";
+        : gameType === "breakout"
+          ? "tank"
+          : "pong";
   selectGame(nextGame);
 });
 gameChoices.forEach((choice) => {
@@ -271,6 +282,8 @@ function selectGame(nextGame) {
       ? snake
       : gameType === "breakout"
         ? breakout
+        : gameType === "tank"
+          ? tank
         : null;
   if (activeGame) {
     activeGame.reset();
@@ -314,29 +327,32 @@ function updateModeUI() {
   const snakeMode = gameType === "snake";
   const bowling3dMode = gameType === "bowling-3d";
   const breakoutMode = gameType === "breakout";
+  const tankMode = gameType === "tank";
   gameTitle.textContent = snakeMode
     ? "Neon Snake"
-    : bowling3dMode ? "3D Bowling" : breakoutMode ? "Neon Breakout" : "Soccer Pong";
+    : bowling3dMode ? "3D Bowling" : breakoutMode ? "Neon Breakout" : tankMode ? "Neon Tanks" : "Soccer Pong";
   gameSubtitle.textContent = snakeMode
     ? "Eat, grow, and own the grid."
     : bowling3dMode
       ? "Open-source physics lane. Drag and flick to bowl."
-      : breakoutMode ? "Clear the wall. Chase the score." : "A quick match. First to seven.";
+      : breakoutMode ? "Clear the wall. Chase the score." : tankMode ? "Ricochet. Reload. Dominate." : "A quick match. First to seven.";
   gameButton.textContent = snakeMode
     ? "3D Bowling"
-    : bowling3dMode ? "Neon Breakout" : breakoutMode ? "Soccer Pong" : "Snake";
-  modeButton.hidden = snakeMode || bowling3dMode || breakoutMode;
+    : bowling3dMode ? "Neon Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Soccer Pong" : "Snake";
+  modeButton.hidden = snakeMode || bowling3dMode || breakoutMode || tankMode;
   modeLabel.textContent = snakeMode || bowling3dMode || breakoutMode
-    ? "1P // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
+    ? "1P // SOLO" : (twoPlayer || tankMode ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
-    : bowling3dMode ? "3D physics bowling game" : breakoutMode ? "Neon Breakout playing field" : "Horizontal soccer pitch");
+    : bowling3dMode ? "3D physics bowling game" : breakoutMode ? "Neon Breakout playing field" : tankMode ? "Neon tank arena" : "Horizontal soccer pitch");
   instructions.innerHTML = snakeMode
     ? "<strong>Move</strong> with the arrow keys or motion <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Collect the gold food"
     : bowling3dMode
       ? "<strong>Roll</strong> to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag also works"
       : breakoutMode
         ? "<strong>Move</strong> with ← / → or roll <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Clear every brick"
+        : tankMode
+          ? "<strong>Player 1</strong> arrows + Space <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
         : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7";
 }
 
@@ -349,6 +365,7 @@ function updateUI() {
   }
   const isSnake = gameType === "snake";
   const isBreakout = gameType === "breakout";
+  const isTank = gameType === "tank";
   if (gameType === "bowling-3d") {
     startButton.disabled = false;
     pauseButton.disabled = false;
@@ -359,8 +376,8 @@ function updateUI() {
   }
   startButton.disabled = false;
   restartButton.disabled = false;
-  playerScore.textContent = isSnake ? snake.score : isBreakout ? breakout.score : pong.scores[1];
-  opponentScore.textContent = isSnake || isBreakout ? "" : pong.scores[2];
+  playerScore.textContent = isSnake ? snake.score : isBreakout ? breakout.score : isTank ? tank.scores[1] : pong.scores[1];
+  opponentScore.textContent = isSnake || isBreakout ? "" : isTank ? tank.scores[2] : pong.scores[2];
   scoreDivider.textContent = isSnake || isBreakout ? "" : ":";
   if (isSnake && snake.gameOver) {
     message.textContent = "Game over";
@@ -368,7 +385,10 @@ function updateUI() {
   } else if (isBreakout && breakout.gameOver) {
     message.textContent = breakout.bricks.every((brick) => !brick.visible) ? "Wall cleared" : "Game over";
     message.classList.add("visible");
-  } else if (!isSnake && !isBreakout && pong.gameOver) {
+  } else if (isTank && tank.gameOver) {
+    message.textContent = `Player ${tank.winner} wins`;
+    message.classList.add("visible");
+  } else if (!isSnake && !isBreakout && !isTank && pong.gameOver) {
     message.textContent = `Player ${pong.winner} wins`;
     message.classList.add("visible");
   } else if (!isSnake && !isBreakout && pong.pauseRemaining > 0) {
@@ -384,7 +404,7 @@ function updateUI() {
     message.classList.remove("visible");
   }
   pauseButton.textContent = activeGame.paused ? "Resume" : "Pause";
-  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && !isBreakout && pong.pauseRemaining > 0);
+  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && !isBreakout && !isTank && pong.pauseRemaining > 0);
 }
 
 function celebrateGoal() {
