@@ -32,6 +32,7 @@ var pickY = 0.0;
 var pickOffset = 0.0;
 var pickTime = 0;
 var gyroSwingArmed = true;
+var gamePaused = false;
 
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
@@ -285,12 +286,20 @@ function initScene() {
 }
 
 window.addEventListener("message", (event) => {
-	if (event.origin !== window.location.origin
-			|| !event.data
-			|| event.data.type !== "headpilot-bowling-motion") {
+	if (event.origin !== window.location.origin || !event.data) {
 		return;
 	}
-	onHeadPilotMotion(event.data);
+	if (event.data.type === "headpilot-bowling-motion") {
+		onHeadPilotMotion(event.data);
+	}
+	if (event.data.type === "headpilot-bowling-command") {
+		if (event.data.command === "pause") {
+			gamePaused = true;
+		}
+		if (event.data.command === "start") {
+			gamePaused = false;
+		}
+	}
 });
 
 function updateGame(player, dt) {
@@ -327,6 +336,9 @@ function updateGame(player, dt) {
 }
 
 function updateScene(dt) {
+	if (gamePaused) {
+		return;
+	}
 	if (imitations) {
 		for (var i = 0; i < imitations.length; i++) {
 			updateImitation(imitations[i], dt);

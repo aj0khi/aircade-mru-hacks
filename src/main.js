@@ -30,6 +30,7 @@ let gameType = "pong";
 let lastTime = performance.now();
 let seenGoalSequence = 0;
 let latestBowling3dSample = null;
+let bowling3dPaused = false;
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -47,7 +48,17 @@ function sendBowling3dMotion(sample) {
   }, window.location.origin);
 }
 
+function sendBowling3dCommand(command) {
+  if (!bowling3dFrame.contentWindow) return;
+  bowling3dFrame.contentWindow.postMessage({
+    type: "headpilot-bowling-command",
+    command,
+  }, window.location.origin);
+}
+
 bowling3dFrame.addEventListener("load", () => {
+  bowling3dPaused = false;
+  sendBowling3dCommand("start");
   if (latestBowling3dSample) sendBowling3dMotion(latestBowling3dSample);
 });
 
@@ -87,9 +98,32 @@ window.addEventListener("keyup", (event) => {
   }
 });
 
-startButton.addEventListener("click", () => activeGame.start());
-pauseButton.addEventListener("click", () => activeGame.togglePause());
-restartButton.addEventListener("click", () => activeGame.restart());
+startButton.addEventListener("click", () => {
+  if (gameType === "bowling-3d") {
+    bowling3dPaused = false;
+    sendBowling3dCommand("start");
+    updateUI();
+    return;
+  }
+  activeGame.start();
+});
+pauseButton.addEventListener("click", () => {
+  if (gameType === "bowling-3d") {
+    bowling3dPaused = !bowling3dPaused;
+    sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
+    updateUI();
+    return;
+  }
+  activeGame.togglePause();
+});
+restartButton.addEventListener("click", () => {
+  if (gameType === "bowling-3d") {
+    bowling3dPaused = false;
+    bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
+    return;
+  }
+  activeGame.restart();
+});
 modeButton.addEventListener("click", () => {
   pong.setMode(pong.mode === "single" ? "two-player" : "single");
   updateModeUI();
@@ -105,6 +139,7 @@ gameButton.addEventListener("click", () => {
   activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : bowling;
   activeGame.reset();
   bowlingMotion.reset();
+  bowling3dPaused = false;
   bowling3dFrame.hidden = gameType !== "bowling-3d";
   bowling3dFrame.src = gameType === "bowling-3d" ? "/bowling-3d/index.html" : "about:blank";
   canvas.hidden = gameType === "bowling-3d";
@@ -148,9 +183,11 @@ function updateUI() {
   const isSnake = gameType === "snake";
   const isBowling = gameType === "bowling";
   if (gameType === "bowling-3d") {
-    startButton.disabled = true;
-    pauseButton.disabled = true;
-    restartButton.disabled = true;
+    startButton.disabled = false;
+    pauseButton.disabled = false;
+    restartButton.disabled = false;
+    startButton.textContent = "START GAME";
+    pauseButton.textContent = bowling3dPaused ? "RESUME" : "PAUSE";
     return;
   }
   startButton.disabled = false;

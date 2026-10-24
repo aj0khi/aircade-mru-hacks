@@ -431,7 +431,8 @@ its Three.js rendering and Ammo.js/Bullet physics. It is vendored under
 server or npm dependency.
 
 Use the mouse or trackpad to drag the ball left/right, then flick forward to
-release it. The original GPLv3 license is included at
+release it. In the arcade shell, **START GAME** resumes the lane, **PAUSE**
+freezes physics, and **RESTART** loads a fresh frame. The original GPLv3 license is included at
 `public/bowling-3d/LICENSE`. Because this mode includes GPLv3 software, review
 the license obligations before distributing the combined application. AirPods
 motion is supported through the parent `window.gyroBowling.setMotionSample()`
