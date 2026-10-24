@@ -12,7 +12,12 @@ export class Snake {
     this.columns = 24;
     this.rows = 14;
     this.stepDuration = 0.12;
+    this.onEvent = null;
     this.reset();
+  }
+
+  emit(type, detail = {}) {
+    this.onEvent?.(type, { ...detail, columns: this.columns, rows: this.rows });
   }
 
   reset() {
@@ -28,19 +33,27 @@ export class Snake {
   }
 
   start() {
+    const alreadyRunning = this.running && !this.gameOver;
     if (this.gameOver) this.reset();
     this.running = true;
     this.paused = false;
+    if (!alreadyRunning) {
+      const head = this.snake[0];
+      this.emit("start", { x: head.x, y: head.y });
+    }
   }
 
   restart() {
     this.reset();
     this.running = true;
+    const head = this.snake[0];
+    this.emit("start", { x: head.x, y: head.y });
   }
 
   togglePause() {
     if (!this.running || this.gameOver) return this.paused;
     this.paused = !this.paused;
+    this.emit(this.paused ? "pause" : "resume");
     return this.paused;
   }
 
@@ -71,12 +84,18 @@ export class Snake {
     if (hitWall || hitSelf) {
       this.running = false;
       this.gameOver = true;
+      this.emit("die", {
+        x: nextHead.x,
+        y: nextHead.y,
+        hit: hitWall ? "wall" : "self",
+      });
       return;
     }
     this.snake.unshift(nextHead);
     if (nextHead.x === this.food.x && nextHead.y === this.food.y) {
       this.score += 1;
       this.placeFood();
+      this.emit("eat", { score: this.score, x: nextHead.x, y: nextHead.y });
     } else {
       this.snake.pop();
     }

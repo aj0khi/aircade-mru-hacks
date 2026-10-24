@@ -8,6 +8,8 @@ export class ArcadeAudio {
     this.muted = false;
     this.voices = new Set();
     this.unlocked = false;
+    this.snakeMusicTimer = null;
+    this.snakeMusicStep = 0;
   }
 
   ensureContext() {
@@ -53,6 +55,7 @@ export class ArcadeAudio {
   }
 
   silence() {
+    this.stopSnakeMusic();
     for (const voice of this.voices) {
       try {
         voice.stop();
@@ -69,18 +72,27 @@ export class ArcadeAudio {
   }
 
   play(game, type, detail = {}) {
+    if (game === "snake" && (type === "pause" || type === "die")) {
+      this.stopSnakeMusic();
+      if (type === "pause") return;
+    }
     if (this.muted) return;
     const context = this.ensureContext();
     if (!context) return;
     if (context.state === "suspended") {
       context.resume().then(() => {
         if (this.muted || this.context?.state !== "running") return;
-        if (game === "pong") this.playPong(type, detail);
+        this.playGame(game, type, detail);
       }).catch(() => {});
       return;
     }
     if (context.state !== "running") return;
+    this.playGame(game, type, detail);
+  }
+
+  playGame(game, type, detail) {
     if (game === "pong") this.playPong(type, detail);
+    if (game === "snake") this.playSnake(type, detail);
   }
 
   playPong(type, detail) {
@@ -146,6 +158,139 @@ export class ArcadeAudio {
     }
   }
 
+  playSnake(type, detail) {
+    const pan = this.panFromDetail(detail);
+    if (type === "start") {
+      this.startSnakeMusic();
+      this.tone({
+        frequency: 349,
+        duration: 0.12,
+        type: "triangle",
+        gain: 0.055,
+        slide: 180,
+        pan: 0,
+      });
+      return;
+    }
+    if (type === "resume") {
+      this.startSnakeMusic();
+      return;
+    }
+    if (type === "eat") {
+      const score = Number(detail.score) || 1;
+      const heat = clamp((score - 1) / 12, 0, 1);
+      const base = 620 + heat * 220;
+      this.tone({
+        frequency: base,
+        duration: 0.09,
+        type: "square",
+        gain: 0.1,
+        slide: 140,
+        pan,
+      });
+      this.tone({
+        frequency: base * 1.5,
+        duration: 0.08,
+        type: "triangle",
+        gain: 0.05,
+        delay: 0.05,
+        slide: 80,
+        pan,
+      });
+      return;
+    }
+    if (type === "die") {
+      this.stopSnakeMusic();
+      this.playSnakeGameOver(pan);
+    }
+  }
+
+  startSnakeMusic() {
+    this.stopSnakeMusic();
+    this.snakeMusicStep = 0;
+    const bass = [131, 131, 165, 196, 175, 175, 147, 196];
+    const lead = [523, 0, 659, 587, 523, 392, 440, 494];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.snakeMusicStep % bass.length;
+      const swingPan = step % 2 === 0 ? -0.35 : 0.35;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.16,
+        type: "triangle",
+        gain: 0.042,
+        pan: -swingPan * 0.6,
+      });
+      if (lead[step]) {
+        this.tone({
+          frequency: lead[step],
+          duration: 0.11,
+          type: "square",
+          gain: 0.025,
+          delay: 0.02,
+          slide: 18,
+          pan: swingPan,
+        });
+      }
+      this.snakeMusicStep += 1;
+    };
+    tick();
+    this.snakeMusicTimer = window.setInterval(tick, 220);
+  }
+
+  stopSnakeMusic() {
+    if (!this.snakeMusicTimer) return;
+    window.clearInterval(this.snakeMusicTimer);
+    this.snakeMusicTimer = null;
+  }
+
+  playSnakeGameOver(pan) {
+    this.noise({ duration: 0.18, gain: 0.055, pan });
+    this.tone({ frequency: 220, duration: 0.14, type: "square", gain: 0.11, slide: -90, pan });
+    this.tone({ frequency: 110, duration: 0.24, type: "sawtooth", gain: 0.09, delay: 0.03, slide: -45, pan: 0 });
+
+    const fall = [659, 622, 587, 554, 523, 466, 392, 311];
+    fall.forEach((frequency, index) => {
+      const spin = index % 2 === 0 ? -0.75 : 0.75;
+      this.tone({
+        frequency,
+        duration: 0.1,
+        type: "square",
+        gain: 0.09,
+        delay: 0.1 + index * 0.075,
+        slide: -42,
+        pan: spin,
+      });
+      this.tone({
+        frequency: frequency * 0.5,
+        duration: 0.09,
+        type: "triangle",
+        gain: 0.045,
+        delay: 0.11 + index * 0.075,
+        pan: -spin * 0.5,
+      });
+    });
+
+    const thudAt = 0.74;
+    [
+      [196, 0.085, -0.4],
+      [233, 0.08, 0],
+      [277, 0.085, 0.4],
+    ].forEach(([frequency, gain, chordPan]) => {
+      this.tone({
+        frequency,
+        duration: 0.48,
+        type: "sawtooth",
+        gain,
+        delay: thudAt,
+        slide: -36,
+        pan: chordPan,
+      });
+    });
+    this.tone({ frequency: 98, duration: 0.55, type: "triangle", gain: 0.1, delay: thudAt, slide: -30, pan: 0 });
+    this.noise({ duration: 0.24, gain: 0.03, delay: thudAt + 0.04, pan: 0 });
+  }
+
   playPongWin(pan) {
     this.noise({ duration: 0.16, gain: 0.05, pan });
     this.tone({ frequency: 147, duration: 0.2, type: "square", gain: 0.1, slide: 50, pan });
@@ -202,6 +347,9 @@ export class ArcadeAudio {
     if (Number.isFinite(Number(detail.pan))) return clamp(Number(detail.pan), -0.9, 0.9);
     if (Number.isFinite(Number(detail.x)) && Number.isFinite(Number(detail.width)) && detail.width > 0) {
       return clamp((Number(detail.x) / Number(detail.width)) * 2 - 1, -0.85, 0.85);
+    }
+    if (Number.isFinite(Number(detail.x)) && Number.isFinite(Number(detail.columns)) && detail.columns > 1) {
+      return clamp((Number(detail.x) / (Number(detail.columns) - 1)) * 2 - 1, -0.85, 0.85);
     }
     if (detail.playerId === 1) return -0.7;
     if (detail.playerId === 2) return 0.7;
