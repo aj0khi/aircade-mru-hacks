@@ -377,7 +377,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. `window.gyroArcade.setMotionSample({ horizontal, forward })` routes forward tilt to Player 1's paddle.
+Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. In Wii Remote mode, wrist roll moves Player 1's paddle through `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
 
 ## 3D Bowling mode
 
@@ -386,23 +386,28 @@ HeadPilot-styled physics lane with mouse/trackpad and AirPods-ready motion
 controls. The browser integration point is:
 
 ```js
-window.gyroBowling.setMotionInput(horizontalValue, forwardValue)
+window.gyroBowling.setMotionInput(rollValue, swingValue)
 ```
 
-Both values are normalized to `-1...1`. A motion bridge can map AirPods roll or
-head tilt to `horizontalValue` and a forward swing gesture to `forwardValue`.
-The parent arcade forwards these samples to the 3D physics scene.
+Both values are normalized to `-1...1`. The controller is assumed to be held
+like a Wii Remote: left/right wrist roll maps to `rollValue`, while a distinct
+forward swing maps to `swingValue`. The parent arcade forwards these samples to
+the 3D physics scene.
 
 For a bridge that sends timestamped samples, use the flick-style adapter:
 
 ```js
-window.gyroBowling.calibrate({ horizontal: 0, forward: 0 });
+window.gyroBowling.calibrate({ roll: 0, pitch: 0, swing: 0 });
 window.gyroBowling.setMotionSample({
-  horizontal: normalizedRoll,
-  forward: normalizedForwardSwing,
+  roll: normalizedRoll,
+  pitch: normalizedPitch,
+  swing: normalizedForwardSwing,
   timestamp: performance.now()
 });
 ```
+
+`horizontal` and `forward` are still accepted as compatibility aliases for
+`roll` and `swing`.
 
 The 3D physics foundation is a local port of the open-source
 [iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling) project.
@@ -428,4 +433,4 @@ After each goal, play pauses briefly while the scoring player is shown, with a s
 
 ## Neon Snake
 
-Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys or motion input, pause with P/Escape, and restart with RESTART. Horizontal motion selects left/right and forward motion selects up/down; a deadzone prevents jitter. Eat gold food to grow and score; hitting the wall or yourself ends the round. The direct motion API is `window.gyroSnake.setDirection(horizontal, forward)`.
+Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys or motion input, pause with P/Escape, and restart with RESTART. Wrist roll selects left/right and wrist pitch selects up/down; a deadzone prevents jitter. Eat gold food to grow and score; hitting the wall or yourself ends the round. The direct motion API is `window.gyroSnake.setDirection(roll, pitch)`.

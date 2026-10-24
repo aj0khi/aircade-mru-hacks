@@ -27,7 +27,7 @@ let lastTime = performance.now();
 let seenGoalSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
-let motionNeutral = { horizontal: 0, forward: 0 };
+let motionNeutral = { roll: 0, pitch: 0, swing: 0 };
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -45,38 +45,49 @@ function sendBowling3dMotion(sample) {
   }, window.location.origin);
 }
 
-function calibrateBowlingMotion({ horizontal = 0, forward = 0 } = {}) {
+function calibrateBowlingMotion(sample = {}) {
+  const roll = sample.roll ?? sample.horizontal ?? 0;
+  const pitch = sample.pitch ?? 0;
+  const swing = sample.swing ?? sample.forward ?? 0;
   motionNeutral = {
-    horizontal: Number.isFinite(Number(horizontal)) ? Number(horizontal) : 0,
-    forward: Number.isFinite(Number(forward)) ? Number(forward) : 0,
+    roll: Number.isFinite(Number(roll)) ? Number(roll) : 0,
+    pitch: Number.isFinite(Number(pitch)) ? Number(pitch) : 0,
+    swing: Number.isFinite(Number(swing)) ? Number(swing) : 0,
   };
 }
 
 function forwardBowlingMotion(sample = {}) {
-  const horizontal = Number(sample.horizontal) - motionNeutral.horizontal;
-  const forward = Number(sample.forward) - motionNeutral.forward;
-  if (!Number.isFinite(horizontal) || !Number.isFinite(forward)) return false;
+  const rollValue = sample.roll ?? sample.horizontal ?? 0;
+  const pitchValue = sample.pitch ?? 0;
+  const swingValue = sample.swing ?? sample.forward ?? 0;
+  const roll = Number(rollValue) - motionNeutral.roll;
+  const pitch = Number(pitchValue) - motionNeutral.pitch;
+  const swing = Number(swingValue) - motionNeutral.swing;
+  if (![roll, pitch, swing].every(Number.isFinite)) return false;
   const normalized = {
-    horizontal: Math.max(-1, Math.min(1, horizontal)),
-    forward: Math.max(-1, Math.min(1, forward)),
+    roll: Math.max(-1, Math.min(1, roll)),
+    pitch: Math.max(-1, Math.min(1, pitch)),
+    swing: Math.max(-1, Math.min(1, swing)),
+    horizontal: Math.max(-1, Math.min(1, roll)),
+    forward: Math.max(-1, Math.min(1, swing)),
     timestamp: sample.timestamp ?? performance.now(),
   };
   if (gameType === "pong") {
-    pong.setPaddleInput(1, normalized.forward);
+    pong.setPaddleInput(1, normalized.roll);
   } else if (gameType === "snake") {
-    updateSnakeMotion(normalized.horizontal, normalized.forward);
+    updateSnakeMotion(normalized.roll, normalized.pitch);
   }
   sendBowling3dMotion(normalized);
   return true;
 }
 
-function updateSnakeMotion(horizontal, forward) {
+function updateSnakeMotion(roll, pitch) {
   const deadzone = 0.32;
-  if (Math.max(Math.abs(horizontal), Math.abs(forward)) < deadzone) return;
-  if (Math.abs(horizontal) >= Math.abs(forward)) {
-    snake.handleKey(horizontal < 0 ? "ArrowLeft" : "ArrowRight");
+  if (Math.max(Math.abs(roll), Math.abs(pitch)) < deadzone) return;
+  if (Math.abs(roll) >= Math.abs(pitch)) {
+    snake.handleKey(roll < 0 ? "ArrowLeft" : "ArrowRight");
   } else {
-    snake.handleKey(forward < 0 ? "ArrowUp" : "ArrowDown");
+    snake.handleKey(pitch < 0 ? "ArrowUp" : "ArrowDown");
   }
 }
 
@@ -203,7 +214,7 @@ function updateModeUI() {
   instructions.innerHTML = snakeMode
     ? "<strong>Move</strong> Arrow Keys or tilt <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
     : bowling3dMode
-      ? "<strong>Drag</strong> the ball left/right <span aria-hidden=\"true\">·</span> Flick forward to bowl <span aria-hidden=\"true\">·</span> Physics by Ammo.js"
+      ? "<strong>Roll</strong> left/right to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag fallback"
       : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
 }
 
@@ -280,19 +291,19 @@ requestAnimationFrame(frame);
 window.gyroPong = { game: pong, setPaddleInput: (playerId, verticalValue) => pong.setPaddleInput(playerId, verticalValue) };
 window.gyroBowling = {
   game: "3d",
-  setAimInput: (horizontalValue) => forwardBowlingMotion({ horizontal: horizontalValue, forward: 0 }),
-  setMotionInput: (horizontalValue, forwardValue) => forwardBowlingMotion({
-    horizontal: horizontalValue,
-    forward: forwardValue,
+  setAimInput: (rollValue) => forwardBowlingMotion({ roll: rollValue, swing: 0 }),
+  setMotionInput: (rollValue, swingValue) => forwardBowlingMotion({
+    roll: rollValue,
+    swing: swingValue,
   }),
   setMotionSample: forwardBowlingMotion,
   calibrate: calibrateBowlingMotion,
-  throwBall: (power = 1) => forwardBowlingMotion({ horizontal: 0, forward: power }),
+  throwBall: (power = 1) => forwardBowlingMotion({ roll: 0, swing: power }),
 };
 window.gyroSnake = {
-  setDirection: (horizontalValue, forwardValue) => updateSnakeMotion(
-    Number(horizontalValue),
-    Number(forwardValue),
+  setDirection: (rollValue, pitchValue) => updateSnakeMotion(
+    Number(rollValue),
+    Number(pitchValue),
   ),
 };
 window.gyroArcade = {
