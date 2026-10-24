@@ -601,6 +601,12 @@ button.primary {
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.28), 3px 3px 0 #7f1b67;
 }
 
+button.muted {
+  color: #d7d0ff;
+  border-color: #6a5d9a;
+  background: #1a1633;
+}
+
 .instructions {
   justify-content: center;
   flex-wrap: wrap;

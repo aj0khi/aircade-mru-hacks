@@ -11,7 +11,12 @@ export class Game {
     this.ball = { radius: 9, speed: 390, maxBounceAngle: Math.PI / 3 };
     this.goalPauseDuration = 1.25;
     this.mode = "single";
+    this.onEvent = null;
     this.reset();
+  }
+
+  emit(type, detail = {}) {
+    this.onEvent?.(type, { ...detail, width: this.width, height: this.height });
   }
 
   reset() {
@@ -45,14 +50,19 @@ export class Game {
   }
 
   start() {
+    const alreadyRunning = this.running && !this.gameOver;
     if (this.gameOver) this.reset();
     this.running = true;
     this.paused = false;
+    if (!alreadyRunning) {
+      this.emit("start", { x: this.ballState.x, y: this.ballState.y });
+    }
   }
 
   restart() {
     this.reset();
     this.running = true;
+    this.emit("start", { x: this.ballState.x, y: this.ballState.y });
   }
 
   togglePause() {
@@ -76,7 +86,10 @@ export class Game {
     const delta = Math.min(deltaSeconds, 0.05);
     if (this.pauseRemaining > 0) {
       this.pauseRemaining = Math.max(0, this.pauseRemaining - delta);
-      if (this.pauseRemaining === 0 && !this.gameOver) this.running = true;
+      if (this.pauseRemaining === 0 && !this.gameOver) {
+        this.running = true;
+        this.emit("serve", { x: this.ballState.x, y: this.ballState.y });
+      }
       return;
     }
     if (!this.running || this.gameOver || this.paused) return;
@@ -108,6 +121,7 @@ export class Game {
     if (ball.y - this.ball.radius <= 0 || ball.y + this.ball.radius >= this.height) {
       ball.y = clamp(ball.y, this.ball.radius, this.height - this.ball.radius);
       ball.vy *= -1;
+      this.emit("wall", { x: ball.x, y: ball.y });
     }
 
     const left = this.paddles[1];
@@ -140,6 +154,12 @@ export class Game {
     ball.x = direction === 1
       ? paddle.x + this.paddle.width + this.ball.radius
       : paddle.x - this.ball.radius;
+    this.emit("paddle", {
+      playerId: direction === 1 ? 1 : 2,
+      speed,
+      x: ball.x,
+      y: ball.y,
+    });
   }
 
   score(playerId) {
@@ -150,8 +170,10 @@ export class Game {
       this.running = false;
       this.gameOver = true;
       this.winner = playerId;
+      this.emit("win", { playerId, x: this.ballState.x, y: this.ballState.y });
       return;
     }
+    this.emit("score", { playerId, x: this.ballState.x, y: this.ballState.y });
     this.serve(playerId === 1 ? 1 : -1);
     this.running = false;
     this.paused = false;

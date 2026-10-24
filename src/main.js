@@ -2,12 +2,14 @@ import { Game } from "./game/Pong.js";
 import { Snake } from "./game/Snake.js";
 import { Breakout } from "./game/Breakout.js";
 import { Tank } from "./game/Tank.js";
+import { ArcadeAudio } from "./audio/ArcadeAudio.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
 const startButton = document.querySelector("#start-button");
 const pauseButton = document.querySelector("#pause-button");
 const restartButton = document.querySelector("#restart-button");
+const muteButton = document.querySelector("#mute-button");
 const modeButton = document.querySelector("#mode-button");
 const menuButton = document.querySelector("#menu-button");
 const gameButton = document.querySelector("#game-button");
@@ -29,6 +31,8 @@ const pong = new Game(canvas);
 const snake = new Snake(canvas);
 const breakout = new Breakout(canvas);
 const tank = new Tank(canvas);
+const arcadeAudio = new ArcadeAudio();
+pong.onEvent = (type, detail) => arcadeAudio.play("pong", type, detail);
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
@@ -216,6 +220,7 @@ window.addEventListener("keydown", (event) => {
     tank.handleKeyDown(event.code);
   }
   if (event.code === "Space" && gameType !== "bowling-3d" && !activeGame.running) {
+    unlockAudio();
     activeGame.start();
   }
   if (event.code === "KeyP" || event.code === "Escape") {
@@ -242,6 +247,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 startButton.addEventListener("click", () => {
+  unlockAudio();
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
     sendBowling3dCommand("start");
@@ -260,6 +266,7 @@ pauseButton.addEventListener("click", () => {
   activeGame.togglePause();
 });
 restartButton.addEventListener("click", () => {
+  unlockAudio();
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
     bowling3dReady = false;
@@ -290,8 +297,27 @@ gameButton.addEventListener("click", () => {
 gameChoices.forEach((choice) => {
   choice.addEventListener("click", () => selectGame(choice.dataset.game));
 });
+controls.addEventListener("pointerdown", () => unlockAudio());
+muteButton.addEventListener("click", () => {
+  unlockAudio();
+  arcadeAudio.toggleMute();
+  updateMuteUI();
+});
+
+function unlockAudio() {
+  void arcadeAudio.unlock();
+}
+
+function updateMuteUI() {
+  muteButton.textContent = arcadeAudio.muted ? "Unmute" : "Mute";
+  muteButton.setAttribute("aria-pressed", String(arcadeAudio.muted));
+  muteButton.classList.toggle("muted", arcadeAudio.muted);
+}
 
 function selectGame(nextGame) {
+  if (gameType === "pong" && nextGame !== "pong") {
+    arcadeAudio.silence();
+  }
   gameType = nextGame;
   activeGame = gameType === "pong"
     ? pong
@@ -383,9 +409,11 @@ function updateUI() {
     startButton.disabled = true;
     pauseButton.disabled = true;
     restartButton.disabled = true;
+    muteButton.disabled = true;
     document.querySelector(".scoreboard").hidden = true;
     return;
   }
+  muteButton.disabled = false;
   const isSnake = gameType === "snake";
   const isBreakout = gameType === "breakout";
   const isTank = gameType === "tank";
@@ -464,6 +492,7 @@ function frame(now) {
 
 gameShell.classList.add("awaiting-choice");
 updateModeUI();
+updateMuteUI();
 requestAnimationFrame(frame);
 
 // Stable integration point for future motion adapters.
