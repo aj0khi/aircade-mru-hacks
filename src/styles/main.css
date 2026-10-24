@@ -294,6 +294,16 @@ h1.marquee-sign {
   color: var(--yellow);
 }
 
+.choice-tank strong {
+  color: #64f4ff;
+}
+
+.game-choice:last-child {
+  grid-column: 2 / 4;
+  justify-self: center;
+  width: calc((100% - 12px) / 2);
+}
+
 .game-menu[hidden] {
   display: none;
 }
@@ -621,6 +631,11 @@ button.primary {
 
   .game-menu-options {
     grid-template-columns: 1fr;
+  }
+
+  .game-choice:last-child {
+    grid-column: auto;
+    width: auto;
   }
 
   .game-choice {

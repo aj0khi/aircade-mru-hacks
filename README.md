@@ -456,3 +456,10 @@ roll, pause with P/Escape, and restart with RESTART. Clear the cyan, pink,
 yellow, and purple brick wall to finish the round. The direct motion API is
 `window.gyroBreakout.setPaddleInput(value)`, where `value` is normalized to
 `-1...1`.
+
+## Neon Tanks
+
+Choose **NEON TANKS** or press **5** from the game menu. Player 1 drives with
+the arrow keys and fires with Space. Player 2 drives with W/A/S/D and fires
+with F. Shots ricochet off the arena walls and can break bronze cover after
+three hits. The first tank hit wins the round.
