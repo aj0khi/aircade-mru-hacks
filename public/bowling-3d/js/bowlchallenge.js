@@ -31,6 +31,7 @@ var pickX = 0.0;
 var pickY = 0.0;
 var pickOffset = 0.0;
 var pickTime = 0;
+var gyroSwingArmed = true;
 
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
@@ -132,6 +133,37 @@ function getLocalPlayer() {
 		return undefined;
 	}
 	return players.find(p => p.local);
+}
+
+function clampMotionValue(value, min, max) {
+	return Math.max(min, Math.min(max, value));
+}
+
+function onHeadPilotMotion(sample) {
+	var localPlayer = getLocalPlayer();
+	if (!localPlayer || localPlayer.physics.simulationActive) {
+		return;
+	}
+
+	var horizontal = Number(sample.horizontal);
+	var forward = Number(sample.forward);
+	if (!Number.isFinite(horizontal) || !Number.isFinite(forward)) {
+		return;
+	}
+
+	var position = clampMotionValue(horizontal, -1.0, 1.0) * BALL_POSITION_MAX;
+	localPlayer.physics.positionBall(position);
+
+	if (forward <= 0.28) {
+		gyroSwingArmed = true;
+	}
+	if (gyroSwingArmed && forward >= 0.68) {
+		gyroSwingArmed = false;
+		var velocity = BALL_VELOCITY_MIN
+				+ clampMotionValue(forward, 0.0, 1.0) * (BALL_VELOCITY_MAX - BALL_VELOCITY_MIN);
+		var angle = clampMotionValue(horizontal, -1.0, 1.0) * BALL_ANGLE_MAX * 0.35;
+		localPlayer.physics.releaseBall(velocity, angle);
+	}
 }
 
 function addPlayer(id, local, slot) {
@@ -251,6 +283,15 @@ function initScene() {
 
 	animate();
 }
+
+window.addEventListener("message", (event) => {
+	if (event.origin !== window.location.origin
+			|| !event.data
+			|| event.data.type !== "headpilot-bowling-motion") {
+		return;
+	}
+	onHeadPilotMotion(event.data);
+});
 
 function updateGame(player, dt) {
 	player.physics.updatePhysics(dt);

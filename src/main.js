@@ -29,6 +29,7 @@ let activeGame = pong;
 let gameType = "pong";
 let lastTime = performance.now();
 let seenGoalSequence = 0;
+let latestBowling3dSample = null;
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -36,6 +37,19 @@ const keyToInput = {
   ArrowUp: [2, -1],
   ArrowDown: [2, 1],
 };
+
+function sendBowling3dMotion(sample) {
+  latestBowling3dSample = sample;
+  if (!bowling3dFrame.contentWindow) return;
+  bowling3dFrame.contentWindow.postMessage({
+    type: "headpilot-bowling-motion",
+    ...sample,
+  }, window.location.origin);
+}
+
+bowling3dFrame.addEventListener("load", () => {
+  if (latestBowling3dSample) sendBowling3dMotion(latestBowling3dSample);
+});
 
 function updateKeyboardInput() {
   for (const playerId of [1, 2]) {
@@ -212,7 +226,10 @@ window.gyroBowling = {
   game: bowling,
   setAimInput: (horizontalValue) => bowling.setAimInput(horizontalValue),
   setMotionInput: (horizontalValue, forwardValue) => bowling.setMotionInput(horizontalValue, forwardValue),
-  setMotionSample: (sample) => bowlingMotion.setSample(sample),
+  setMotionSample: (sample) => {
+    bowlingMotion.setSample(sample);
+    sendBowling3dMotion(sample);
+  },
   calibrate: (sample) => bowlingMotion.calibrate(sample),
   throwBall: (power) => bowling.throwBall(power),
 };

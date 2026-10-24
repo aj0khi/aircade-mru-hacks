@@ -414,16 +414,17 @@ window.gyroBowling.setMotionSample({
 
 This follows the open-source [`iliagrigorevdev/bowling`](https://github.com/iliagrigorevdev/bowling)
 interaction idea: position the ball laterally, then release it with a forward flick.
-That repository is GPLv3 and uses touch input plus Three.js/Ammo.js physics; this
-project does not copy its source or assets. The adapter reuses the interaction
-concept while keeping this arcade's Canvas engine and existing license boundary.
+That repository is GPLv3 and uses touch input plus Three.js/Ammo.js physics. The
+same source, physics, models, and resources are ported into `public/bowling-3d/`
+with the original license preserved. The adapter also forwards the same motion
+samples into the 3D physics scene when that mode is active.
 
 The bowling engine remains independent of AirPods, Swift, and the UI. The future
 macOS bridge only needs to translate CoreMotion samples into this contract.
 
 ### 3D physics bowling
 
-The **3D BOWLING** mode embeds the original open-source bowling game from
+The **3D BOWLING** mode is a complete local port of the original open-source bowling game from
 [iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling), including
 its Three.js rendering and Ammo.js/Bullet physics. It is vendored under
 `public/bowling-3d/` so the normal Vite server can load it without a second
@@ -432,7 +433,9 @@ server or npm dependency.
 Use the mouse or trackpad to drag the ball left/right, then flick forward to
 release it. The original GPLv3 license is included at
 `public/bowling-3d/LICENSE`. Because this mode includes GPLv3 software, review
-the license obligations before distributing the combined application.
+the license obligations before distributing the combined application. AirPods
+motion is supported through the parent `window.gyroBowling.setMotionSample()`
+contract and is forwarded into the ported 3D physics scene.
 
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
 
