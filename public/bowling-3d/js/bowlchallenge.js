@@ -35,6 +35,7 @@ var gyroSwingArmed = true;
 var gamePaused = false;
 var keyboardAim = 0.0;
 var lastFrameNumber = 0;
+var sceneInitialized = false;
 
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
@@ -112,18 +113,21 @@ function init() {
 	window.addEventListener("resize", resizeViewport, false);
 
 	var loader = new THREE.GLTFLoader();
-	loader.load("res/scene.gltf", (gltf) => {
+	var initializeAssets = (gltf) => {
 		trackProtoMesh = gltf.scene.children.find(child => child.name == "Track");
 		if (!trackProtoMesh) {
-			throw new Error("Track not found");
+			initializeFallbackAssets();
+			return;
 		}
 		ballProtoMesh = gltf.scene.children.find(child => child.name == "Ball");
 		if (!ballProtoMesh) {
-			throw new Error("Ball not found");
+			initializeFallbackAssets();
+			return;
 		}
 		pinProtoMesh = gltf.scene.children.find(child => child.name == "Pin");
 		if (!pinProtoMesh) {
-			throw new Error("Pin not found");
+			initializeFallbackAssets();
+			return;
 		}
 
 		var maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -135,8 +139,39 @@ function init() {
 
 		Ammo().then((Ammo) => {
 			initScene();
+		}).catch(() => {
+			setBowlingStatus("PHYSICS ERROR");
 		});
+	};
+	loader.load("res/scene.gltf", initializeAssets, undefined, () => {
+		setBowlingStatus("LOADING FALLBACK");
+		initializeFallbackAssets();
 	});
+	window.setTimeout(() => {
+		if (!sceneInitialized && !trackProtoMesh) {
+			setBowlingStatus("LOADING FALLBACK");
+			initializeFallbackAssets();
+		}
+	}, 2500);
+}
+
+function initializeFallbackAssets() {
+	if (trackProtoMesh) return;
+	var trackMaterial = new THREE.MeshPhongMaterial({ color: 0x30205f });
+	var ballMaterial = new THREE.MeshPhongMaterial({ color: 0xff3fba });
+	var pinMaterial = new THREE.MeshPhongMaterial({ color: 0xf7f3ff });
+	trackProtoMesh = new THREE.Mesh(
+			new THREE.BoxGeometry(TRACK_WIDTH, TRACK_HEIGHT, TRACK_LENGTH), trackMaterial);
+	trackProtoMesh.position.set(0.0, TRACK_MID_Y, TRACK_MID_Z);
+	ballProtoMesh = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 24, 16), ballMaterial);
+	ballProtoMesh.position.set(0.0, BALL_HEIGHT, BALL_LINE);
+	pinProtoMesh = new THREE.Mesh(
+			new THREE.CylinderGeometry(PIN_RADIUS_MAX * 0.65, PIN_RADIUS_MAX, PIN_HEIGHT, 16),
+			pinMaterial);
+	pinProtoMesh.position.set(0.0, PIN_Y, 0.0);
+	styleImportedMeshes();
+	addLaneAccents();
+	Ammo().then(() => initScene()).catch(() => setBowlingStatus("PHYSICS ERROR"));
 }
 
 function styleImportedMeshes() {
@@ -343,6 +378,8 @@ function updateImitation(imitation, dt) {
 }
 
 function initScene() {
+	if (sceneInitialized) return;
+	sceneInitialized = true;
 	addPlayer(0, true, 0);
 
 	//addImitation(-1);
