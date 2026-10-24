@@ -40,6 +40,7 @@
 				pointer-events: none;
 				text-transform: uppercase;
 				letter-spacing: 0.12em;
+				z-index: 2;
 			}
 
 			.headpilot-brand,
@@ -59,6 +60,50 @@
 
 			.headpilot-status {
 				color: #ffe44a;
+			}
+
+			.headpilot-score {
+				position: fixed;
+				top: 74px;
+				left: 50%;
+				transform: translateX(-50%);
+				min-width: 220px;
+				padding: 10px 16px;
+				color: #f7f3ff;
+				background: rgba(13, 10, 30, 0.9);
+				border: 2px solid #41356e;
+				box-shadow: 3px 3px 0 #080614, 0 0 16px rgba(34, 216, 255, 0.2);
+				text-align: center;
+				font-size: 12px;
+				font-weight: 800;
+				line-height: 1.5;
+				letter-spacing: 0.12em;
+				z-index: 2;
+			}
+
+			.headpilot-score strong {
+				color: #ffe44a;
+				font-size: 20px;
+			}
+
+			.headpilot-meter {
+				position: fixed;
+				left: 50%;
+				bottom: 54px;
+				width: min(360px, calc(100vw - 48px));
+				height: 8px;
+				transform: translateX(-50%);
+				border: 1px solid #41356e;
+				background: rgba(13, 10, 30, 0.9);
+				z-index: 2;
+			}
+
+			#headpilot-power {
+				display: block;
+				width: 0%;
+				height: 100%;
+				background: linear-gradient(90deg, #22d8ff, #ffe44a, #ff3fba);
+				transition: width 80ms linear;
 			}
 
 			.headpilot-hint {
@@ -85,6 +130,8 @@
 				<div class="headpilot-brand">HEADPILOT / LANE 01</div>
 				<div id="headpilot-status" class="headpilot-status">READY</div>
 			</div>
+			<div id="headpilot-score" class="headpilot-score">FRAME 01 &nbsp;·&nbsp; SCORE <strong>0</strong></div>
+			<div class="headpilot-meter" aria-label="Roll power"><span id="headpilot-power"></span></div>
 			<div class="headpilot-hint">DRAG TO AIM &nbsp; · &nbsp; FLICK FORWARD TO ROLL</div>
 		</div>
 
