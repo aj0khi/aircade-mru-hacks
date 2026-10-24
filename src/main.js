@@ -685,6 +685,7 @@ function updateMuteUI() {
 
   if (volumeSlider) {
     volumeSlider.value = String(displayPercent);
+    volumeSlider.style.setProperty("--vol", `${displayPercent}%`);
   }
   if (volumeValue) {
     volumeValue.textContent = `${displayPercent}%`;
