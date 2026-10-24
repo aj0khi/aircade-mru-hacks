@@ -366,6 +366,8 @@ gameButton.addEventListener("click", () => {
 });
 gameChoices.forEach((choice, index) => {
   choice.addEventListener("pointerenter", () => {
+    unlockAudio();
+    if (!gameType) arcadeAudio.play("ui", "menu-start");
     arcadeAudio.play("ui", "hover", { index, pan: ((index - 2) / 2) * 0.55 });
   });
   choice.addEventListener("click", () => {
@@ -375,6 +377,10 @@ gameChoices.forEach((choice, index) => {
   });
 });
 window.addEventListener("pointerdown", () => {
+  unlockAudio();
+  if (!gameType) arcadeAudio.play("ui", "menu-start");
+}, { once: false });
+window.addEventListener("keydown", () => {
   unlockAudio();
   if (!gameType) arcadeAudio.play("ui", "menu-start");
 }, { once: false });
