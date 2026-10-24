@@ -163,12 +163,36 @@ export class Game {
     ctx.clearRect(0, 0, this.width, this.height);
     ctx.fillStyle = "#167343";
     ctx.fillRect(0, 0, this.width, this.height);
+    this.drawScoringZones(ctx);
     this.drawPitch(ctx);
     this.drawGoal(ctx, 0, "#64f4ff");
     this.drawGoal(ctx, this.width, "#ff64d8");
     this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
     this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
     this.drawSoccerBall(ctx);
+  }
+
+  drawScoringZones(ctx) {
+    const zoneWidth = 118;
+    const leftZone = ctx.createLinearGradient(0, 0, zoneWidth, 0);
+    leftZone.addColorStop(0, "rgba(100, 244, 255, 0.16)");
+    leftZone.addColorStop(1, "rgba(100, 244, 255, 0)");
+    ctx.fillStyle = leftZone;
+    ctx.fillRect(0, 0, zoneWidth, this.height);
+
+    const rightZone = ctx.createLinearGradient(this.width, 0, this.width - zoneWidth, 0);
+    rightZone.addColorStop(0, "rgba(255, 100, 216, 0.16)");
+    rightZone.addColorStop(1, "rgba(255, 100, 216, 0)");
+    ctx.fillStyle = rightZone;
+    ctx.fillRect(this.width - zoneWidth, 0, zoneWidth, this.height);
+
+    const goalTop = this.height / 2 - 145;
+    const goalHeight = 290;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(100, 244, 255, 0.28)";
+    ctx.strokeRect(18, goalTop, 110, goalHeight);
+    ctx.strokeStyle = "rgba(255, 100, 216, 0.28)";
+    ctx.strokeRect(this.width - 128, goalTop, 110, goalHeight);
   }
 
   drawPitch(ctx) {
