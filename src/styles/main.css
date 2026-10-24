@@ -145,6 +145,7 @@ canvas {
 .message {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   display: grid;
   place-items: center;
   color: #fff;
