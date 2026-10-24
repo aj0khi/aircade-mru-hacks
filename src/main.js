@@ -1,7 +1,6 @@
 import { Game } from "./game/Pong.js";
 import { Snake } from "./game/Snake.js";
 import { Breakout } from "./game/Breakout.js";
-import { Bowling } from "./game/Bowling.js";
 import { Tank } from "./game/Tank.js";
 import { ArcadeAudio } from "./audio/ArcadeAudio.js";
 import "./styles/main.css";
@@ -36,7 +35,6 @@ const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
 const breakout = new Breakout(canvas);
-const bowling = new Bowling(canvas);
 const tank = new Tank(canvas);
 const arcadeAudio = new ArcadeAudio();
 pong.onEvent = (type, detail) => arcadeAudio.play("pong", type, detail);
@@ -103,8 +101,6 @@ function forwardBowlingMotion(sample = {}) {
     updateSnakeMotion(normalized.roll, normalized.pitch);
   } else if (gameType === "breakout") {
     breakout.setPaddleInput(normalized.roll);
-  } else if (gameType === "bowling") {
-    bowling.setMotionInput(normalized.roll, normalized.swing);
   }
   sendBowling3dMotion(normalized);
   return true;
@@ -225,9 +221,9 @@ function updateKeyboardInput() {
 }
 
 window.addEventListener("keydown", (event) => {
-  if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6"].includes(event.code)) {
+  if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code)) {
     event.preventDefault();
-    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling", Digit4: "breakout", Digit5: "tank", Digit6: "bowling-3d" };
+    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d", Digit4: "breakout", Digit5: "tank" };
     selectGame(gameByKey[event.code]);
     return;
   }
@@ -244,15 +240,11 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     breakout.setPaddleInput(event.code === "ArrowLeft" ? -1 : 1);
   }
-  if (gameType === "bowling" && ["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) {
-    event.preventDefault();
-    bowling.handleKey(event.code);
-  }
   if (gameType === "tank" && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyW", "KeyS", "KeyA", "KeyD", "KeyF"].includes(event.code)) {
     event.preventDefault();
     tank.handleKeyDown(event.code);
   }
-  if (event.code === "Space" && gameType !== "bowling-3d" && gameType !== "bowling" && !activeGame.running) {
+  if (event.code === "Space" && gameType !== "bowling-3d" && !activeGame.running) {
     unlockAudio();
     activeGame.start();
   }
@@ -332,11 +324,9 @@ gameButton.addEventListener("click", () => {
   const nextGame = gameType === "pong"
     ? "snake"
     : gameType === "snake"
-      ? "bowling"
-      : gameType === "bowling"
+      ? "bowling-3d"
+      : gameType === "bowling-3d"
         ? "breakout"
-        : gameType === "bowling-3d"
-          ? "breakout"
         : gameType === "breakout"
           ? "tank"
           : "pong";
@@ -366,6 +356,7 @@ function selectGame(nextGame) {
   if (gameType === "pong" && nextGame !== "pong") {
     arcadeAudio.silence();
   }
+  if (nextGame === "bowling") nextGame = "bowling-3d";
   gameType = nextGame;
   activeGame = gameType === "pong"
     ? pong
@@ -373,8 +364,6 @@ function selectGame(nextGame) {
       ? snake
       : gameType === "breakout"
         ? breakout
-        : gameType === "bowling"
-          ? bowling
         : gameType === "tank"
           ? tank
         : null;
@@ -423,33 +412,28 @@ function updateModeUI() {
   gameShell.setAttribute("aria-label", `${gameType} game`);
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";
-  const bowlingMode = gameType === "bowling";
   const bowling3dMode = gameType === "bowling-3d";
   const breakoutMode = gameType === "breakout";
   const tankMode = gameType === "tank";
   gameTitle.textContent = snakeMode
     ? "Snake"
-    : bowlingMode ? "HeadPilot Bowling" : bowling3dMode ? "3D Bowling" : breakoutMode ? "Breakout" : tankMode ? "Neon Tanks" : "Pong";
+    : bowling3dMode ? "HeadPilot Bowling" : breakoutMode ? "Breakout" : tankMode ? "Neon Tanks" : "Pong";
   gameSubtitle.textContent = snakeMode
     ? "Guide the snake. Find the apple."
-    : bowlingMode
-      ? "Aim the lane. Roll your own revival."
     : bowling3dMode
-      ? "Open-source physics lane. Drag and flick to bowl."
+      ? "Our custom HeadPilot lane. Drag and flick to bowl."
       : breakoutMode ? "Clear the wall brick by brick." : tankMode ? "Ricochet. Reload. Dominate." : "Two paddles. One ball.";
   gameButton.textContent = snakeMode
     ? "HeadPilot Bowling"
-    : bowlingMode ? "Breakout" : bowling3dMode ? "Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Pong" : "Snake";
-  modeButton.hidden = snakeMode || bowlingMode || bowling3dMode || breakoutMode || tankMode;
-  modeLabel.textContent = snakeMode || bowlingMode || bowling3dMode || breakoutMode
+    : bowling3dMode ? "Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Pong" : "Snake";
+  modeButton.hidden = snakeMode || bowling3dMode || breakoutMode || tankMode;
+  modeLabel.textContent = snakeMode || bowling3dMode || breakoutMode
     ? "1P // SOLO" : (twoPlayer || tankMode ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
-    : bowlingMode ? "HeadPilot Bowling lane" : bowling3dMode ? "3D physics bowling game" : breakoutMode ? "Breakout playing field" : tankMode ? "Neon tank arena" : "Horizontal Pong playing field");
+    : bowling3dMode ? "HeadPilot Bowling lane" : breakoutMode ? "Breakout playing field" : tankMode ? "Neon tank arena" : "Horizontal Pong playing field");
   instructions.innerHTML = snakeMode
     ? "<strong>Move</strong> with the arrow keys or motion <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Find the apple"
-    : bowlingMode
-      ? "<strong>Aim</strong> with ← / → <span aria-hidden=\"true\">·</span> Space rolls the ball <span aria-hidden=\"true\">·</span> Tilt and swing with AirPods"
     : bowling3dMode
       ? "<strong>Roll</strong> to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag also works"
       : breakoutMode
@@ -470,7 +454,6 @@ function updateUI() {
   }
   muteButton.disabled = false;
   const isSnake = gameType === "snake";
-  const isBowling = gameType === "bowling";
   const isBreakout = gameType === "breakout";
   const isTank = gameType === "tank";
   if (gameType === "bowling-3d") {
@@ -486,14 +469,11 @@ function updateUI() {
   restartButton.disabled = false;
   const showScoreboard = activeGame.paused || activeGame.gameOver;
   document.querySelector(".scoreboard").hidden = !showScoreboard;
-  playerScore.textContent = isSnake ? snake.score : isBowling ? bowling.score : isBreakout ? breakout.score : isTank ? tank.scores[1] : pong.scores[1];
-  opponentScore.textContent = isSnake || isBowling || isBreakout ? "" : isTank ? tank.scores[2] : pong.scores[2];
-  scoreDivider.textContent = isSnake || isBowling || isBreakout ? "" : ":";
+  playerScore.textContent = isSnake ? snake.score : isBreakout ? breakout.score : isTank ? tank.scores[1] : pong.scores[1];
+  opponentScore.textContent = isSnake || isBreakout ? "" : isTank ? tank.scores[2] : pong.scores[2];
+  scoreDivider.textContent = isSnake || isBreakout ? "" : ":";
   if (isSnake && snake.gameOver) {
     message.textContent = "Game over";
-    message.classList.add("visible");
-  } else if (isBowling && bowling.gameOver) {
-    message.textContent = `Game over · ${bowling.score} pins`;
     message.classList.add("visible");
   } else if (isBreakout && breakout.gameOver) {
     message.textContent = breakout.bricks.every((brick) => !brick.visible) ? "Wall cleared" : "Game over";
