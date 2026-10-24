@@ -396,7 +396,7 @@ h1.marquee-sign {
 
 .game-menu-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   width: min(1020px, 100%);
   margin: 0 auto 22px;
@@ -628,12 +628,16 @@ h1.marquee-sign {
 .choice-pong strong {
   color: #fff0f5;
 }
-.game-choice:nth-child(5) {
-  grid-column: 2 / 3;
+.game-choice {
+  grid-column: span 2;
 }
 
-.game-choice:nth-child(6) {
-  grid-column: 3 / 4;
+.game-choice:nth-child(4) {
+  grid-column: 2 / span 2;
+}
+
+.game-choice:nth-child(5) {
+  grid-column: 4 / span 2;
 }
 
 .game-menu[hidden] {
@@ -1128,6 +1132,10 @@ button.muted {
     width: 50%;
     justify-self: center;
   }
+
+  .game-choice {
+    grid-column: auto;
+  }
 }
 
 /* Mobile screens: 620px and below */
@@ -1167,8 +1175,7 @@ button.muted {
     grid-template-columns: 1fr;
   }
 
-  .game-choice:nth-child(5),
-  .game-choice:nth-child(6) {
+  .game-choice {
     grid-column: auto;
     width: auto;
   }
