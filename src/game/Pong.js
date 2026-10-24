@@ -1,7 +1,7 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export class Game {
-  constructor(canvas, { winningScore = 7 } = {}) {
+  constructor(canvas, { winningScore = 3 } = {}) {
     this.canvas = canvas;
     this.context = canvas.getContext("2d");
     this.winningScore = winningScore;

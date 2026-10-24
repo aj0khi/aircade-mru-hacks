@@ -153,8 +153,35 @@ export class Breakout {
     for (const brick of this.bricks) {
       if (brick.visible) this.drawGlowRect(ctx, brick.x, brick.y, brick.width, brick.height, brick.color);
     }
+    this.drawBallsLeft(ctx);
     this.drawGlowRect(ctx, this.paddleState.x, this.paddleState.y, this.paddle.width, this.paddle.height, "#f5f1df");
     this.drawBall(ctx);
+  }
+
+  drawBallsLeft(ctx) {
+    const startX = this.width - 122;
+    const y = 24;
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 11px Tahoma, sans-serif";
+    ctx.fillStyle = "#f7f3ff";
+    ctx.fillText("BALLS", startX, y);
+    for (let index = 0; index < 3; index += 1) {
+      const x = startX + 42 + index * 20;
+      const available = index < this.lives;
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = available ? "#f7f3ff" : "rgba(247, 243, 255, 0.2)";
+      ctx.fill();
+      ctx.strokeStyle = available ? "#22d8ff" : "rgba(247, 243, 255, 0.35)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.font = "900 11px Tahoma, sans-serif";
+    ctx.fillStyle = "#22d8ff";
+    ctx.fillText(`x${this.lives}`, startX + 108, y);
+    ctx.restore();
   }
 
   drawGlowRect(ctx, x, y, width, height, color) {
