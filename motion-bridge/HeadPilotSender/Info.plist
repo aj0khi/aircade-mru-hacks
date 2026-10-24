@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSMotionUsageDescription</key>
+	<string>Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local HeadPilot Arcade game.</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+</dict>
+</plist>

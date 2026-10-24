@@ -41,9 +41,9 @@ production-ready:
 1. **Motion setup is still technical.** The bridge requires a local WebSocket
    relay and a macOS development environment; first-time players need clearer
    pairing and calibration guidance.
-2. **The games are not equally motion-enabled.** Pong, Snake, Breakout, and
-   Bowling accept motion input, while Tanks currently relies mainly on
-   keyboard controls.
+2. **The games are not equally motion-enabled.** Pong, Snake, Breakout,
+   Bowling, and Tanks all accept AirPods motion; Tanks still uses keyboard
+   for player 2.
 3. **Bowling has the most fragile lifecycle.** It loads separate Three.js,
    Ammo.js, and GLTF assets inside an iframe, so asset or WebGL failures need
    clearer player-facing error states.
@@ -543,6 +543,7 @@ brick wall to finish the round. The direct motion API is
 ## Neon Tanks
 
 Choose **NEON TANKS** or press **5** from the game menu. Player 1 drives with
-the arrow keys and fires with Space. Player 2 drives with W/A/S/D and fires
-with F. Shots ricochet off the arena walls and can break bronze cover after
-three hits. The first tank hit wins the round.
+the arrow keys and fires with Space, or with AirPods: nod up to drive, nod
+down to reverse, look left/right to turn, and tilt (roll) to shoot. Player 2
+drives with W/A/S/D and fires with F. Shots ricochet off the arena walls and
+can break bronze cover after three hits. The first tank hit wins the round.
