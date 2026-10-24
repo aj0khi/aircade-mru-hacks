@@ -161,6 +161,11 @@ function sendBowling3dCommand(command) {
   }, window.location.origin);
 }
 
+function loadBowling3dFrame() {
+  bowling3dFrame.hidden = false;
+  bowling3dFrame.src = `/bowling-3d/index.html?session=${Date.now()}`;
+}
+
 bowling3dFrame.addEventListener("load", () => {
   bowling3dPaused = false;
   sendBowling3dCommand("start");
@@ -294,8 +299,12 @@ function selectGame(nextGame) {
   gameMenu.hidden = Boolean(gameType);
   gameShell.classList.toggle("awaiting-choice", !gameType);
   controls.hidden = !gameType;
-  bowling3dFrame.hidden = gameType !== "bowling-3d";
-  bowling3dFrame.src = gameType === "bowling-3d" ? "/bowling-3d/index.html" : "about:blank";
+  if (gameType === "bowling-3d") {
+    loadBowling3dFrame();
+  } else {
+    bowling3dFrame.hidden = true;
+    bowling3dFrame.src = "about:blank";
+  }
   canvas.hidden = gameType === "bowling-3d";
   document.querySelector(".scoreboard").hidden = gameType === "bowling-3d";
   message.hidden = gameType === "bowling-3d";
