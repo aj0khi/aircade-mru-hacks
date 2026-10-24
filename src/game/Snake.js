@@ -96,9 +96,9 @@ export class Snake {
     const ctx = this.context;
     const cellWidth = this.canvas.width / this.columns;
     const cellHeight = this.canvas.height / this.rows;
-    ctx.fillStyle = "#101327";
+    ctx.fillStyle = "#f5f1df";
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.strokeStyle = "rgba(123, 77, 255, 0.2)";
+    ctx.strokeStyle = "rgba(38, 92, 43, 0.12)";
     ctx.lineWidth = 1;
     for (let x = 1; x < this.columns; x += 1) {
       ctx.beginPath(); ctx.moveTo(x * cellWidth, 0); ctx.lineTo(x * cellWidth, this.canvas.height); ctx.stroke();
@@ -106,15 +106,48 @@ export class Snake {
     for (let y = 1; y < this.rows; y += 1) {
       ctx.beginPath(); ctx.moveTo(0, y * cellHeight); ctx.lineTo(this.canvas.width, y * cellHeight); ctx.stroke();
     }
-    this.drawCell(ctx, this.food, cellWidth, cellHeight, "#ffe44a");
-    this.snake.forEach((segment, index) => this.drawCell(ctx, segment, cellWidth, cellHeight, index === 0 ? "#22d8ff" : "#ff3fba"));
+    this.drawApple(ctx, this.food, cellWidth, cellHeight);
+    this.snake.forEach((segment, index) => this.drawSnakeSegment(ctx, segment, cellWidth, cellHeight, index === 0));
   }
 
-  drawCell(ctx, cell, width, height, color) {
-    ctx.fillStyle = color;
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = color;
-    ctx.fillRect(cell.x * width + 3, cell.y * height + 3, width - 6, height - 6);
-    ctx.shadowBlur = 0;
+  drawSnakeSegment(ctx, segment, width, height, head) {
+    const x = segment.x * width + width / 2;
+    const y = segment.y * height + height / 2;
+    const radius = Math.min(width, height) * (head ? 0.42 : 0.38);
+    ctx.fillStyle = head ? "#2f7d32" : "#4b9d45";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (head) {
+      const eyeOffset = this.direction.x === 0 ? width * 0.18 : 0;
+      const eyeX = x + (this.direction.x * width * 0.18);
+      const eyeY = y + (this.direction.y * height * 0.18);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(eyeX - eyeOffset, eyeY - (this.direction.x === 0 ? height * 0.13 : width * 0.13), 3, 0, Math.PI * 2);
+      ctx.arc(eyeX + eyeOffset, eyeY + (this.direction.x === 0 ? height * 0.13 : width * 0.13), 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#111111";
+      ctx.beginPath();
+      ctx.arc(eyeX - eyeOffset, eyeY - (this.direction.x === 0 ? height * 0.13 : width * 0.13), 1.5, 0, Math.PI * 2);
+      ctx.arc(eyeX + eyeOffset, eyeY + (this.direction.x === 0 ? height * 0.13 : width * 0.13), 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  drawApple(ctx, food, width, height) {
+    const x = food.x * width + width / 2;
+    const y = food.y * height + height / 2 + 2;
+    ctx.fillStyle = "#d94b3d";
+    ctx.beginPath();
+    ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
+    ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#4b7135";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 7);
+    ctx.lineTo(x + 3, y - 15);
+    ctx.stroke();
   }
 }
