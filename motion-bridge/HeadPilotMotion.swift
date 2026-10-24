@@ -1,32 +1,109 @@
 import CoreMotion
 import Foundation
 
-/// The stable payload sent to HeadPilot Arcade.
+/// Named AirPods axes plus the old `{roll,pitch,swing}` aliases.
+/// `yaw`/`pitch`/`roll` are game values in `-1...1`. Degrees are for the sender UI.
 struct HeadPilotMotionSample: Encodable {
     let type = "motion"
-    let roll: Double
+    let yaw: Double
     let pitch: Double
+    let roll: Double
+    let accelX: Double
+    let accelY: Double
+    let accelZ: Double
     let swing: Double
     let timestamp: Int64
+    let yawDegrees: Double
+    let pitchDegrees: Double
+    let rollDegrees: Double
 
-    init(roll: Double, pitch: Double, swing: Double, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) {
-        self.roll = roll
+    enum CodingKeys: String, CodingKey {
+        case type, yaw, pitch, roll, accelX, accelY, accelZ, swing, timestamp
+    }
+
+    init(
+        yaw: Double,
+        pitch: Double,
+        roll: Double,
+        accelX: Double,
+        accelY: Double,
+        accelZ: Double,
+        yawDegrees: Double,
+        pitchDegrees: Double,
+        rollDegrees: Double,
+        timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
+    ) {
+        self.yaw = yaw
         self.pitch = pitch
-        self.swing = swing
+        self.roll = roll
+        self.accelX = accelX
+        self.accelY = accelY
+        self.accelZ = accelZ
+        self.swing = accelZ
         self.timestamp = timestamp
+        self.yawDegrees = yawDegrees
+        self.pitchDegrees = pitchDegrees
+        self.rollDegrees = rollDegrees
     }
 }
 
-/// Converts Core Motion values into the normalized `-1...1` arcade contract.
-struct HeadPilotMotionNormalizer {
-    var angleSensitivity: Double = 1.2
-    var swingSensitivity: Double = 2.0
+/// Games pick one axis and ignore the rest.
+/// X = yaw, Y = pitch, bowling throw = accel Z.
+///
+/// Zero is a relative CMAttitude (look straight ahead), not world Euler 0.
+/// AirPods rest pitch is often already large, so subtracting 0 makes +1 at rest
+/// and you have to nod a long way before negatives appear.
+final class HeadPilotMotionNormalizer {
+    /// About 20° of look/nod is full scale for the games.
+    var angleSensitivity: Double = 0.35
+    var accelSensitivity: Double = 0.16
+    private let lock = NSLock()
+    private var origin: CMAttitude?
+    private var samplesUntilOrigin = 25
+
+    func resetOrigin() {
+        lock.lock()
+        origin = nil
+        samplesUntilOrigin = 8
+        lock.unlock()
+    }
 
     func sample(from deviceMotion: CMDeviceMotion) -> HeadPilotMotionSample {
-        let roll = normalize(deviceMotion.attitude.roll, sensitivity: angleSensitivity)
-        let pitch = normalize(deviceMotion.attitude.pitch, sensitivity: angleSensitivity)
-        let swing = normalize(deviceMotion.userAcceleration.z, sensitivity: swingSensitivity)
-        return HeadPilotMotionSample(roll: roll, pitch: pitch, swing: swing)
+        lock.lock()
+        defer { lock.unlock() }
+
+        if origin == nil {
+            if samplesUntilOrigin > 0 {
+                samplesUntilOrigin -= 1
+            }
+            if samplesUntilOrigin == 0 {
+                origin = deviceMotion.attitude.copy() as? CMAttitude
+            }
+        }
+
+        var yaw = 0.0
+        var pitch = 0.0
+        var roll = 0.0
+        if let origin, let relative = deviceMotion.attitude.copy() as? CMAttitude {
+            relative.multiply(byInverseOf: origin)
+            yaw = relative.yaw
+            pitch = relative.pitch
+            roll = relative.roll
+        }
+
+        let accel = deviceMotion.userAcceleration
+        let degrees = 180.0 / Double.pi
+        return HeadPilotMotionSample(
+            yaw: normalize(yaw, sensitivity: angleSensitivity),
+            pitch: normalize(pitch, sensitivity: angleSensitivity),
+            roll: normalize(roll, sensitivity: angleSensitivity),
+            accelX: normalize(accel.x, sensitivity: accelSensitivity),
+            accelY: normalize(accel.y, sensitivity: accelSensitivity),
+            accelZ: normalize(accel.z, sensitivity: accelSensitivity),
+            yawDegrees: yaw * degrees,
+            pitchDegrees: pitch * degrees,
+            rollDegrees: roll * degrees
+        )
     }
 
     private func normalize(_ value: Double, sensitivity: Double) -> Double {
@@ -50,10 +127,17 @@ final class HeadPilotMotionSource {
         queue.qualityOfService = .userInteractive
     }
 
+    var isAvailable: Bool { manager.isDeviceMotionAvailable }
+
+    func resetOrigin() {
+        normalizer.resetOrigin()
+    }
+
     func start() throws {
-        guard manager.isDeviceMotionAvailable else {
+        guard isAvailable else {
             throw MotionSourceError.unavailable
         }
+        normalizer.resetOrigin()
         manager.startDeviceMotionUpdates(to: queue) { [normalizer, onSample] motion, error in
             guard error == nil, let motion else { return }
             onSample(normalizer.sample(from: motion))
