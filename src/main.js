@@ -7,6 +7,7 @@ const startButton = document.querySelector("#start-button");
 const pauseButton = document.querySelector("#pause-button");
 const restartButton = document.querySelector("#restart-button");
 const modeButton = document.querySelector("#mode-button");
+const menuButton = document.querySelector("#menu-button");
 const gameButton = document.querySelector("#game-button");
 const gameTitle = document.querySelector("#game-title");
 const gameSubtitle = document.querySelector("#game-subtitle");
@@ -234,6 +235,9 @@ modeButton.addEventListener("click", () => {
   pong.setMode(pong.mode === "single" ? "two-player" : "single");
   updateModeUI();
 });
+menuButton.addEventListener("click", () => {
+  selectGame(null);
+});
 gameButton.addEventListener("click", () => {
   const nextGame = gameType === "pong"
     ? "snake"
@@ -249,33 +253,43 @@ gameChoices.forEach((choice) => {
 function selectGame(nextGame) {
   gameType = nextGame;
   activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : null;
-  if (activeGame) activeGame.reset();
+  if (activeGame) {
+    activeGame.reset();
+  } else {
+    bowling3dFrame.src = "about:blank";
+  }
   bowling3dPaused = false;
-  gameMenu.hidden = true;
-  gameShell.classList.remove("awaiting-choice");
-  controls.hidden = false;
+  gameMenu.hidden = Boolean(gameType);
+  gameShell.classList.toggle("awaiting-choice", !gameType);
+  controls.hidden = !gameType;
   bowling3dFrame.hidden = gameType !== "bowling-3d";
   bowling3dFrame.src = gameType === "bowling-3d" ? "/bowling-3d/index.html" : "about:blank";
   canvas.hidden = gameType === "bowling-3d";
   document.querySelector(".scoreboard").hidden = gameType === "bowling-3d";
   message.hidden = gameType === "bowling-3d";
   updateModeUI();
+  updateUI();
 }
 
 function updateModeUI() {
   if (!gameType) {
+    gameTitle.classList.add("marquee-sign");
     gameTitle.textContent = "HeadPilot Arcade";
     gameSubtitle.textContent = "Pick a cabinet and start playing.";
     modeLabel.textContent = "INSERT COIN // CHOOSE A GAME";
     modeButton.hidden = true;
     gameButton.hidden = true;
+    menuButton.hidden = true;
     controls.hidden = true;
     instructions.hidden = true;
     gameShell.setAttribute("aria-label", "HeadPilot game selection");
     instructions.innerHTML = "<strong>Choose a game</strong> above to begin";
     return;
   }
+  gameTitle.classList.remove("marquee-sign");
   instructions.hidden = false;
+  menuButton.hidden = false;
+  gameButton.hidden = false;
   gameShell.setAttribute("aria-label", `${gameType} game`);
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";

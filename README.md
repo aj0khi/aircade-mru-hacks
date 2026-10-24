@@ -390,7 +390,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. In Wii Remote mode, wrist roll moves Player 1's paddle through `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
+Open the local URL printed by Vite. The first screen is the cabinet selector: choose a game with the on-screen buttons or keys **1**, **2**, and **3**. Once inside a game, **ARCADE MENU** returns to the selector and the adjacent game button switches directly to the next cabinet without a page reload. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. In Wii Remote mode, wrist roll moves Player 1's paddle through `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
 
 ## 3D Bowling mode
 

@@ -124,6 +124,10 @@ h1 {
   transform: skew(-4deg);
 }
 
+h1.marquee-sign {
+  animation: marquee-twitch 6.4s steps(5, end) infinite;
+}
+
 .subtitle {
   margin: 17px 0 0;
   color: #e4dff3;
@@ -186,6 +190,27 @@ h1 {
   text-align: center;
 }
 
+.game-menu::before,
+.game-menu::after {
+  position: absolute;
+  right: 9%;
+  left: 9%;
+  height: 3px;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--blue) 18%, var(--pink) 50%, var(--yellow) 82%, transparent);
+  box-shadow: 0 0 12px rgba(34, 216, 255, 0.7);
+  animation: rail-hum 5.8s ease-in-out infinite;
+}
+
+.game-menu::before {
+  top: 12%;
+}
+
+.game-menu::after {
+  bottom: 12%;
+  animation-delay: -2.1s;
+}
+
 .menu-kicker,
 .menu-hint {
   margin: 0;
@@ -211,13 +236,13 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  width: min(760px, 100%);
+  width: min(920px, 100%);
   margin: 0 auto 22px;
 }
 
 .game-choice {
   display: flex;
-  min-height: 132px;
+  min-height: 178px;
   align-items: flex-start;
   gap: 12px;
   padding: 16px 14px;
@@ -498,6 +523,23 @@ button.primary {
   80% { transform: translate(3px, 2px); }
 }
 
+@keyframes marquee-twitch {
+  0%, 12%, 16%, 58%, 100% {
+    opacity: 1;
+    transform: skew(-4deg) translate(0);
+    text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
+  }
+  13%, 15% {
+    opacity: 0.52;
+    transform: skew(-4deg) translate(1px, 0);
+    text-shadow: 4px 4px 0 #9a2d83, 7px 7px 0 #351c64;
+  }
+  59% {
+    opacity: 0.86;
+    transform: skew(-4deg) translate(-1px, 1px);
+  }
+}
+
 @keyframes confetti-fall {
   0% { opacity: 1; transform: translate(-50%, -50%) rotate(0); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--x)), var(--y)) rotate(var(--r)); }
@@ -532,11 +574,13 @@ button.primary {
 
 @media (prefers-reduced-motion: reduce) {
   .brand-mark,
-  h1,
+  h1.marquee-sign,
   .status,
   .game-shell,
   .game-shell::before,
-  .controls::before {
+  .controls::before,
+  .game-menu::before,
+  .game-menu::after {
     animation: none;
   }
 }
@@ -563,6 +607,12 @@ button.primary {
 
   .game-menu {
     padding: 34px 18px;
+  }
+
+  .game-menu::before,
+  .game-menu::after {
+    right: 7%;
+    left: 7%;
   }
 
   .game-menu-options {
