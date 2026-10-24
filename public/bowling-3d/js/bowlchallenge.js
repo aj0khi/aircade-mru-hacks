@@ -36,6 +36,8 @@ var gamePaused = false;
 var keyboardAim = 0.0;
 var lastFrameNumber = 0;
 var sceneInitialized = false;
+var loadingPreview = [];
+var animationStarted = false;
 
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
@@ -137,11 +139,13 @@ function init() {
 		styleImportedMeshes();
 		addLaneAccents();
 
-		Ammo().then((Ammo) => {
+		startLoadingPreview();
+		window.setTimeout(() => Ammo().then(() => {
+			clearLoadingPreview();
 			initScene();
 		}).catch(() => {
 			setBowlingStatus("PHYSICS ERROR");
-		});
+		}), 0);
 	};
 	loader.load("res/scene.gltf", initializeAssets, undefined, () => {
 		setBowlingStatus("LOADING FALLBACK");
@@ -171,7 +175,38 @@ function initializeFallbackAssets() {
 	pinProtoMesh.position.set(0.0, PIN_Y, 0.0);
 	styleImportedMeshes();
 	addLaneAccents();
-	Ammo().then(() => initScene()).catch(() => setBowlingStatus("PHYSICS ERROR"));
+	startLoadingPreview();
+	window.setTimeout(() => Ammo().then(() => {
+		clearLoadingPreview();
+		initScene();
+	}).catch(() => setBowlingStatus("PHYSICS ERROR")), 0);
+}
+
+function startLoadingPreview() {
+	if (loadingPreview.length > 0) return;
+	var track = trackProtoMesh.clone();
+	track.position.x = 0.0;
+	scene.add(track);
+	loadingPreview.push(track);
+	var ball = ballProtoMesh.clone();
+	ball.position.set(0.0, BALL_HEIGHT, BALL_LINE);
+	scene.add(ball);
+	loadingPreview.push(ball);
+	for (var i = 0; i < PIN_POSITIONS.length; i++) {
+		var pin = pinProtoMesh.clone();
+		pin.position.set(PIN_POSITIONS[i][0], PIN_POSITIONS[i][1], PIN_POSITIONS[i][2]);
+		scene.add(pin);
+		loadingPreview.push(pin);
+	}
+	setBowlingStatus("LOADING PHYSICS");
+	startAnimation();
+}
+
+function clearLoadingPreview() {
+	for (var i = 0; i < loadingPreview.length; i++) {
+		scene.remove(loadingPreview[i]);
+	}
+	loadingPreview = [];
 }
 
 function styleImportedMeshes() {
@@ -392,7 +427,7 @@ function initScene() {
 	renderer.domElement.addEventListener("touchmove", onDocumentTouchMove, false);
 	renderer.domElement.addEventListener("touchend", onDocumentTouchEnd, false);
 
-	animate();
+	startAnimation();
 	window.addEventListener("keydown", onKeyboardInput, false);
 	window.parent.postMessage({ type: "headpilot-bowling-ready" }, window.location.origin);
 }
@@ -530,6 +565,12 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	render();
+}
+
+function startAnimation() {
+	if (animationStarted) return;
+	animationStarted = true;
+	animate();
 }
 
 function updateTouchRay(clientX, clientY) {
