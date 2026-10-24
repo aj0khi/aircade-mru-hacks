@@ -3,6 +3,10 @@ const DIRECTIONS = {
   ArrowDown: { x: 0, y: 1 },
   ArrowLeft: { x: -1, y: 0 },
   ArrowRight: { x: 1, y: 0 },
+  KeyW: { x: 0, y: -1 },
+  KeyS: { x: 0, y: 1 },
+  KeyA: { x: -1, y: 0 },
+  KeyD: { x: 1, y: 0 },
 };
 
 export class Snake {
