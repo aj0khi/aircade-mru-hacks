@@ -210,8 +210,18 @@ bowling3dFrame.addEventListener("load", () => {
 
 window.addEventListener("message", (event) => {
   if (event.origin !== window.location.origin
-    || event.source !== bowling3dFrame.contentWindow
-    || event.data?.type !== "headpilot-bowling-ready") {
+    || event.source !== bowling3dFrame.contentWindow) {
+    return;
+  }
+  if (event.data?.type === "headpilot-bowling-audio" && gameType === "bowling-3d") {
+    unlockAudio();
+    arcadeAudio.play("bowling", event.data.event, event.data.detail);
+    if (event.data.event === "strike" || event.data.event === "spare") {
+      celebrateGoal();
+    }
+    return;
+  }
+  if (event.data?.type !== "headpilot-bowling-ready") {
     return;
   }
   bowling3dReady = true;
@@ -258,6 +268,7 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "KeyP" || event.code === "Escape") {
     if (gameType === "bowling-3d") {
       bowling3dPaused = !bowling3dPaused;
+      arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
       sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     } else {
       activeGame?.togglePause();
@@ -288,6 +299,7 @@ startButton.addEventListener("click", () => {
   unlockAudio();
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
+    arcadeAudio.play("bowling", "start");
     sendBowling3dCommand("start");
     updateUI();
     return;
@@ -297,6 +309,7 @@ startButton.addEventListener("click", () => {
 pauseButton.addEventListener("click", () => {
   if (gameType === "bowling-3d") {
     bowling3dPaused = !bowling3dPaused;
+    arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
     sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     updateUI();
     return;
@@ -308,6 +321,7 @@ restartButton.addEventListener("click", () => {
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
     bowling3dReady = false;
+    arcadeAudio.play("bowling", "start");
     bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
     return;
   }
@@ -359,6 +373,7 @@ function updateMuteUI() {
 }
 
 function selectGame(nextGame) {
+  unlockAudio();
   if (gameType && nextGame !== gameType) {
     arcadeAudio.silence();
   }
