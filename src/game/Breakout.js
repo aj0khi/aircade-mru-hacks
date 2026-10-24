@@ -1,6 +1,6 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-const BRICK_COLORS = ["#22d8ff", "#ff3fba", "#ffe44a", "#7b4dff"];
+const BRICK_COLORS = ["#e44b3a", "#ef8c3a", "#f2c94c", "#66a64a", "#4b8bc5"];
 
 export class Breakout {
   constructor(canvas) {
@@ -34,9 +34,9 @@ export class Breakout {
       for (let column = 0; column < columns; column += 1) {
         bricks.push({
           x: 48 + column * (width + gap),
-          y: 56 + row * 28,
+          y: 48 + row * 26,
           width,
-          height: 18,
+          height: 16,
           color: BRICK_COLORS[row % BRICK_COLORS.length],
           visible: true,
         });
@@ -140,9 +140,9 @@ export class Breakout {
 
   draw() {
     const ctx = this.context;
-    ctx.fillStyle = "#0b0920";
+    ctx.fillStyle = "#070707";
     ctx.fillRect(0, 0, this.width, this.height);
-    ctx.strokeStyle = "rgba(123, 77, 255, 0.18)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
     ctx.lineWidth = 1;
     for (let x = 0; x <= this.width; x += 48) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke();
@@ -153,25 +153,19 @@ export class Breakout {
     for (const brick of this.bricks) {
       if (brick.visible) this.drawGlowRect(ctx, brick.x, brick.y, brick.width, brick.height, brick.color);
     }
-    this.drawGlowRect(ctx, this.paddleState.x, this.paddleState.y, this.paddle.width, this.paddle.height, "#22d8ff");
+    this.drawGlowRect(ctx, this.paddleState.x, this.paddleState.y, this.paddle.width, this.paddle.height, "#f5f1df");
     this.drawBall(ctx);
   }
 
   drawGlowRect(ctx, x, y, width, height, color) {
     ctx.fillStyle = color;
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = color;
     ctx.fillRect(x, y, width, height);
-    ctx.shadowBlur = 0;
   }
 
   drawBall(ctx) {
     ctx.fillStyle = "#f7f3ff";
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "#ffe44a";
     ctx.beginPath();
     ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
   }
 }

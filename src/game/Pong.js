@@ -161,15 +161,19 @@ export class Game {
   draw() {
     const ctx = this.context;
     ctx.clearRect(0, 0, this.width, this.height);
-    ctx.fillStyle = "#0b0920";
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, this.width, this.height);
-    this.drawNeonGrid(ctx);
-    this.drawScoringZones(ctx);
-    this.drawPitch(ctx);
-    this.drawGoal(ctx, 0, "#ffffff");
-    this.drawGoal(ctx, this.width, "#ffffff");
-    this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
-    this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(this.paddles[1].x, this.paddles[1].y, this.paddle.width, this.paddle.height);
+    ctx.fillRect(this.paddles[2].x, this.paddles[2].y, this.paddle.width, this.paddle.height);
+    ctx.setLineDash([12, 16]);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(this.width / 2, 0);
+    ctx.lineTo(this.width / 2, this.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
     this.drawSoccerBall(ctx);
   }
 
@@ -261,26 +265,9 @@ export class Game {
 
   drawSoccerBall(ctx) {
     const { x, y } = this.ballState;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "#ffffff";
-    ctx.fillStyle = "#f8fbff";
+    ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(x, y, this.ball.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#241d45";
-    for (const angle of [0, Math.PI * 0.4, Math.PI * 0.8, Math.PI * 1.2, Math.PI * 1.6]) {
-      ctx.beginPath();
-      ctx.arc(x + Math.cos(angle) * 4, y + Math.sin(angle) * 4, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.shadowBlur = 0;
-  }
-
-  drawGlowRect(ctx, x, y, color) {
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = color;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, this.paddle.width, this.paddle.height);
-    ctx.shadowBlur = 0;
   }
 }

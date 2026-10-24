@@ -390,7 +390,18 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The first screen is the cabinet selector: choose a game with the on-screen buttons or keys **1**, **2**, and **3**. Once inside a game, **ARCADE MENU** returns to the selector and the adjacent game button switches directly to the next cabinet without a page reload. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. In Wii Remote mode, wrist roll moves Player 1's paddle through `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
+Open the local URL printed by Vite. The first screen is the cabinet selector:
+choose a game with the on-screen buttons or keys **1** through **5**. Once
+inside a game, **ARCADE MENU** returns to the selector and the adjacent game
+button switches directly to the next cabinet without a page reload. Pong uses
+the original black-and-white two-paddle presentation. Use **W/S** for Player 1,
+**Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press
+**P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player
+mode, Player 2 is controlled by the built-in AI. The browser integration point
+is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where
+`verticalValue` is normalized to `-1...1`. In Wii Remote mode, wrist roll moves
+Player 1's paddle through
+`window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
 
 ## 3D Bowling mode
 
@@ -444,16 +455,21 @@ AirPods motion is supported through the parent
 
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
 
-## Neon Snake
+## Snake
 
-Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys or motion input, pause with P/Escape, and restart with RESTART. Wrist roll selects left/right and wrist pitch selects up/down; a deadzone prevents jitter. Eat gold food to grow and score; hitting the wall or yourself ends the round. The direct motion API is `window.gyroSnake.setDirection(roll, pitch)`.
+Use the **SNAKE** button to switch to the second arcade game. Start with the
+button or Space, steer with the arrow keys or motion input, pause with
+P/Escape, and restart with RESTART. The original-inspired presentation uses a
+cartoon snake and apple; a deadzone prevents motion jitter. Hitting the wall or
+yourself ends the round. The direct motion API is
+`window.gyroSnake.setDirection(roll, pitch)`.
 
-## Neon Breakout
+## Breakout
 
-Use the **NEON BREAKOUT** cabinet or press **4** from the game menu. Start with
+Use the **BREAKOUT** cabinet or press **4** from the game menu. Start with
 the button or Space, move the paddle with the left/right arrow keys or wrist
-roll, pause with P/Escape, and restart with RESTART. Clear the cyan, pink,
-yellow, and purple brick wall to finish the round. The direct motion API is
+roll, pause with P/Escape, and restart with RESTART. Clear the classic colored
+brick wall to finish the round. The direct motion API is
 `window.gyroBreakout.setPaddleInput(value)`, where `value` is normalized to
 `-1...1`.
 

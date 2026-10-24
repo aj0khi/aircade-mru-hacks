@@ -329,16 +329,16 @@ function updateModeUI() {
   const breakoutMode = gameType === "breakout";
   const tankMode = gameType === "tank";
   gameTitle.textContent = snakeMode
-    ? "Neon Snake"
-    : bowling3dMode ? "3D Bowling" : breakoutMode ? "Neon Breakout" : tankMode ? "Neon Tanks" : "Soccer Pong";
+    ? "Snake"
+    : bowling3dMode ? "3D Bowling" : breakoutMode ? "Breakout" : tankMode ? "Neon Tanks" : "Pong";
   gameSubtitle.textContent = snakeMode
-    ? "Eat, grow, and own the grid."
+    ? "Guide the snake. Find the apple."
     : bowling3dMode
       ? "Open-source physics lane. Drag and flick to bowl."
-      : breakoutMode ? "Clear the wall. Chase the score." : tankMode ? "Ricochet. Reload. Dominate." : "A quick match. First to seven.";
+      : breakoutMode ? "Clear the wall brick by brick." : tankMode ? "Ricochet. Reload. Dominate." : "Two paddles. One ball.";
   gameButton.textContent = snakeMode
     ? "3D Bowling"
-    : bowling3dMode ? "Neon Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Soccer Pong" : "Snake";
+    : bowling3dMode ? "Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Pong" : "Snake";
   modeButton.hidden = snakeMode || bowling3dMode || breakoutMode || tankMode;
   modeLabel.textContent = snakeMode || bowling3dMode || breakoutMode
     ? "1P // SOLO" : (twoPlayer || tankMode ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
