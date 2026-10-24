@@ -216,6 +216,9 @@ window.addEventListener("message", (event) => {
   if (event.data?.type === "headpilot-bowling-audio" && gameType === "bowling-3d") {
     unlockAudio();
     arcadeAudio.play("bowling", event.data.event, event.data.detail);
+    if (event.data.event === "strike" || event.data.event === "spare") {
+      celebrateGoal();
+    }
     return;
   }
   if (event.data?.type !== "headpilot-bowling-ready") {
@@ -370,6 +373,7 @@ function updateMuteUI() {
 }
 
 function selectGame(nextGame) {
+  unlockAudio();
   if (gameType && nextGame !== gameType) {
     arcadeAudio.silence();
   }

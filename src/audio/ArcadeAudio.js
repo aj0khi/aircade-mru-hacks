@@ -346,30 +346,67 @@ export class ArcadeAudio {
       });
       return;
     }
+    if (type === "impact") {
+      this.noise({ duration: 0.16, gain: 0.085, pan });
+      this.tone({
+        frequency: 155,
+        duration: 0.16,
+        type: "sawtooth",
+        gain: 0.13,
+        slide: -95,
+        pan,
+      });
+      this.tone({
+        frequency: 920,
+        duration: 0.06,
+        type: "square",
+        gain: 0.095,
+        slide: -420,
+        pan,
+      });
+      this.tone({
+        frequency: 1480,
+        duration: 0.045,
+        type: "triangle",
+        gain: 0.06,
+        delay: 0.015,
+        slide: -500,
+        pan: -pan * 0.5,
+      });
+      return;
+    }
     if (type === "pin") {
       const count = clamp(Number(detail.count) || 1, 1, 10);
-      const bursts = Math.min(count, 5);
-      this.noise({ duration: 0.09 + bursts * 0.02, gain: 0.045 + bursts * 0.006, pan });
+      const bursts = Math.min(count + 1, 7);
+      this.noise({ duration: 0.12 + bursts * 0.022, gain: 0.06 + bursts * 0.007, pan });
+      this.tone({
+        frequency: 190 + count * 12,
+        duration: 0.12,
+        type: "triangle",
+        gain: 0.09,
+        slide: -80,
+        pan,
+      });
       for (let i = 0; i < bursts; i += 1) {
-        const hitPan = clamp(pan + (i % 2 === 0 ? -0.22 : 0.22) * (i + 1) * 0.3, -0.9, 0.9);
-        const baseFreq = 580 + i * 115 + (count * 18);
+        const hitPan = clamp(pan + (i % 2 === 0 ? -0.32 : 0.32) * ((i % 3) + 1) * 0.3, -0.9, 0.9);
+        const baseFreq = 640 + (i * 135) + (count * 22);
         this.tone({
           frequency: baseFreq,
-          duration: 0.075,
+          duration: 0.08,
           type: "square",
-          gain: 0.075,
-          delay: i * 0.032,
-          slide: -160,
+          gain: 0.09,
+          delay: i * 0.028,
+          slide: -210,
           pan: hitPan,
         });
         this.tone({
-          frequency: baseFreq * 1.65,
-          duration: 0.045,
+          frequency: baseFreq * 1.72,
+          duration: 0.05,
           type: "triangle",
-          gain: 0.04,
-          delay: i * 0.032 + 0.01,
-          slide: -90,
-          pan: -hitPan * 0.6,
+          gain: 0.055,
+          delay: i * 0.028 + 0.01,
+          slide: -140,
+          pan: -hitPan * 0.65,
         });
       }
       return;
@@ -473,38 +510,47 @@ export class ArcadeAudio {
   }
 
   playBowlingStrike() {
-    this.noise({ duration: 0.2, gain: 0.06, pan: 0 });
-    const fanfare = [523, 659, 784, 1047, 1319, 1568];
+    this.noise({ duration: 0.28, gain: 0.085, pan: 0 });
+    this.tone({ frequency: 131, duration: 0.24, type: "sawtooth", gain: 0.11, slide: 65, pan: 0 });
+    this.tone({ frequency: 262, duration: 0.2, type: "square", gain: 0.09, delay: 0.03, slide: 90, pan: 0 });
+
+    const fanfare = [523, 659, 784, 1047, 784, 1047, 1319, 1568];
     fanfare.forEach((frequency, index) => {
-      const bounce = index % 2 === 0 ? -0.75 : 0.75;
+      const bounce = index % 2 === 0 ? -0.78 : 0.78;
       this.tone({
         frequency,
-        duration: 0.12,
+        duration: 0.13,
         type: "square",
-        gain: 0.095,
-        delay: 0.05 + index * 0.075,
-        slide: 45,
+        gain: 0.105,
+        delay: 0.08 + index * 0.075,
+        slide: 48,
         pan: bounce,
       });
       this.tone({
         frequency: frequency * 1.5,
-        duration: 0.07,
+        duration: 0.075,
         type: "triangle",
-        gain: 0.04,
-        delay: 0.065 + index * 0.075,
-        pan: -bounce * 0.6,
+        gain: 0.048,
+        delay: 0.095 + index * 0.075,
+        pan: -bounce * 0.65,
       });
     });
-    [523, 659, 784, 1047].forEach((frequency, index) => {
+
+    const chordDelay = 0.7;
+    [523, 659, 784, 1047, 1319].forEach((frequency, index) => {
       this.tone({
         frequency,
-        duration: 0.45,
+        duration: 0.55,
         type: "square",
-        gain: 0.07,
-        delay: 0.54,
-        pan: (index - 1.5) * 0.28,
+        gain: 0.08,
+        delay: chordDelay,
+        slide: 25,
+        pan: (index - 2) * 0.32,
       });
     });
+    this.tone({ frequency: 1568, duration: 0.24, type: "triangle", gain: 0.06, delay: 0.95, slide: 120, pan: -0.5 });
+    this.tone({ frequency: 2093, duration: 0.28, type: "triangle", gain: 0.055, delay: 1.06, slide: 140, pan: 0.5 });
+    this.noise({ duration: 0.24, gain: 0.04, delay: 0.96, pan: 0 });
   }
 
   playBowlingGameOver() {
