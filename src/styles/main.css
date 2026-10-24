@@ -65,7 +65,6 @@ body {
   border-radius: 50%;
   background: var(--yellow);
   box-shadow: 0 0 7px var(--yellow);
-  animation: bulb-flicker 3.7s steps(3, end) infinite;
 }
 
 .header::before {
@@ -74,7 +73,6 @@ body {
 
 .header::after {
   right: 8px;
-  animation-delay: -1.4s;
 }
 
 .brand-line {
@@ -98,7 +96,6 @@ body {
   font-size: 0.72rem;
   letter-spacing: -0.08em;
   transform: rotate(-4deg);
-  animation: neon-hum 4.8s ease-in-out infinite;
 }
 
 .eyebrow,
@@ -125,7 +122,6 @@ h1 {
   text-transform: uppercase;
   text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
   transform: skew(-4deg);
-  animation: sign-hum 5.6s steps(4, end) infinite;
 }
 
 .subtitle {
@@ -150,7 +146,6 @@ h1 {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   white-space: nowrap;
-  animation: neon-hum 4.2s steps(5, end) infinite;
 }
 
 .status-dot {
@@ -172,7 +167,6 @@ h1 {
     0 0 0 4px #0c0a1c,
     0 0 22px rgba(34, 216, 255, 0.22),
     0 8px 0 #05040d;
-  animation: cabinet-hum 6.5s ease-in-out infinite;
 }
 
 .game-shell.awaiting-choice {
@@ -509,57 +503,6 @@ button.primary {
   100% { opacity: 0; transform: translate(calc(-50% + var(--x)), var(--y)) rotate(var(--r)); }
 }
 
-@keyframes neon-hum {
-  0%, 18%, 21%, 64%, 100% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  19%, 20%, 65% {
-    opacity: 0.82;
-    filter: brightness(0.86);
-  }
-  66% {
-    opacity: 0.94;
-    filter: brightness(1.12);
-  }
-}
-
-@keyframes sign-hum {
-  0%, 16%, 20%, 100% {
-    text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64;
-  }
-  17%, 19% {
-    text-shadow: 4px 4px 0 #bd2d8e, 7px 7px 0 #351c64;
-  }
-  63%, 65% {
-    text-shadow: 4px 4px 0 var(--pink), 7px 7px 0 #351c64, 0 0 14px rgba(255, 228, 74, 0.55);
-  }
-}
-
-@keyframes cabinet-hum {
-  0%, 100% {
-    box-shadow: 0 0 0 4px #0c0a1c, 0 0 22px rgba(34, 216, 255, 0.2), 0 8px 0 #05040d;
-  }
-  48% {
-    box-shadow: 0 0 0 4px #0c0a1c, 0 0 27px rgba(34, 216, 255, 0.31), 0 8px 0 #05040d;
-  }
-  51% {
-    box-shadow: 0 0 0 4px #0c0a1c, 0 0 13px rgba(34, 216, 255, 0.13), 0 8px 0 #05040d;
-  }
-}
-
-@keyframes bulb-flicker {
-  0%, 15%, 18%, 55%, 100% {
-    opacity: 1;
-  }
-  16%, 17% {
-    opacity: 0.32;
-  }
-  56% {
-    opacity: 0.72;
-  }
-}
-
 @keyframes rail-hum {
   0%, 100% {
     opacity: 0.7;
@@ -592,8 +535,6 @@ button.primary {
   h1,
   .status,
   .game-shell,
-  .header::before,
-  .header::after,
   .game-shell::before,
   .controls::before {
     animation: none;
