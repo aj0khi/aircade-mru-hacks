@@ -488,10 +488,12 @@ h1.marquee-sign {
   color: #64f4ff;
 }
 
-.game-choice:last-child {
-  grid-column: 2 / 4;
-  justify-self: center;
-  width: calc((100% - 12px) / 2);
+.game-choice:nth-child(5) {
+  grid-column: 2 / 3;
+}
+
+.game-choice:nth-child(6) {
+  grid-column: 3 / 4;
 }
 
 .game-menu[hidden] {
@@ -867,7 +869,8 @@ button.primary {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .game-choice:last-child {
+    .game-choice:nth-child(5),
+    .game-choice:nth-child(6) {
       grid-column: 1 / -1;
       width: 50%;
     }
@@ -902,7 +905,8 @@ button.primary {
     grid-template-columns: 1fr;
   }
 
-  .game-choice:last-child {
+  .game-choice:nth-child(5),
+  .game-choice:nth-child(6) {
     grid-column: auto;
     width: auto;
   }

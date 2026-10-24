@@ -8,6 +8,11 @@ HeadPilot Arcade is a browser-based arcade collection that revitalizes familiar 
 
 The goal is to transform familiar arcade games into an accessible, social gaming experience using consumer hardware that players may already own. The shared cabinet brings together classic Pong, Snake, and Breakout presentations with 3D Bowling and Neon Tanks.
 
+The default bowling cabinet is now a first-party Canvas prototype,
+**HeadPilot Bowling**. The previous borrowed Three.js/Ammo.js lane remains
+available as **3D Bowling // Backup** from the menu while the replacement is
+being evaluated.
+
 **Hackathon theme:** Revitalization
 
 **Judging criteria:**
@@ -457,7 +462,22 @@ is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where
 Player 1's paddle through
 `window.gyroArcade.setMotionSample({ roll, pitch, swing })`.
 
-## 3D Bowling mode
+## HeadPilot Bowling
+
+The default **HEADPILOT BOWLING** cabinet is our own lightweight Canvas
+prototype. It uses a perspective lane, ten pins, aim control, rolling
+animation, frame progression, scoring, mouse/trackpad drag input, keyboard
+arrows, and AirPods roll/swing input.
+
+- Use **Left/Right** to aim.
+- Press **Space** or drag upward on the lane to roll.
+- Use **Start game**, **Pause**, and **Restart** like the other cabinets.
+- The first roll uses the current aim to knock down more pins when centered.
+
+This prototype is intentionally separate from the borrowed lane so it can be
+judged safely. It can be removed or promoted without changing the fallback.
+
+## 3D Bowling backup mode
 
 The arcade keeps one bowling experience: **3D BOWLING**. It is a local,
 HeadPilot-styled physics lane with mouse/trackpad and AirPods-ready motion
