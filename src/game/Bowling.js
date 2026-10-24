@@ -40,11 +40,13 @@ export class Bowling {
   }
 
   createPins() {
-    return Array.from({ length: 10 }, (_, index) => {
-      const row = Math.floor((index + 1) / 3.01);
-      const column = (index + 1) % 3;
-      return { x: (column - 1) * (row + 1) * 0.18, row, standing: true };
-    });
+    const formation = [
+      [-0.27, 3], [-0.09, 3], [0.09, 3], [0.27, 3],
+      [-0.18, 2], [0, 2], [0.18, 2],
+      [-0.09, 1], [0.09, 1],
+      [0, 0],
+    ];
+    return formation.map(([x, row]) => ({ x, row, standing: true }));
   }
 
   start() {
@@ -138,54 +140,123 @@ export class Bowling {
 
   draw() {
     const ctx = this.context;
-    ctx.fillStyle = "#080a18";
+    ctx.fillStyle = "#070711";
     ctx.fillRect(0, 0, this.width, this.height);
-    const lane = ctx.createLinearGradient(0, 70, 0, this.height);
-    lane.addColorStop(0, "#3a2460");
-    lane.addColorStop(0.45, "#151d46");
-    lane.addColorStop(1, "#08152a");
+    this.drawBackdrop(ctx);
+    const lane = ctx.createLinearGradient(0, 90, 0, this.height);
+    lane.addColorStop(0, "#b88ee4");
+    lane.addColorStop(0.18, "#7554ac");
+    lane.addColorStop(0.55, "#263b78");
+    lane.addColorStop(1, "#111d3e");
     ctx.fillStyle = lane;
     ctx.beginPath();
-    ctx.moveTo(330, 92); ctx.lineTo(630, 92); ctx.lineTo(850, 540); ctx.lineTo(110, 540);
+    ctx.moveTo(318, 92); ctx.lineTo(642, 92); ctx.lineTo(866, 540); ctx.lineTo(94, 540);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = "rgba(100, 244, 255, 0.34)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    this.drawLaneSurface(ctx);
     this.drawLaneMarks(ctx);
+    this.drawPinDeck(ctx);
     this.drawPins(ctx);
     this.drawAim(ctx);
-    if (this.ball) this.drawBall(ctx);
+    this.drawBall(ctx);
+    this.drawHud(ctx);
+  }
+
+  drawBackdrop(ctx) {
+    const glow = ctx.createRadialGradient(this.width / 2, 100, 20, this.width / 2, 180, 420);
+    glow.addColorStop(0, "rgba(255, 63, 186, 0.2)");
+    glow.addColorStop(0.5, "rgba(34, 216, 255, 0.05)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.fillStyle = "rgba(7, 6, 20, 0.9)";
+    ctx.fillRect(0, 0, this.width, 80);
     ctx.fillStyle = "#ffe44a";
-    ctx.font = "900 18px Arial";
-    ctx.fillText(`FRAME ${Math.min(this.frame, 10)}  ·  ${this.score} PINS`, 34, 42);
-    ctx.fillStyle = "#22d8ff";
-    ctx.font = "700 14px Arial";
-    ctx.fillText(this.message, 34, 66);
+    ctx.font = "900 16px Arial";
+    ctx.fillText("HEADPILOT LANES", 34, 31);
+    ctx.fillStyle = "#8d86ad";
+    ctx.font = "700 11px Arial";
+    ctx.fillText("LANE 01  //  MOTION BOWLING", 34, 52);
+  }
+
+  drawLaneSurface(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(318, 92); ctx.lineTo(642, 92); ctx.lineTo(866, 540); ctx.lineTo(94, 540);
+    ctx.clip();
+    for (let index = 0; index < 18; index += 1) {
+      const left = 94 + index * 43;
+      ctx.fillStyle = index % 2 ? "rgba(255, 255, 255, 0.035)" : "rgba(5, 8, 25, 0.08)";
+      ctx.beginPath();
+      ctx.moveTo(480 + (left - 480) * 0.08, 92);
+      ctx.lineTo(480 + (left - 480) * 1.9, 540);
+      ctx.lineTo(480 + (left - 480 + 43) * 1.9, 540);
+      ctx.lineTo(480 + (left - 480 + 43) * 0.08, 92);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.strokeStyle = "#22d8ff";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(318, 92); ctx.lineTo(642, 92); ctx.lineTo(866, 540); ctx.lineTo(94, 540);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255, 63, 186, 0.75)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(292, 540); ctx.lineTo(300, 92); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(668, 540); ctx.lineTo(660, 92); ctx.stroke();
   }
 
   drawLaneMarks(ctx) {
-    ctx.strokeStyle = "rgba(255, 228, 74, 0.22)";
+    ctx.fillStyle = "rgba(255, 228, 74, 0.8)";
+    for (let index = 0; index < 7; index += 1) {
+      const point = this.lanePoint(0.15, (index - 3) * 0.18);
+      ctx.beginPath(); ctx.arc(point.x, point.y, 5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.17)";
     ctx.lineWidth = 2;
-    for (let index = 1; index < 7; index += 1) {
-      const x = 330 + index * 50;
-      ctx.beginPath(); ctx.moveTo(x, 100); ctx.lineTo(130 + index * 100, 540); ctx.stroke();
-    }
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
     for (let index = 1; index < 5; index += 1) {
-      const y = 120 + index * 85;
-      ctx.beginPath(); ctx.moveTo(330 - index * 12, y); ctx.lineTo(630 + index * 12, y); ctx.stroke();
+      const y = 128 + index * 82;
+      const inset = index * 15;
+      ctx.beginPath(); ctx.moveTo(318 + inset, y); ctx.lineTo(642 - inset, y); ctx.stroke();
     }
+  }
+
+  drawPinDeck(ctx) {
+    const deck = this.lanePoint(0.74);
+    ctx.fillStyle = "rgba(8, 7, 22, 0.5)";
+    ctx.beginPath();
+    ctx.ellipse(deck.x, deck.y + 12, 110, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 228, 74, 0.38)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   drawPins(ctx) {
     for (const pin of this.pins) {
       if (!pin.standing) continue;
       const point = this.lanePoint(0.77 + pin.row * 0.025, pin.x);
-      const size = 10 + pin.row;
-      ctx.fillStyle = "#f7f3ff";
-      ctx.beginPath(); ctx.arc(point.x, point.y, size, 0, Math.PI * 2); ctx.fill();
+      const size = 8 + pin.row * 0.7;
+      ctx.save();
+      ctx.translate(point.x, point.y);
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = "#fff9ff";
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.52, size);
+      ctx.quadraticCurveTo(-size * 0.9, size * 0.2, -size * 0.45, -size * 0.18);
+      ctx.quadraticCurveTo(-size * 0.3, -size * 0.8, 0, -size);
+      ctx.quadraticCurveTo(size * 0.3, -size * 0.8, size * 0.45, -size * 0.18);
+      ctx.quadraticCurveTo(size * 0.9, size * 0.2, size * 0.52, size);
+      ctx.closePath(); ctx.fill();
+      ctx.shadowColor = "transparent";
       ctx.fillStyle = "#ff3fba";
-      ctx.fillRect(point.x - size * 0.75, point.y - 2, size * 1.5, 4);
+      ctx.fillRect(-size * 0.5, -size * 0.1, size, size * 0.16);
+      ctx.fillStyle = "#22d8ff";
+      ctx.fillRect(-size * 0.42, size * 0.12, size * 0.84, size * 0.08);
+      ctx.restore();
     }
   }
 
@@ -196,17 +267,43 @@ export class Bowling {
     ctx.setLineDash([8, 8]);
     ctx.beginPath(); ctx.moveTo(point.x, point.y); ctx.lineTo(this.width / 2, 106); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.fillStyle = "#ffe44a";
+    ctx.beginPath(); ctx.arc(point.x, point.y, 7, 0, Math.PI * 2); ctx.fill();
   }
 
   drawBall(ctx) {
-    const point = this.lanePoint(this.ball.progress, this.ball.laneX);
-    const radius = 18 - this.ball.progress * 10;
+    const point = this.ball
+      ? this.lanePoint(this.ball.progress, this.ball.laneX)
+      : this.lanePoint(0, this.aim);
+    const radius = this.ball ? 18 - this.ball.progress * 10 : 20;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.beginPath(); ctx.ellipse(point.x + 6, point.y + 10, radius * 1.1, radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = "#22d8ff";
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = "#22d8ff";
+    ctx.shadowBlur = 24;
+    const ball = ctx.createRadialGradient(point.x - radius * 0.35, point.y - radius * 0.4, 2, point.x, point.y, radius);
+    ball.addColorStop(0, "#ffffff");
+    ball.addColorStop(0.2, "#64f4ff");
+    ball.addColorStop(0.7, "#2875cb");
+    ball.addColorStop(1, "#101638");
+    ctx.fillStyle = ball;
     ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "#08152a";
-    ctx.beginPath(); ctx.arc(point.x - radius * 0.25, point.y - radius * 0.2, radius * 0.18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0a1230";
+    for (const hole of [[-0.22, -0.25], [0.05, -0.32], [0.22, -0.12]]) {
+      ctx.beginPath(); ctx.arc(point.x + radius * hole[0], point.y + radius * hole[1], radius * 0.12, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  drawHud(ctx) {
+    ctx.fillStyle = "rgba(7, 6, 20, 0.88)";
+    ctx.fillRect(700, 22, 220, 50);
+    ctx.strokeStyle = "#41356e";
+    ctx.strokeRect(700, 22, 220, 50);
+    ctx.fillStyle = "#ffe44a";
+    ctx.font = "900 16px Arial";
+    ctx.fillText(`FRAME ${Math.min(this.frame, 10)}`, 716, 43);
+    ctx.fillStyle = "#f7f3ff";
+    ctx.font = "700 13px Arial";
+    ctx.fillText(`${this.score} PINS  ·  ${this.message}`, 716, 61);
   }
 }
