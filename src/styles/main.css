@@ -54,6 +54,29 @@ body {
   box-shadow: 0 0 0 4px #0c0a1c, 0 5px 0 #0c0a1c;
 }
 
+.header::before,
+.header::after {
+  position: absolute;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  content: "";
+  border: 1px solid #fff4a1;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 7px var(--yellow);
+  animation: bulb-flicker 3.7s steps(3, end) infinite;
+}
+
+.header::before {
+  left: 8px;
+}
+
+.header::after {
+  right: 8px;
+  animation-delay: -1.4s;
+}
+
 .brand-line {
   display: flex;
   align-items: center;
@@ -150,6 +173,29 @@ h1 {
     0 0 22px rgba(34, 216, 255, 0.22),
     0 8px 0 #05040d;
   animation: cabinet-hum 6.5s ease-in-out infinite;
+}
+
+.game-shell::before {
+  position: absolute;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  z-index: 4;
+  height: 3px;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    transparent 0 7%,
+    var(--blue) 7% 25%,
+    transparent 25% 29%,
+    var(--pink) 29% 53%,
+    transparent 53% 58%,
+    var(--yellow) 58% 86%,
+    transparent 86%
+  );
+  box-shadow: 0 0 9px rgba(34, 216, 255, 0.7);
+  animation: rail-hum 5.2s ease-in-out infinite;
 }
 
 .game-shell::after {
@@ -255,6 +301,17 @@ button[hidden] {
   border: 2px solid var(--line);
   background: var(--panel);
   box-shadow: 0 4px 0 #0c0a1c;
+}
+
+.controls::before {
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin: -1px 0 8px;
+  content: "";
+  background: var(--purple);
+  box-shadow: 0 0 8px rgba(123, 77, 255, 0.6);
+  animation: control-light 4.6s ease-in-out infinite;
 }
 
 .control-group {
@@ -382,11 +439,54 @@ button.primary {
   }
 }
 
+@keyframes bulb-flicker {
+  0%, 15%, 18%, 55%, 100% {
+    opacity: 1;
+  }
+  16%, 17% {
+    opacity: 0.32;
+  }
+  56% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes rail-hum {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scaleX(0.98);
+  }
+  45% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  48% {
+    opacity: 0.42;
+    transform: scaleX(0.985);
+  }
+}
+
+@keyframes control-light {
+  0%, 100% {
+    opacity: 0.48;
+  }
+  47% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .brand-mark,
   h1,
   .status,
-  .game-shell {
+  .game-shell,
+  .header::before,
+  .header::after,
+  .game-shell::before,
+  .controls::before {
     animation: none;
   }
 }
