@@ -164,6 +164,10 @@ canvas[hidden] {
   opacity: 1;
 }
 
+.message[hidden] {
+  display: none;
+}
+
 .confetti {
   position: absolute;
   z-index: 2;

@@ -379,27 +379,19 @@ npm run dev
 
 Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
 
-## Bowling mode
+## 3D Bowling mode
 
-The arcade also includes **Gyro Bowling**, a ten-frame, two-roll bowling game designed
-around the same normalized-input approach as Pong. Keyboard fallback controls are:
-
-- **Left / Right:** aim
-- **Up / Down:** adjust throw power
-- **Space:** start and throw
-- **P / Escape:** pause between throws
-
-The browser integration point is:
+The arcade keeps one bowling experience: **3D BOWLING**. It is a local,
+HeadPilot-styled physics lane with mouse/trackpad and AirPods-ready motion
+controls. The browser integration point is:
 
 ```js
 window.gyroBowling.setMotionInput(horizontalValue, forwardValue)
 ```
 
-Both values are normalized to `-1...1`. A motion adapter can map AirPods roll or
+Both values are normalized to `-1...1`. A motion bridge can map AirPods roll or
 head tilt to `horizontalValue` and a forward swing gesture to `forwardValue`.
-When `forwardValue` exceeds the throw threshold, the ball rolls. A bridge can
-also call `window.gyroBowling.setAimInput(horizontalValue)` continuously and
-`window.gyroBowling.throwBall(power)` once a swing is detected.
+The parent arcade forwards these samples to the 3D physics scene.
 
 For a bridge that sends timestamped samples, use the flick-style adapter:
 
@@ -412,31 +404,25 @@ window.gyroBowling.setMotionSample({
 });
 ```
 
-This follows the open-source [`iliagrigorevdev/bowling`](https://github.com/iliagrigorevdev/bowling)
-interaction idea: position the ball laterally, then release it with a forward flick.
-That repository is GPLv3 and uses touch input plus Three.js/Ammo.js physics. The
-same source, physics, models, and resources are ported into `public/bowling-3d/`
-with the original license preserved. The adapter also forwards the same motion
-samples into the 3D physics scene when that mode is active.
+The 3D physics foundation is a local port of the open-source
+[iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling) project.
+The HeadPilot-specific shell, HUD, colors, status system, pause lifecycle, and
+motion forwarding are maintained in this repository. The original project is
+GPLv3; its license and attribution remain included at
+`public/bowling-3d/LICENSE`.
 
-The bowling engine remains independent of AirPods, Swift, and the UI. The future
-macOS bridge only needs to translate CoreMotion samples into this contract.
-
-### 3D physics bowling
-
-The **3D BOWLING** mode is a complete local port of the original open-source bowling game from
+The **3D BOWLING** mode includes the ported physics lane from
 [iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling), including
 its Three.js rendering and Ammo.js/Bullet physics. It is vendored under
 `public/bowling-3d/` so the normal Vite server can load it without a second
 server or npm dependency.
 
 Use the mouse or trackpad to drag the ball left/right, then flick forward to
-release it. In the arcade shell, **START GAME** resumes the lane, **PAUSE**
-freezes physics, and **RESTART** loads a fresh frame. The original GPLv3 license is included at
-`public/bowling-3d/LICENSE`. Because this mode includes GPLv3 software, review
-the license obligations before distributing the combined application. AirPods
-motion is supported through the parent `window.gyroBowling.setMotionSample()`
-contract and is forwarded into the ported 3D physics scene.
+release it. **START GAME** resumes the lane, **PAUSE** freezes physics, and
+**RESTART** loads a fresh frame. Because this mode includes GPLv3 software,
+review the license obligations before distributing the combined application.
+AirPods motion is supported through the parent
+`window.gyroBowling.setMotionSample()` contract.
 
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
 

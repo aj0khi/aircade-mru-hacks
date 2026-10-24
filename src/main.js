@@ -1,7 +1,5 @@
 import { Game } from "./game/Pong.js";
 import { Snake } from "./game/Snake.js";
-import { Bowling } from "./game/Bowling.js";
-import { BowlingMotionAdapter } from "./input/BowlingMotionAdapter.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
@@ -23,14 +21,13 @@ const bowling3dFrame = document.querySelector("#bowling-3d-frame");
 const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
-const bowling = new Bowling(canvas);
-const bowlingMotion = new BowlingMotionAdapter(bowling);
 let activeGame = pong;
 let gameType = "pong";
 let lastTime = performance.now();
 let seenGoalSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
+let motionNeutral = { horizontal: 0, forward: 0 };
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -46,6 +43,26 @@ function sendBowling3dMotion(sample) {
     type: "headpilot-bowling-motion",
     ...sample,
   }, window.location.origin);
+}
+
+function calibrateBowlingMotion({ horizontal = 0, forward = 0 } = {}) {
+  motionNeutral = {
+    horizontal: Number.isFinite(Number(horizontal)) ? Number(horizontal) : 0,
+    forward: Number.isFinite(Number(forward)) ? Number(forward) : 0,
+  };
+}
+
+function forwardBowlingMotion(sample = {}) {
+  const horizontal = Number(sample.horizontal) - motionNeutral.horizontal;
+  const forward = Number(sample.forward) - motionNeutral.forward;
+  if (!Number.isFinite(horizontal) || !Number.isFinite(forward)) return false;
+  const normalized = {
+    horizontal: Math.max(-1, Math.min(1, horizontal)),
+    forward: Math.max(-1, Math.min(1, forward)),
+    timestamp: sample.timestamp ?? performance.now(),
+  };
+  sendBowling3dMotion(normalized);
+  return true;
 }
 
 function sendBowling3dCommand(command) {
@@ -80,15 +97,17 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     snake.handleKey(event.code);
   }
-  if (gameType === "bowling" && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"].includes(event.code)) {
-    event.preventDefault();
-    bowling.handleKey(event.code);
-  }
-  if (event.code === "Space" && !activeGame.running) {
+  if (event.code === "Space" && gameType !== "bowling-3d" && !activeGame.running) {
     activeGame.start();
-    if (gameType === "bowling") bowling.throwBall();
   }
-  if (event.code === "KeyP" || event.code === "Escape") activeGame.togglePause();
+  if (event.code === "KeyP" || event.code === "Escape") {
+    if (gameType === "bowling-3d") {
+      bowling3dPaused = !bowling3dPaused;
+      sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
+    } else {
+      activeGame.togglePause();
+    }
+  }
 });
 
 window.addEventListener("keyup", (event) => {
@@ -132,13 +151,10 @@ gameButton.addEventListener("click", () => {
   gameType = gameType === "pong"
     ? "snake"
     : gameType === "snake"
-      ? "bowling"
-      : gameType === "bowling"
-        ? "bowling-3d"
-        : "pong";
-  activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : bowling;
-  activeGame.reset();
-  bowlingMotion.reset();
+      ? "bowling-3d"
+      : "pong";
+  activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : null;
+  if (activeGame) activeGame.reset();
   bowling3dPaused = false;
   bowling3dFrame.hidden = gameType !== "bowling-3d";
   bowling3dFrame.src = gameType === "bowling-3d" ? "/bowling-3d/index.html" : "about:blank";
@@ -151,37 +167,33 @@ gameButton.addEventListener("click", () => {
 function updateModeUI() {
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";
-  const bowlingMode = gameType === "bowling";
   const bowling3dMode = gameType === "bowling-3d";
   gameTitle.textContent = snakeMode
     ? "NEON SNAKE"
-    : bowling3dMode ? "3D BOWLING" : bowlingMode ? "GYRO BOWLING" : "SOCCER PONG";
+    : bowling3dMode ? "3D BOWLING" : "SOCCER PONG";
   gameSubtitle.textContent = snakeMode
     ? "Eat, grow, and own the grid."
     : bowling3dMode
       ? "Open-source physics lane. Drag and flick to bowl."
-      : bowlingMode ? "Aim with your head. Roll for the strike." : "A quick match. First to seven.";
+      : "A quick match. First to seven.";
   gameButton.textContent = snakeMode
-    ? "BOWLING"
-    : bowlingMode ? "3D BOWLING" : bowling3dMode ? "SOCCER PONG" : "SNAKE";
-  modeButton.hidden = snakeMode || bowlingMode || bowling3dMode;
-  modeLabel.textContent = snakeMode || bowlingMode || bowling3dMode
+    ? "3D BOWLING"
+    : bowling3dMode ? "SOCCER PONG" : "SNAKE";
+  modeButton.hidden = snakeMode || bowling3dMode;
+  modeLabel.textContent = snakeMode || bowling3dMode
     ? "ARCADE // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS AI");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
-    : bowling3dMode ? "3D physics bowling game" : bowlingMode ? "Gyro Bowling lane" : "Horizontal soccer pitch");
+    : bowling3dMode ? "3D physics bowling game" : "Horizontal soccer pitch");
   instructions.innerHTML = snakeMode
     ? "<strong>Move</strong> Arrow Keys <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
     : bowling3dMode
       ? "<strong>Drag</strong> the ball left/right <span aria-hidden=\"true\">·</span> Flick forward to bowl <span aria-hidden=\"true\">·</span> Physics by Ammo.js"
-    : bowlingMode
-      ? "<strong>Aim</strong> ← / → <span aria-hidden=\"true\">·</span> Power ↑ / ↓ <span aria-hidden=\"true\">·</span> Space throws <span aria-hidden=\"true\">·</span> Tilt to aim, swing forward to roll"
       : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
 }
 
 function updateUI() {
   const isSnake = gameType === "snake";
-  const isBowling = gameType === "bowling";
   if (gameType === "bowling-3d") {
     startButton.disabled = false;
     pauseButton.disabled = false;
@@ -192,19 +204,11 @@ function updateUI() {
   }
   startButton.disabled = false;
   restartButton.disabled = false;
-  playerScore.textContent = isSnake ? snake.score : isBowling ? bowling.score : pong.scores[1];
-  opponentScore.textContent = isSnake || isBowling ? "" : pong.scores[2];
-  scoreDivider.textContent = isSnake || isBowling ? "" : ":";
+  playerScore.textContent = isSnake ? snake.score : pong.scores[1];
+  opponentScore.textContent = isSnake ? "" : pong.scores[2];
+  scoreDivider.textContent = isSnake ? "" : ":";
   if (isSnake && snake.gameOver) {
     message.textContent = "GAME OVER";
-    message.classList.add("visible");
-  } else if (isBowling && bowling.gameOver) {
-    message.textContent = bowling.message;
-    message.classList.add("visible");
-  } else if (isBowling && bowling.ball) {
-    message.classList.remove("visible");
-  } else if (isBowling && bowling.message) {
-    message.textContent = bowling.message;
     message.classList.add("visible");
   } else if (!isSnake && pong.gameOver) {
     message.textContent = `PLAYER ${pong.winner} WINS`;
@@ -222,7 +226,7 @@ function updateUI() {
     message.classList.remove("visible");
   }
   pauseButton.textContent = activeGame.paused ? "RESUME" : "PAUSE";
-  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && !isBowling && pong.pauseRemaining > 0);
+  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && pong.pauseRemaining > 0);
 }
 
 function celebrateGoal() {
@@ -243,13 +247,13 @@ function celebrateGoal() {
 }
 
 function frame(now) {
-  if (gameType !== "bowling-3d") activeGame.update((now - lastTime) / 1000);
+  if (activeGame) activeGame.update((now - lastTime) / 1000);
   lastTime = now;
   if (gameType === "pong" && pong.goalSequence !== seenGoalSequence) {
     seenGoalSequence = pong.goalSequence;
     celebrateGoal();
   }
-  if (gameType !== "bowling-3d") activeGame.draw();
+  if (activeGame) activeGame.draw();
   updateUI();
   requestAnimationFrame(frame);
 }
@@ -260,13 +264,13 @@ requestAnimationFrame(frame);
 // Stable integration point for future motion adapters.
 window.gyroPong = { game: pong, setPaddleInput: (playerId, verticalValue) => pong.setPaddleInput(playerId, verticalValue) };
 window.gyroBowling = {
-  game: bowling,
-  setAimInput: (horizontalValue) => bowling.setAimInput(horizontalValue),
-  setMotionInput: (horizontalValue, forwardValue) => bowling.setMotionInput(horizontalValue, forwardValue),
-  setMotionSample: (sample) => {
-    bowlingMotion.setSample(sample);
-    sendBowling3dMotion(sample);
-  },
-  calibrate: (sample) => bowlingMotion.calibrate(sample),
-  throwBall: (power) => bowling.throwBall(power),
+  game: "3d",
+  setAimInput: (horizontalValue) => forwardBowlingMotion({ horizontal: horizontalValue, forward: 0 }),
+  setMotionInput: (horizontalValue, forwardValue) => forwardBowlingMotion({
+    horizontal: horizontalValue,
+    forward: forwardValue,
+  }),
+  setMotionSample: forwardBowlingMotion,
+  calibrate: calibrateBowlingMotion,
+  throwBall: (power = 1) => forwardBowlingMotion({ horizontal: 0, forward: power }),
 };

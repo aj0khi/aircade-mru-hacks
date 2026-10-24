@@ -18,7 +18,7 @@ const IMITATION_THROW_TIME_MAX = 7.0;
 const IMITATION_THROW_POSITION_MAX = 0.3;
 const IMITATION_THROW_ANGLE_MAX = Math.PI / 18.0;
 
-var container, scene, camera, clock, renderer, ppi;
+var container, scene, camera, clock, renderer, ppi, statusLabel;
 var touchPoint, raycaster, pickPoint, dragPoint, releaseVector, pickSphere;
 var trackProtoMesh, ballProtoMesh, pinProtoMesh;
 var players, imitations, scoresDiv;
@@ -55,19 +55,23 @@ class Imitation {
 
 function init() {
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color(0.7, 0.7, 0.7);
+	scene.background = new THREE.Color(0.047, 0.063, 0.051);
 
 	camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight,
 			CAMERA_NEAR, CAMERA_FAR);
 	camera.position.set(0.0, 1.7, 5.0);
 	camera.rotation.x = -25.0 / 180.0 * Math.PI;
 
-	var ambient = new THREE.AmbientLight(0xffffff, 0.4);
+	var ambient = new THREE.AmbientLight(0xdfffea, 0.58);
 	scene.add(ambient);
 
-	var light = new THREE.DirectionalLight(0xffffff, 0.6);
-	light.position.set(-0.4, 0.6, 1.0);
+	var light = new THREE.DirectionalLight(0x9fffe4, 0.9);
+	light.position.set(-0.4, 0.8, 1.0);
 	scene.add(light);
+
+	var accentLight = new THREE.PointLight(0xf3a7d4, 0.35, 5.0);
+	accentLight.position.set(0.8, 1.5, 1.8);
+	scene.add(accentLight);
 
 	touchPoint = new THREE.Vector2();
 	pickPoint = new THREE.Vector3();
@@ -80,15 +84,16 @@ function init() {
 
 	container = document.getElementById("container");
 
-	renderer = new THREE.WebGLRenderer({ antialias: false });
+	renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.gammaOutput = true;
 	container.appendChild(renderer.domElement);
 
 	scoresDiv = document.createElement("div");
-	scoresDiv.style = "position: fixed; left: 50%; top: 0; transform: translate(-50%, 0); margin-top: 5px; white-space: pre; font-family: monospace;";
+	scoresDiv.style = "position: fixed; left: 50%; top: 58px; transform: translate(-50%, 0); padding: 8px 12px; color: #f4f7f2; background: rgba(12, 16, 13, 0.7); border: 1px solid rgba(204, 231, 207, 0.18); border-radius: 8px; white-space: pre; font: 700 12px/1.3 ui-monospace, monospace; letter-spacing: 0.12em;";
 	container.appendChild(scoresDiv);
+	statusLabel = document.getElementById("headpilot-status");
 
 	// XXX How to get pixel density?
 	ppi = 96 * window.devicePixelRatio;
@@ -157,6 +162,7 @@ function onHeadPilotMotion(sample) {
 
 	if (forward <= 0.28) {
 		gyroSwingArmed = true;
+		setBowlingStatus("AIMING");
 	}
 	if (gyroSwingArmed && forward >= 0.68) {
 		gyroSwingArmed = false;
@@ -164,6 +170,13 @@ function onHeadPilotMotion(sample) {
 				+ clampMotionValue(forward, 0.0, 1.0) * (BALL_VELOCITY_MAX - BALL_VELOCITY_MIN);
 		var angle = clampMotionValue(horizontal, -1.0, 1.0) * BALL_ANGLE_MAX * 0.35;
 		localPlayer.physics.releaseBall(velocity, angle);
+		setBowlingStatus("ROLLING");
+	}
+}
+
+function setBowlingStatus(label) {
+	if (statusLabel) {
+		statusLabel.textContent = label;
 	}
 }
 
@@ -295,9 +308,11 @@ window.addEventListener("message", (event) => {
 	if (event.data.type === "headpilot-bowling-command") {
 		if (event.data.command === "pause") {
 			gamePaused = true;
+			setBowlingStatus("PAUSED");
 		}
 		if (event.data.command === "start") {
 			gamePaused = false;
+			setBowlingStatus("READY");
 		}
 	}
 });
