@@ -110,6 +110,10 @@ canvas {
   border-radius: 8px;
 }
 
+canvas[hidden] {
+  display: none;
+}
+
 #bowling-3d-frame {
   display: block;
   width: 100%;
