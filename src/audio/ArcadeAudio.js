@@ -243,35 +243,44 @@ export class ArcadeAudio {
     if (type === "hover") {
       const index = Number(detail.index) || 0;
       this.tone({
-        frequency: 520 + index * 55,
+        frequency: 540 + index * 65,
+        duration: 0.06,
+        type: "triangle",
+        gain: 0.085,
+        slide: 65,
+        pan,
+      });
+      this.tone({
+        frequency: (540 + index * 65) * 1.5,
         duration: 0.04,
         type: "sine",
-        gain: 0.03,
-        slide: 45,
-        pan,
+        gain: 0.045,
+        delay: 0.012,
+        pan: -pan * 0.5,
       });
       return;
     }
     if (type === "click") {
       this.tone({
         frequency: 660,
-        duration: 0.05,
-        type: "triangle",
-        gain: 0.05,
-        slide: 90,
+        duration: 0.065,
+        type: "square",
+        gain: 0.1,
+        slide: 110,
         pan,
       });
       return;
     }
     if (type === "select") {
       this.stopMenuMusic();
-      this.tone({ frequency: 523, duration: 0.08, type: "square", gain: 0.075, slide: 60, pan: -0.25 });
-      this.tone({ frequency: 784, duration: 0.13, type: "triangle", gain: 0.08, delay: 0.06, slide: 110, pan: 0.25 });
+      this.tone({ frequency: 523, duration: 0.09, type: "square", gain: 0.13, slide: 70, pan: -0.3 });
+      this.tone({ frequency: 784, duration: 0.14, type: "square", gain: 0.13, delay: 0.065, slide: 120, pan: 0.3 });
+      this.tone({ frequency: 1047, duration: 0.18, type: "triangle", gain: 0.11, delay: 0.13, slide: 90, pan: 0 });
       return;
     }
     if (type === "back") {
-      this.tone({ frequency: 587, duration: 0.07, type: "triangle", gain: 0.06, slide: -60, pan: 0.2 });
-      this.tone({ frequency: 392, duration: 0.11, type: "sine", gain: 0.06, delay: 0.05, slide: -50, pan: -0.2 });
+      this.tone({ frequency: 659, duration: 0.08, type: "square", gain: 0.11, slide: -70, pan: 0.25 });
+      this.tone({ frequency: 440, duration: 0.13, type: "triangle", gain: 0.11, delay: 0.06, slide: -60, pan: -0.25 });
       this.startMenuMusic();
     }
   }
@@ -279,33 +288,42 @@ export class ArcadeAudio {
   startMenuMusic() {
     if (this.menuMusicTimer) return;
     this.menuMusicStep = 0;
+    const bass = [110, 110, 147, 165, 131, 131, 165, 196];
     const pad = [220, 262, 330, 294, 196, 247, 294, 262];
-    const bell = [659, 0, 784, 0, 587, 0, 659, 0];
+    const bell = [659, 523, 784, 659, 587, 494, 659, 784];
     const tick = () => {
       if (this.muted || !this.context || this.context.state !== "running") return;
       const step = this.menuMusicStep % pad.length;
-      const pan = step % 2 === 0 ? -0.3 : 0.3;
+      const pan = step % 2 === 0 ? -0.38 : 0.38;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.24,
+        type: "triangle",
+        gain: 0.075,
+        pan: 0,
+      });
       this.tone({
         frequency: pad[step],
-        duration: 0.34,
-        type: "sine",
-        gain: 0.024,
-        pan: -pan * 0.5,
+        duration: 0.28,
+        type: "square",
+        gain: 0.055,
+        pan: -pan * 0.6,
       });
       if (bell[step]) {
         this.tone({
           frequency: bell[step],
-          duration: 0.22,
+          duration: 0.18,
           type: "triangle",
-          gain: 0.015,
-          delay: 0.05,
+          gain: 0.06,
+          delay: 0.04,
+          slide: 24,
           pan,
         });
       }
       this.menuMusicStep += 1;
     };
     tick();
-    this.menuMusicTimer = window.setInterval(tick, 380);
+    this.menuMusicTimer = window.setInterval(tick, 300);
   }
 
   stopMenuMusic() {
