@@ -11,7 +11,7 @@ export class Snake {
     this.context = canvas.getContext("2d");
     this.columns = 24;
     this.rows = 14;
-    this.stepDuration = 0.16;
+    this.stepDuration = 0.3;
     this.onEvent = null;
     this.reset();
   }
