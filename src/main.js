@@ -259,7 +259,7 @@ function updateModeUI() {
     : bowling3dMode ? "Soccer Pong" : "Snake";
   modeButton.hidden = snakeMode || bowling3dMode;
   modeLabel.textContent = snakeMode || bowling3dMode
-    ? "Solo play" : (twoPlayer ? "2 players / local" : "1P / vs. computer");
+    ? "1P // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
     : bowling3dMode ? "3D physics bowling game" : "Horizontal soccer pitch");
