@@ -56,7 +56,7 @@ let seenTankWinSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
 let bowling3dReady = false;
-let motionNeutral = { roll: 0, pitch: 0, swing: 0 };
+let motionNeutral = { roll: 0, pitch: 0, swing: 0, tilt: 0 };
 let motionSocket = null;
 let motionSocketUrl = null;
 let lastMotionTimestamp = 0;
@@ -121,6 +121,7 @@ function sendBowling3dMotion(sample) {
 
 const MOTION_DEADZONE = 0.08;
 let motionNeedsCalibrate = true;
+let tankFireArmed = true;
 
 function clampAxis(value) {
   const numeric = Number(value);
@@ -143,6 +144,7 @@ function calibrateBowlingMotion(sample = {}) {
     roll: Number.isFinite(Number(axes.x)) ? Number(axes.x) : 0,
     pitch: Number.isFinite(Number(axes.y)) ? Number(axes.y) : 0,
     swing: Number.isFinite(Number(axes.z)) ? Number(axes.z) : 0,
+    tilt: Number.isFinite(Number(sample.roll)) ? Number(sample.roll) : 0,
   };
 }
 
@@ -158,7 +160,14 @@ function forwardBowlingMotion(sample = {}) {
   const timestamp = sample.timestamp ?? performance.now();
 
   if (gameType === "tank") {
-    updateMotionPanel(0);
+    const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
+    updateMotionPanel(Math.abs(y) >= Math.abs(x) ? y : x);
+    tank.setMotionInput(y, x);
+    if (Math.abs(tilt) <= 0.22) tankFireArmed = true;
+    if (tankFireArmed && Math.abs(tilt) >= 0.36) {
+      tankFireArmed = false;
+      tank.fire(tank.tanks[1]);
+    }
     return true;
   }
 
@@ -181,8 +190,10 @@ function forwardBowlingMotion(sample = {}) {
   }
 
   if (gameType === "bowling-3d") {
-    const forward = Math.max(0, -z);
-    updateMotionPanel(x);
+    const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
+    const nodDown = Math.max(0, -y);
+    const forward = Math.max(Math.abs(z), nodDown, Math.abs(tilt));
+    updateMotionPanel(forward > 0.2 ? forward : x);
     sendBowling3dMotion({
       roll: x,
       pitch: 0,
@@ -270,6 +281,10 @@ function clearStaleMotion() {
     applyBreakoutKeys();
     return;
   }
+  if (gameType === "tank") {
+    tank.setMotionInput(0, 0);
+    return;
+  }
   if (gameType === "bowling-3d" && latestBowling3dSample) {
     sendBowling3dMotion({
       ...latestBowling3dSample,
@@ -284,6 +299,7 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   disconnectMotionBridge();
 
   motionNeedsCalibrate = true;
+  tankFireArmed = true;
   motionSocketUrl = url;
   motionSocket = new WebSocket(url);
 
@@ -311,6 +327,8 @@ function disconnectMotionBridge() {
   motionSocket = null;
   motionSocketUrl = null;
   lastMotionTimestamp = 0;
+  tank.setMotionInput(0, 0);
+  tankFireArmed = true;
 
   if (motionStaleTimer) {
     window.clearInterval(motionStaleTimer);
@@ -819,11 +837,11 @@ function updateModeUI() {
   instructions.innerHTML = snakeMode
     ? '<strong>Move</strong> arrows or WASD, or look left/right and nod <span aria-hidden="true">·</span> P / Esc pauses'
     : bowling3dMode
-      ? '<strong>Aim</strong> ← / → or A / D or look left/right <span aria-hidden="true">·</span> Space / W, or swing the AirPod forward to throw'
+      ? '<strong>Aim</strong> ← / → or A / D or look left/right <span aria-hidden="true">·</span> Space / W, or nod / tilt / swing to throw'
       : breakoutMode
         ? '<strong>Move</strong> ← / → or A / D, or look left/right <span aria-hidden="true">·</span> P / Esc pauses'
         : tankMode
-          ? "<strong>Player 1</strong> arrows + Space <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
+          ? "<strong>Player 1</strong> arrows + Space, or nod to drive, look left/right to turn, tilt to shoot <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
         : "<strong>Player 1</strong> W / S or arrows, or nod <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses";
 }
 
@@ -1080,6 +1098,12 @@ window.gyroBreakout = {
 
   setPaddleInput: (rollValue) =>
     breakout.setPaddleInput(rollValue),
+};
+
+window.gyroTank = {
+  game: tank,
+  setMotionInput: (drive, turn) => tank.setMotionInput(drive, turn),
+  fire: () => tank.fire(tank.tanks[1]),
 };
 
 window.gyroArcade = {
