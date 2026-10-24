@@ -247,27 +247,27 @@ function updateModeUI() {
   const snakeMode = gameType === "snake";
   const bowling3dMode = gameType === "bowling-3d";
   gameTitle.textContent = snakeMode
-    ? "NEON SNAKE"
-    : bowling3dMode ? "3D BOWLING" : "SOCCER PONG";
+    ? "Neon Snake"
+    : bowling3dMode ? "3D Bowling" : "Soccer Pong";
   gameSubtitle.textContent = snakeMode
     ? "Eat, grow, and own the grid."
     : bowling3dMode
       ? "Open-source physics lane. Drag and flick to bowl."
       : "A quick match. First to seven.";
   gameButton.textContent = snakeMode
-    ? "3D BOWLING"
-    : bowling3dMode ? "SOCCER PONG" : "SNAKE";
+    ? "3D Bowling"
+    : bowling3dMode ? "Soccer Pong" : "Snake";
   modeButton.hidden = snakeMode || bowling3dMode;
   modeLabel.textContent = snakeMode || bowling3dMode
-    ? "ARCADE // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS AI");
+    ? "Solo play" : (twoPlayer ? "2 players / local" : "1P / vs. computer");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
     : bowling3dMode ? "3D physics bowling game" : "Horizontal soccer pitch");
   instructions.innerHTML = snakeMode
-    ? "<strong>Move</strong> Arrow Keys or tilt <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
+    ? "<strong>Move</strong> with the arrow keys or motion <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Collect the gold food"
     : bowling3dMode
-      ? "<strong>Roll</strong> left/right to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag fallback"
-      : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
+      ? "<strong>Roll</strong> to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag also works"
+      : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7";
 }
 
 function updateUI() {
@@ -276,8 +276,8 @@ function updateUI() {
     startButton.disabled = false;
     pauseButton.disabled = false;
     restartButton.disabled = false;
-    startButton.textContent = "START GAME";
-    pauseButton.textContent = bowling3dPaused ? "RESUME" : "PAUSE";
+    startButton.textContent = "Start game";
+    pauseButton.textContent = bowling3dPaused ? "Resume" : "Pause";
     return;
   }
   startButton.disabled = false;
@@ -286,24 +286,24 @@ function updateUI() {
   opponentScore.textContent = isSnake ? "" : pong.scores[2];
   scoreDivider.textContent = isSnake ? "" : ":";
   if (isSnake && snake.gameOver) {
-    message.textContent = "GAME OVER";
+    message.textContent = "Game over";
     message.classList.add("visible");
   } else if (!isSnake && pong.gameOver) {
-    message.textContent = `PLAYER ${pong.winner} WINS`;
+    message.textContent = `Player ${pong.winner} wins`;
     message.classList.add("visible");
   } else if (!isSnake && pong.pauseRemaining > 0) {
-    message.textContent = `PLAYER ${pong.lastScorer} SCORES`;
+    message.textContent = `Player ${pong.lastScorer} scores`;
     message.classList.add("visible");
   } else if (activeGame.paused) {
-    message.textContent = "GAME PAUSED";
+    message.textContent = "Game paused";
     message.classList.add("visible");
   } else if (!activeGame.running) {
-    message.textContent = "PRESS START";
+    message.textContent = "Press start";
     message.classList.add("visible");
   } else {
     message.classList.remove("visible");
   }
-  pauseButton.textContent = activeGame.paused ? "RESUME" : "PAUSE";
+  pauseButton.textContent = activeGame.paused ? "Resume" : "Pause";
   pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && pong.pauseRemaining > 0);
 }
 

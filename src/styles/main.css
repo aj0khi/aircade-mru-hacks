@@ -1,18 +1,18 @@
 :root {
-  color: #f5f7f2;
-  background: #0b0f0d;
+  color: #1d2922;
+  background: #e7e1d6;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --field-green: #167343;
   --line-green: #cce7cf;
   --cyan: #78e4d1;
   --pink: #f3a7d4;
-  --ink: #f5f7f2;
-  --muted: #8f9d91;
-  --muted-bright: #b8c3b9;
-  --panel: rgba(18, 25, 20, 0.88);
-  --panel-raised: #1a241d;
-  --line: rgba(205, 231, 208, 0.15);
-  --line-strong: rgba(205, 231, 208, 0.24);
+  --ink: #1d2922;
+  --muted: #6e776e;
+  --muted-bright: #39463d;
+  --panel: #f1ece3;
+  --panel-raised: #e9e3d8;
+  --line: rgba(29, 41, 34, 0.16);
+  --line-strong: rgba(29, 41, 34, 0.28);
 }
 
 * {
@@ -24,15 +24,14 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% -18%, rgba(47, 83, 56, 0.48) 0, transparent 38%),
-    linear-gradient(135deg, rgba(120, 228, 209, 0.025), transparent 38%),
-    #0b0f0d;
+    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+    #e7e1d6;
 }
 
 .arcade {
   width: min(1180px, 100%);
   margin: 0 auto;
-  padding: 34px 32px 26px;
+  padding: 42px 32px 28px;
 }
 
 .header,
@@ -46,7 +45,7 @@ body {
 
 .header {
   align-items: flex-start;
-  padding-bottom: 25px;
+  padding-bottom: 22px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -62,10 +61,10 @@ body {
   width: 24px;
   height: 24px;
   place-items: center;
-  color: #0d1711;
-  background: var(--line-green);
-  border-radius: 6px;
-  font-size: 0.59rem;
+  color: #f4f0e8;
+  background: #24342a;
+  border-radius: 50%;
+  font-size: 0.56rem;
   font-weight: 900;
   letter-spacing: -0.08em;
 }
@@ -73,8 +72,8 @@ body {
 .eyebrow,
 .mode-label {
   color: var(--muted);
-  letter-spacing: 0.18em;
-  font-size: 0.65rem;
+  letter-spacing: 0.01em;
+  font-size: 0.78rem;
 }
 
 .eyebrow {
@@ -85,15 +84,15 @@ body {
 h1 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(2.25rem, 6vw, 4.5rem);
-  line-height: 0.9;
-  letter-spacing: -0.075em;
-  font-weight: 850;
+  font-size: clamp(2.45rem, 6vw, 4.35rem);
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+  font-weight: 800;
 }
 
 .subtitle {
   margin: 13px 0 0;
-  color: var(--muted-bright);
+  color: var(--muted);
   font-size: 0.88rem;
   letter-spacing: 0.01em;
 }
@@ -103,34 +102,35 @@ h1 {
   align-items: center;
   gap: 9px;
   margin-top: 2px;
-  padding: 9px 12px;
-  color: var(--muted-bright);
-  background: rgba(15, 21, 17, 0.72);
+  padding: 8px 0;
+  color: var(--muted);
+  background: transparent;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 0.63rem;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
 }
 
 .status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 0 4px rgba(120, 228, 209, 0.12);
+  background: #3f9d82;
+  box-shadow: none;
 }
 
 .game-shell {
   position: relative;
   margin: 28px 0 14px;
   overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border: 1px solid #18271e;
+  border-radius: 5px;
   background: #101710;
   box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.32),
-    0 0 0 5px rgba(205, 231, 208, 0.025);
+    0 18px 34px rgba(42, 47, 40, 0.2),
+    0 0 0 6px rgba(29, 41, 34, 0.05);
 }
 
 .game-shell.shake {
@@ -191,7 +191,7 @@ canvas[hidden] {
   color: #fff;
   font-size: clamp(1rem, 3vw, 1.4rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.03em;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -216,11 +216,11 @@ canvas[hidden] {
 }
 
 .controls {
-  padding: 8px;
+  padding: 9px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+  border-radius: 4px;
+  box-shadow: none;
 }
 
 .control-group {
@@ -231,14 +231,14 @@ canvas[hidden] {
 button {
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 3px;
   padding: 10px 15px;
   color: var(--muted-bright);
   background: var(--panel-raised);
   font: inherit;
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
 }
@@ -246,9 +246,9 @@ button {
 button:hover:not(:disabled),
 button:focus-visible {
   color: var(--ink);
-  border-color: var(--cyan);
-  background: #202d24;
-  box-shadow: 0 0 0 3px rgba(100, 244, 255, 0.08);
+  border-color: var(--line-strong);
+  background: #ddd6c9;
+  box-shadow: none;
 }
 
 button:disabled {
@@ -261,10 +261,10 @@ button[hidden] {
 }
 
 button.primary {
-  color: #10221d;
-  background: var(--line-green);
-  border-color: var(--cyan);
-  box-shadow: 0 5px 14px rgba(120, 228, 209, 0.12);
+  color: #f4f0e8;
+  background: #243a2b;
+  border-color: #243a2b;
+  box-shadow: none;
 }
 
 .instructions {
@@ -285,11 +285,11 @@ button.primary {
   justify-content: space-between;
   margin-top: 36px;
   padding-top: 13px;
-  border-top: 1px solid rgba(205, 231, 208, 0.08);
-  color: #607064;
+  border-top: 1px solid var(--line);
+  color: #7b8178;
   font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.02em;
 }
 
 @keyframes screen-shake {
