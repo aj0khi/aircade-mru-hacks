@@ -421,6 +421,19 @@ concept while keeping this arcade's Canvas engine and existing license boundary.
 The bowling engine remains independent of AirPods, Swift, and the UI. The future
 macOS bridge only needs to translate CoreMotion samples into this contract.
 
+### 3D physics bowling
+
+The **3D BOWLING** mode embeds the original open-source bowling game from
+[iliagrigorevdev/bowling](https://github.com/iliagrigorevdev/bowling), including
+its Three.js rendering and Ammo.js/Bullet physics. It is vendored under
+`public/bowling-3d/` so the normal Vite server can load it without a second
+server or npm dependency.
+
+Use the mouse or trackpad to drag the ball left/right, then flick forward to
+release it. The original GPLv3 license is included at
+`public/bowling-3d/LICENSE`. Because this mode includes GPLv3 software, review
+the license obligations before distributing the combined application.
+
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
 
 ## Neon Snake

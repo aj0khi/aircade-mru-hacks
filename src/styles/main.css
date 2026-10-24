@@ -110,6 +110,19 @@ canvas {
   border-radius: 8px;
 }
 
+#bowling-3d-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  background: #101710;
+}
+
+#bowling-3d-frame[hidden] {
+  display: none;
+}
+
 .scoreboard {
   position: absolute;
   z-index: 1;
