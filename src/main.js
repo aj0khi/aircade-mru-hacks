@@ -35,6 +35,7 @@ let lastTime = performance.now();
 let seenGoalSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
+let bowling3dReady = false;
 let motionNeutral = { roll: 0, pitch: 0, swing: 0 };
 let motionSocket = null;
 let motionSocketUrl = null;
@@ -154,7 +155,7 @@ function updateSnakeMotion(roll, pitch) {
 }
 
 function sendBowling3dCommand(command) {
-  if (!bowling3dFrame.contentWindow) return;
+  if (!bowling3dReady || !bowling3dFrame.contentWindow) return;
   bowling3dFrame.contentWindow.postMessage({
     type: "headpilot-bowling-command",
     command,
@@ -162,12 +163,22 @@ function sendBowling3dCommand(command) {
 }
 
 function loadBowling3dFrame() {
+  bowling3dReady = false;
   bowling3dFrame.hidden = false;
   bowling3dFrame.src = `/bowling-3d/index.html?session=${Date.now()}`;
 }
 
 bowling3dFrame.addEventListener("load", () => {
   bowling3dPaused = false;
+});
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== window.location.origin
+    || event.source !== bowling3dFrame.contentWindow
+    || event.data?.type !== "headpilot-bowling-ready") {
+    return;
+  }
+  bowling3dReady = true;
   sendBowling3dCommand("start");
   if (latestBowling3dSample) sendBowling3dMotion(latestBowling3dSample);
 });
@@ -251,6 +262,7 @@ pauseButton.addEventListener("click", () => {
 restartButton.addEventListener("click", () => {
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
+    bowling3dReady = false;
     bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
     return;
   }
@@ -294,6 +306,7 @@ function selectGame(nextGame) {
     activeGame.reset();
   } else {
     bowling3dFrame.src = "about:blank";
+    bowling3dReady = false;
   }
   bowling3dPaused = false;
   gameMenu.hidden = Boolean(gameType);

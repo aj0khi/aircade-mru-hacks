@@ -299,6 +299,7 @@ function initScene() {
 	renderer.domElement.addEventListener("touchend", onDocumentTouchEnd, false);
 
 	animate();
+	window.parent.postMessage({ type: "headpilot-bowling-ready" }, window.location.origin);
 }
 
 window.addEventListener("message", (event) => {
