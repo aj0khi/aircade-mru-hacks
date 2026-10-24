@@ -62,7 +62,7 @@ The goal is to transform a familiar arcade game into a new, accessible, social g
 - Node.js and npm
 - macOS for live AirPods motion testing
 
-The browser game should work on Windows and macOS. Live AirPods motion tracking will initially be hosted on a supported Mac.
+The game is hosted and demonstrated on macOS for this project. Live AirPods motion tracking runs through the native Mac bridge; Windows-native motion compatibility is out of scope.
 
 ## 4. System Architecture
 
@@ -236,6 +236,7 @@ Requirements:
 - Stream frequently enough for responsive movement, ideally around 30–60 updates per second if supported reliably.
 - Avoid printing every sample to the terminal.
 - Keep the connection local for the initial prototype.
+- Treat macOS and Xcode as prerequisites for the live AirPods bridge.
 - Handle disconnects gracefully.
 - Never let a stale motion reading continue moving a paddle indefinitely.
 
