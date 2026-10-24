@@ -344,9 +344,9 @@ function updateModeUI() {
     ? "1P // SOLO" : (twoPlayer || tankMode ? "2P // LOCAL BATTLE" : "1P // VS COMPUTER");
   canvas.setAttribute("aria-label", snakeMode
     ? "Neon Snake playing field"
-    : bowling3dMode ? "3D physics bowling game" : breakoutMode ? "Neon Breakout playing field" : tankMode ? "Neon tank arena" : "Horizontal soccer pitch");
+    : bowling3dMode ? "3D physics bowling game" : breakoutMode ? "Breakout playing field" : tankMode ? "Neon tank arena" : "Horizontal Pong playing field");
   instructions.innerHTML = snakeMode
-    ? "<strong>Move</strong> with the arrow keys or motion <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Collect the gold food"
+    ? "<strong>Move</strong> with the arrow keys or motion <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Find the apple"
     : bowling3dMode
       ? "<strong>Roll</strong> to aim <span aria-hidden=\"true\">·</span> Swing forward to bowl <span aria-hidden=\"true\">·</span> Drag also works"
       : breakoutMode

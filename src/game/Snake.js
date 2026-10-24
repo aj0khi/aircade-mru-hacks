@@ -98,7 +98,7 @@ export class Snake {
     const cellHeight = this.canvas.height / this.rows;
     ctx.fillStyle = "#f5f1df";
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.strokeStyle = "rgba(38, 92, 43, 0.12)";
+    ctx.strokeStyle = "rgba(45, 91, 51, 0.13)";
     ctx.lineWidth = 1;
     for (let x = 1; x < this.columns; x += 1) {
       ctx.beginPath(); ctx.moveTo(x * cellWidth, 0); ctx.lineTo(x * cellWidth, this.canvas.height); ctx.stroke();
@@ -106,48 +106,97 @@ export class Snake {
     for (let y = 1; y < this.rows; y += 1) {
       ctx.beginPath(); ctx.moveTo(0, y * cellHeight); ctx.lineTo(this.canvas.width, y * cellHeight); ctx.stroke();
     }
+    ctx.strokeStyle = "#315b35";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(4, 4, this.canvas.width - 8, this.canvas.height - 8);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(11, 11, this.canvas.width - 22, this.canvas.height - 22);
     this.drawApple(ctx, this.food, cellWidth, cellHeight);
-    this.snake.forEach((segment, index) => this.drawSnakeSegment(ctx, segment, cellWidth, cellHeight, index === 0));
+    for (let index = this.snake.length - 1; index >= 0; index -= 1) {
+      this.drawSnakeSegment(ctx, this.snake[index], cellWidth, cellHeight, index === 0);
+    }
   }
 
   drawSnakeSegment(ctx, segment, width, height, head) {
     const x = segment.x * width + width / 2;
     const y = segment.y * height + height / 2;
-    const radius = Math.min(width, height) * (head ? 0.42 : 0.38);
+    const inset = head ? 3 : 5;
+    const size = Math.min(width, height) - inset * 2;
+    const left = x - size / 2;
+    const top = y - size / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(28, 72, 32, 0.28)";
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
     ctx.fillStyle = head ? "#2f7d32" : "#4b9d45";
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.roundedRect(ctx, left, top, size, size, head ? 10 : 7);
     ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = head ? "#204d27" : "#39783b";
+    ctx.lineWidth = 2;
+    this.roundedRect(ctx, left + 1, top + 1, size - 2, size - 2, head ? 9 : 6);
+    ctx.stroke();
     if (head) {
-      const eyeOffset = this.direction.x === 0 ? width * 0.18 : 0;
-      const eyeX = x + (this.direction.x * width * 0.18);
-      const eyeY = y + (this.direction.y * height * 0.18);
+      const forwardX = this.direction.x * width * 0.17;
+      const forwardY = this.direction.y * height * 0.17;
+      const sideX = this.direction.y * width * 0.15;
+      const sideY = -this.direction.x * height * 0.15;
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(eyeX - eyeOffset, eyeY - (this.direction.x === 0 ? height * 0.13 : width * 0.13), 3, 0, Math.PI * 2);
-      ctx.arc(eyeX + eyeOffset, eyeY + (this.direction.x === 0 ? height * 0.13 : width * 0.13), 3, 0, Math.PI * 2);
+      ctx.arc(x + forwardX + sideX, y + forwardY + sideY, 4, 0, Math.PI * 2);
+      ctx.arc(x + forwardX - sideX, y + forwardY - sideY, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#111111";
       ctx.beginPath();
-      ctx.arc(eyeX - eyeOffset, eyeY - (this.direction.x === 0 ? height * 0.13 : width * 0.13), 1.5, 0, Math.PI * 2);
-      ctx.arc(eyeX + eyeOffset, eyeY + (this.direction.x === 0 ? height * 0.13 : width * 0.13), 1.5, 0, Math.PI * 2);
+      ctx.arc(x + forwardX + sideX + forwardX * 0.15, y + forwardY + sideY + forwardY * 0.15, 1.8, 0, Math.PI * 2);
+      ctx.arc(x + forwardX - sideX + forwardX * 0.15, y + forwardY - sideY + forwardY * 0.15, 1.8, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = "#d94b3d";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + forwardX * 1.8, y + forwardY * 1.8);
+      ctx.lineTo(x + forwardX * 2.5, y + forwardY * 2.5);
+      ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  roundedRect(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
   }
 
   drawApple(ctx, food, width, height) {
     const x = food.x * width + width / 2;
     const y = food.y * height + height / 2 + 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(134, 40, 31, 0.32)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetY = 2;
     ctx.fillStyle = "#d94b3d";
     ctx.beginPath();
-    ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
-    ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+    ctx.arc(x - 5, y, 9, 0, Math.PI * 2);
+    ctx.arc(x + 5, y, 9, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowColor = "transparent";
     ctx.strokeStyle = "#4b7135";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(x, y - 7);
     ctx.lineTo(x + 3, y - 15);
     ctx.stroke();
+    ctx.fillStyle = "#5a8d3e";
+    ctx.beginPath();
+    ctx.ellipse(x + 7, y - 13, 6, 3, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
