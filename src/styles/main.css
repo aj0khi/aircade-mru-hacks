@@ -125,6 +125,10 @@ canvas {
   color: #52647d;
 }
 
+.scoreboard:has(.score-divider:empty) {
+  top: 18px;
+}
+
 .message {
   position: absolute;
   inset: 0;

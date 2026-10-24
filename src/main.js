@@ -1,5 +1,6 @@
 import { Game } from "./game/Game.js";
 import { Snake } from "./game/Snake.js";
+import { Bowling } from "./game/Bowling.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
@@ -20,6 +21,7 @@ const gameShell = document.querySelector(".game-shell");
 const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
+const bowling = new Bowling(canvas);
 let activeGame = pong;
 let gameType = "pong";
 let lastTime = performance.now();
@@ -50,7 +52,14 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     snake.handleKey(event.code);
   }
-  if (event.code === "Space" && !activeGame.running) activeGame.start();
+  if (gameType === "bowling" && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"].includes(event.code)) {
+    event.preventDefault();
+    bowling.handleKey(event.code);
+  }
+  if (event.code === "Space" && !activeGame.running) {
+    activeGame.start();
+    if (gameType === "bowling") bowling.throwBall();
+  }
   if (event.code === "KeyP" || event.code === "Escape") activeGame.togglePause();
 });
 
@@ -69,8 +78,8 @@ modeButton.addEventListener("click", () => {
   updateModeUI();
 });
 gameButton.addEventListener("click", () => {
-  gameType = gameType === "pong" ? "snake" : "pong";
-  activeGame = gameType === "pong" ? pong : snake;
+  gameType = gameType === "pong" ? "snake" : gameType === "snake" ? "bowling" : "pong";
+  activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : bowling;
   activeGame.reset();
   updateModeUI();
 });
@@ -78,24 +87,38 @@ gameButton.addEventListener("click", () => {
 function updateModeUI() {
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";
-  gameTitle.textContent = snakeMode ? "NEON SNAKE" : "SOCCER PONG";
-  gameSubtitle.textContent = snakeMode ? "Eat, grow, and own the grid." : "A quick match. First to seven.";
-  gameButton.textContent = snakeMode ? "SOCCER PONG" : "SNAKE";
-  modeButton.hidden = snakeMode;
-  modeLabel.textContent = snakeMode ? "ARCADE // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS AI");
-  canvas.setAttribute("aria-label", snakeMode ? "Neon Snake playing field" : "Horizontal soccer pitch");
+  const bowlingMode = gameType === "bowling";
+  gameTitle.textContent = snakeMode ? "NEON SNAKE" : bowlingMode ? "GYRO BOWLING" : "SOCCER PONG";
+  gameSubtitle.textContent = snakeMode
+    ? "Eat, grow, and own the grid."
+    : bowlingMode ? "Aim with your head. Roll for the strike." : "A quick match. First to seven.";
+  gameButton.textContent = snakeMode ? "BOWLING" : bowlingMode ? "SOCCER PONG" : "SNAKE";
+  modeButton.hidden = snakeMode || bowlingMode;
+  modeLabel.textContent = snakeMode || bowlingMode ? "ARCADE // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS AI");
+  canvas.setAttribute("aria-label", snakeMode ? "Neon Snake playing field" : bowlingMode ? "Gyro Bowling lane" : "Horizontal soccer pitch");
   instructions.innerHTML = snakeMode
     ? "<strong>Move</strong> Arrow Keys <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
-    : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
+    : bowlingMode
+      ? "<strong>Aim</strong> ← / → <span aria-hidden=\"true\">·</span> Power ↑ / ↓ <span aria-hidden=\"true\">·</span> Space throws <span aria-hidden=\"true\">·</span> Tilt to aim, swing forward to roll"
+      : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
 }
 
 function updateUI() {
   const isSnake = gameType === "snake";
-  playerScore.textContent = isSnake ? snake.score : pong.scores[1];
-  opponentScore.textContent = isSnake ? "" : pong.scores[2];
-  scoreDivider.textContent = isSnake ? "" : ":";
+  const isBowling = gameType === "bowling";
+  playerScore.textContent = isSnake ? snake.score : isBowling ? bowling.score : pong.scores[1];
+  opponentScore.textContent = isSnake || isBowling ? "" : pong.scores[2];
+  scoreDivider.textContent = isSnake || isBowling ? "" : ":";
   if (isSnake && snake.gameOver) {
     message.textContent = "GAME OVER";
+    message.classList.add("visible");
+  } else if (isBowling && bowling.gameOver) {
+    message.textContent = bowling.message;
+    message.classList.add("visible");
+  } else if (isBowling && bowling.ball) {
+    message.classList.remove("visible");
+  } else if (isBowling && bowling.message) {
+    message.textContent = bowling.message;
     message.classList.add("visible");
   } else if (!isSnake && pong.gameOver) {
     message.textContent = `PLAYER ${pong.winner} WINS`;
@@ -113,7 +136,7 @@ function updateUI() {
     message.classList.remove("visible");
   }
   pauseButton.textContent = activeGame.paused ? "RESUME" : "PAUSE";
-  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && pong.pauseRemaining > 0);
+  pauseButton.disabled = !activeGame.running || activeGame.gameOver || (!isSnake && !isBowling && pong.pauseRemaining > 0);
 }
 
 function celebrateGoal() {
@@ -150,3 +173,9 @@ requestAnimationFrame(frame);
 
 // Stable integration point for future motion adapters.
 window.gyroPong = { game: pong, setPaddleInput: (playerId, verticalValue) => pong.setPaddleInput(playerId, verticalValue) };
+window.gyroBowling = {
+  game: bowling,
+  setAimInput: (horizontalValue) => bowling.setAimInput(horizontalValue),
+  setMotionInput: (horizontalValue, forwardValue) => bowling.setMotionInput(horizontalValue, forwardValue),
+  throwBall: (power) => bowling.throwBall(power),
+};

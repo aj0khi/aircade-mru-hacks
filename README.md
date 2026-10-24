@@ -379,6 +379,31 @@ npm run dev
 
 Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
 
+## Bowling mode
+
+The arcade also includes **Gyro Bowling**, a ten-frame, two-roll bowling game designed
+around the same normalized-input approach as Pong. Keyboard fallback controls are:
+
+- **Left / Right:** aim
+- **Up / Down:** adjust throw power
+- **Space:** start and throw
+- **P / Escape:** pause between throws
+
+The browser integration point is:
+
+```js
+window.gyroBowling.setMotionInput(horizontalValue, forwardValue)
+```
+
+Both values are normalized to `-1...1`. A motion adapter can map AirPods roll or
+head tilt to `horizontalValue` and a forward swing gesture to `forwardValue`.
+When `forwardValue` exceeds the throw threshold, the ball rolls. A bridge can
+also call `window.gyroBowling.setAimInput(horizontalValue)` continuously and
+`window.gyroBowling.throwBall(power)` once a swing is detected.
+
+The bowling engine remains independent of AirPods, Swift, and the UI. The future
+macOS bridge only needs to translate CoreMotion samples into this contract.
+
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
 
 ## Neon Snake
