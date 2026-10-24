@@ -393,7 +393,6 @@ window.addEventListener("keydown", (event) => {
         bowling3dPaused ? "pause" : "start"
       );
       arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
-      sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     } else {
       activeGame?.togglePause();
     }
@@ -454,7 +453,6 @@ pauseButton.addEventListener("click", () => {
     );
 
     arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
-    sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     updateUI();
     return;
   }
@@ -473,7 +471,6 @@ restartButton.addEventListener("click", () => {
       `/bowling-3d/index.html?restart=${Date.now()}`;
 
     arcadeAudio.play("bowling", "start");
-    bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
     return;
   }
 
