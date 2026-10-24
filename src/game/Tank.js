@@ -16,24 +16,99 @@ function rect(cx, cy, width, height, breakable = false) {
   };
 }
 
+// Map coordinates follow the 1536×1024 design sketch, scaled to the 960×540 arena.
+// All walls are filled axis-aligned rectangles: the drawn pixels and collision boxes agree.
+const MAP_SCALE_X = WORLD_WIDTH / 1536;
+const MAP_SCALE_Y = WORLD_HEIGHT / 1024;
+const WALL_THICKNESS = 15;
+
+function segment(x1, y1, x2, y2, breakable = false) {
+  const ax = x1 * MAP_SCALE_X, ay = y1 * MAP_SCALE_Y;
+  const bx = x2 * MAP_SCALE_X, by = y2 * MAP_SCALE_Y;
+  const t = WALL_THICKNESS;
+  if (Math.abs(y2 - y1) < 0.001) return rect((ax + bx) / 2, ay, Math.abs(bx - ax) + t, t, breakable);
+  if (Math.abs(x2 - x1) < 0.001) return rect(ax, (ay + by) / 2, t, Math.abs(by - ay) + t, breakable);
+  throw new Error("Maze walls must be horizontal or vertical");
+}
+
 function makeWalls() {
   return [
-    // Original corner cover (permanent).
-    rect(61, 101, 112, 6), rect(120, 77, 7, 54),
-    rect(899, 101, 112, 6), rect(840, 77, 7, 54),
-    rect(61, 439, 112, 6), rect(120, 463, 7, 54),
-    rect(899, 439, 112, 6), rect(840, 463, 7, 54),
+    // Upper-left hooked structure. Breakable middle of left vertical.
+    segment(232,185,232,266), segment(232,266,232,408,true),
+    segment(232,408,232,480), segment(232,480,425,480),
+    segment(425,480,425,710), segment(425,710,450,710),
+    segment(450,710,531,710,true), segment(531,710,542,710),
+    segment(542,481,542,710),
 
-    // Fourteen-segment maze. Bronze segments take 3 hits.
-    rect(272, 115, 11, 120), rect(344, 175, 144, 11, true),
-    rect(480, 101, 11, 108),
-    rect(616, 175, 144, 11, true), rect(688, 115, 11, 120),
-    rect(216, 290, 11, 142), rect(288, 331, 144, 11, true),
-    rect(480, 270, 160, 11, true),
-    rect(744, 290, 11, 142), rect(672, 331, 144, 11, true),
-    rect(296, 466, 11, 88), rect(368, 425, 144, 11),
-    rect(664, 466, 11, 88), rect(592, 425, 144, 11),
+    // Lower-left large U-shaped arena.
+    segment(246,636,246,879), segment(246,879,386,879),
+    segment(386,879,568,879,true), segment(568,879,726,879),
+    segment(726,345,726,496), segment(726,496,726,663,true),
+    segment(726,663,726,879),
+
+    // Upper center isolated cover.
+    segment(516,111,724,111),
+
+    // Top-right long hooked maze segment.
+    segment(929,151,929,317), segment(929,317,1067,317),
+    segment(1067,317,1274,317,true), segment(1274,317,1536,317),
+
+    // Right interior wall with a breakable vertical connector.
+    segment(1052,527,1315,527),
+    segment(1052,527,1052,537), segment(1052,537,1052,665,true),
+    segment(1052,665,1052,740),
+
+    // Lower-right cover.
+    segment(1130,852,1415,852),
+    segment(897,875,897,1024),
   ];
+}
+
+// Each visible shape in drawTank is collision-tested in exactly the same local-space
+// coordinates. Tank silhouettes consist of a rectangular chassis and its narrow cannon.
+const TANK_SHAPES = [
+  { cx: 0, cy: 0, halfW: 15, halfH: 12 },
+  { cx: 13, cy: 0, halfW: 13, halfH: 4 },
+];
+
+function tankPolygons(tank, x = tank.x, y = tank.y, rotation = tank.rotation) {
+  const c = Math.cos(rotation), s = Math.sin(rotation);
+  return TANK_SHAPES.map(({ cx, cy, halfW, halfH }) =>
+    [[cx-halfW,cy-halfH],[cx+halfW,cy-halfH],[cx+halfW,cy+halfH],[cx-halfW,cy+halfH]]
+      .map(([lx,ly]) => ({ x: x + lx*c-ly*s, y: y + lx*s+ly*c }))
+  );
+}
+
+function polygonsOverlap(a, b) {
+  for (const polygon of [a,b]) {
+    for (let i=0; i<polygon.length; i++) {
+      const p=polygon[i], q=polygon[(i+1)%polygon.length];
+      const nx=-(q.y-p.y), ny=q.x-p.x;
+      const project=pts=>pts.map(v=>v.x*nx+v.y*ny);
+      const pa=project(a), pb=project(b);
+      if (Math.max(...pa) <= Math.min(...pb) || Math.max(...pb) <= Math.min(...pa)) return false;
+    }
+  }
+  return true;
+}
+
+function wallPolygon(w) {
+  return [{x:w.x,y:w.y},{x:w.x+w.w,y:w.y},
+          {x:w.x+w.w,y:w.y+w.h},{x:w.x,y:w.y+w.h}];
+}
+
+function circleHitsPolygon(x, y, r, poly) {
+  // For a rotated rectangular tank component, convert to the component's axes.
+  const origin=poly[0], edgeX=poly[1], edgeY=poly[3];
+  const ux=edgeX.x-origin.x, uy=edgeX.y-origin.y;
+  const vx=edgeY.x-origin.x, vy=edgeY.y-origin.y;
+  const lenX=Math.hypot(ux,uy), lenY=Math.hypot(vx,vy);
+  const dx=x-origin.x, dy=y-origin.y;
+  const localX=clamp((dx*ux+dy*uy)/lenX,0,lenX);
+  const localY=clamp((dx*vx+dy*vy)/lenY,0,lenY);
+  const nearX=origin.x+ux/lenX*localX+vx/lenY*localY;
+  const nearY=origin.y+uy/lenX*localX+vy/lenY*localY;
+  return (x-nearX)**2+(y-nearY)**2 <= r*r;
 }
 
 function circleHitsRect(x, y, radius, wall) {
@@ -48,7 +123,7 @@ export class Tank {
     this.context = canvas.getContext("2d");
     this.width = WORLD_WIDTH;
     this.height = WORLD_HEIGHT;
-    this.tankRadius = 21;
+    // Hull and barrel collide using the same oriented rectangles that are drawn.
     this.keys = new Set();
     this.reset();
   }
@@ -145,24 +220,29 @@ export class Tank {
     if (tank.destroyed) return;
     const turn = Number(this.keys.has(right)) - Number(this.keys.has(left));
     const move = Number(this.keys.has(forward)) - Number(this.keys.has(backward));
+    const rotationBefore = tank.rotation;
     tank.rotation += turn * 2.4 * dt;
+    if (!this.canOccupy(tank, tank.x, tank.y)) tank.rotation = rotationBefore;
     const dx = Math.cos(tank.rotation) * move * 165 * dt;
     const dy = Math.sin(tank.rotation) * move * 165 * dt;
-    if (this.canOccupy(tank, tank.x + dx, tank.y)) tank.x += dx;
-    if (this.canOccupy(tank, tank.x, tank.y + dy)) tank.y += dy;
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 3));
+    for (let i = 0; i < steps; i++) {
+      if (this.canOccupy(tank, tank.x + dx / steps, tank.y)) tank.x += dx / steps;
+      if (this.canOccupy(tank, tank.x, tank.y + dy / steps)) tank.y += dy / steps;
+    }
   }
 
   canOccupy(tank, x, y) {
-    const r = this.tankRadius;
-    if (x < r || x > this.width - r || y < r || y > this.height - r) return false;
-    if (this.walls.some((w) => circleHitsRect(x, y, r, w))) return false;
+    const polygons = tankPolygons(tank, x, y);
+    if (polygons.some(poly => poly.some(p => p.x < 0 || p.y < 0 || p.x > this.width || p.y > this.height))) return false;
+    if (polygons.some(poly => this.walls.some(w => polygonsOverlap(poly, wallPolygon(w))))) return false;
     const other = this.tanks[tank.player === 1 ? 2 : 1];
-    return other.destroyed || Math.hypot(x - other.x, y - other.y) >= r * 2;
+    return other.destroyed || !polygons.some(poly => tankPolygons(other).some(otherPoly => polygonsOverlap(poly, otherPoly)));
   }
 
   fire(tank) {
     if (!this.running || this.paused || tank.destroyed || tank.cooldown > 0) return;
-    const muzzle = 27;
+    const muzzle = 22;
     this.bullets.push({
       x: tank.x + Math.cos(tank.rotation) * muzzle,
       y: tank.y + Math.sin(tank.rotation) * muzzle,
@@ -237,7 +317,7 @@ export class Tank {
       for (const tank of Object.values(this.tanks)) {
         // The shot cannot hit its owner immediately on spawning.
         if (tank.destroyed || (tank.player === b.owner && b.age < 0.15)) continue;
-        if (Math.hypot(b.x - tank.x, b.y - tank.y) <= this.tankRadius + radius) {
+        if (tankPolygons(tank).some(poly => circleHitsPolygon(b.x, b.y, radius, poly))) {
           tank.destroyed = true;
           this.winner = tank.player === 1 ? 2 : 1;
           this.scores[this.winner] = 1;
@@ -271,24 +351,23 @@ export class Tank {
     ctx.setTransform(this.canvas.width / this.width, 0, 0, this.canvas.height / this.height, 0, 0);
 
     // Dark tactical arena, consistent with the existing neon arcade styling.
-    ctx.fillStyle = "#09251d";
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, this.width, this.height);
-    ctx.strokeStyle = "rgba(150, 255, 207, 0.075)";
+    ctx.strokeStyle = "rgba(150, 255, 207, 0)";
     ctx.lineWidth = 1;
-    for (let x = 0; x < this.width; x += 30) {
+    for (let x = 0; x < 0; x += 30) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke();
     }
-    for (let y = 0; y < this.height; y += 30) {
+    for (let y = 0; y < 0; y += 30) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.width, y); ctx.stroke();
     }
 
     for (const wall of this.walls) {
+      // No decorative overhang: rendered rectangle is exactly the collision shape.
       ctx.fillStyle = wall.breakable
-        ? (wall.hp === 3 ? "#a96523" : wall.hp === 2 ? "#c48b3b" : "#e6bd78")
-        : "#536a68";
+        ? (wall.hp === 3 ? "#d67837" : wall.hp === 2 ? "#e49b51" : "#f2bd7a")
+        : "#b84320";
       ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-      ctx.fillStyle = wall.breakable ? "rgba(255,221,158,0.45)" : "rgba(218,255,241,0.25)";
-      ctx.fillRect(wall.x, wall.y, wall.w, Math.min(3, wall.h));
     }
 
     for (const tank of Object.values(this.tanks)) {
@@ -314,28 +393,27 @@ export class Tank {
     ctx.save();
     ctx.translate(tank.x, tank.y);
     ctx.rotate(tank.rotation);
-    ctx.shadowColor = tank.color;
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = "#122e30";
-    ctx.strokeStyle = tank.color;
-    ctx.lineWidth = 3;
-    ctx.fillRect(-22, -17, 44, 34);
-    ctx.strokeRect(-22, -17, 44, 34);
+    // Collision shapes: hull [-15,15]×[-12,12], barrel [0,26]×[-4,4].
     ctx.fillStyle = tank.color;
-    ctx.fillRect(-19, -19, 38, 5);
-    ctx.fillRect(-19, 14, 38, 5);
-    ctx.fillRect(0, -5, 36, 10);
-    ctx.beginPath(); ctx.arc(0, 0, 10, 0, TAU); ctx.fill();
+    ctx.fillRect(-15, -12, 30, 24);
+    ctx.fillRect(0, -4, 26, 8);
+    // Surface details stay inside the collidable silhouette.
+    ctx.fillStyle = "#202124";
+    ctx.fillRect(-12, -9, 24, 4);
+    ctx.fillRect(-12, 5, 24, 4);
+    ctx.fillStyle = tank.color;
+    ctx.beginPath(); ctx.arc(0, 0, 6, 0, TAU); ctx.fill();
     if (tank.flash > 0) {
       ctx.fillStyle = "#fff4ba";
-      ctx.beginPath(); ctx.arc(39, 0, 8, 0, TAU); ctx.fill();
+      ctx.fillRect(22, -3, 4, 6);
     }
     ctx.restore();
 
-    // Reload indicator, above tank in screen coordinates.
+    // Cooldown indicator is UI only, not physical tank geometry.
     ctx.fillStyle = "rgba(10,20,24,0.8)";
-    ctx.fillRect(tank.x - 22, tank.y - 33, 44, 4);
+    ctx.fillRect(tank.x - 15, tank.y - 26, 30, 3);
     ctx.fillStyle = tank.color;
-    ctx.fillRect(tank.x - 22, tank.y - 33, 44 * (1 - tank.cooldown / 0.65), 4);
+    ctx.fillRect(tank.x - 15, tank.y - 26, 30 * (1 - tank.cooldown / 0.65), 3);
   }
+
 }
