@@ -1,0 +1,170 @@
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+export class Game {
+  constructor(canvas, { winningScore = 7 } = {}) {
+    this.canvas = canvas;
+    this.context = canvas.getContext("2d");
+    this.winningScore = winningScore;
+    this.width = canvas.width;
+    this.height = canvas.height;
+    this.paddle = { width: 14, height: 100, speed: 440, inset: 32 };
+    this.ball = { radius: 9, speed: 390, maxBounceAngle: Math.PI / 3 };
+    this.mode = "single";
+    this.reset();
+  }
+
+  reset() {
+    this.scores = { 1: 0, 2: 0 };
+    this.inputs = { 1: 0, 2: 0 };
+    this.running = false;
+    this.gameOver = false;
+    this.winner = null;
+    this.paddles = {
+      1: { x: this.paddle.inset, y: this.height / 2 - this.paddle.height / 2 },
+      2: {
+        x: this.width - this.paddle.inset - this.paddle.width,
+        y: this.height / 2 - this.paddle.height / 2,
+      },
+    };
+    this.serve();
+  }
+
+  serve(direction = Math.random() > 0.5 ? 1 : -1) {
+    const angle = (Math.random() - 0.5) * (Math.PI / 2);
+    this.ballState = {
+      x: this.width / 2,
+      y: this.height / 2,
+      vx: Math.cos(angle) * this.ball.speed * direction,
+      vy: Math.sin(angle) * this.ball.speed,
+    };
+  }
+
+  start() {
+    if (this.gameOver) this.reset();
+    this.running = true;
+  }
+
+  restart() {
+    this.reset();
+    this.running = true;
+  }
+
+  setMode(mode) {
+    this.mode = mode === "two-player" ? "two-player" : "single";
+    this.reset();
+  }
+
+  setPaddleInput(playerId, verticalValue) {
+    if (playerId !== 1 && playerId !== 2) return;
+    const numericValue = Number(verticalValue);
+    this.inputs[playerId] = Number.isFinite(numericValue) ? clamp(numericValue, -1, 1) : 0;
+  }
+
+  update(deltaSeconds) {
+    if (!this.running || this.gameOver) return;
+    const delta = Math.min(deltaSeconds, 0.05);
+    this.movePaddle(1, this.inputs[1], delta);
+    if (this.mode === "two-player") {
+      this.movePaddle(2, this.inputs[2], delta);
+    } else {
+      const target = this.ballState.y - (this.paddle.height / 2);
+      const aiInput = clamp((target - this.paddles[2].y) / 80, -1, 1);
+      this.movePaddle(2, aiInput, delta);
+    }
+    this.moveBall(delta);
+  }
+
+  movePaddle(playerId, input, delta) {
+    const paddle = this.paddles[playerId];
+    paddle.y = clamp(
+      paddle.y + input * this.paddle.speed * delta,
+      0,
+      this.height - this.paddle.height,
+    );
+  }
+
+  moveBall(delta) {
+    const ball = this.ballState;
+    ball.x += ball.vx * delta;
+    ball.y += ball.vy * delta;
+
+    if (ball.y - this.ball.radius <= 0 || ball.y + this.ball.radius >= this.height) {
+      ball.y = clamp(ball.y, this.ball.radius, this.height - this.ball.radius);
+      ball.vy *= -1;
+    }
+
+    const left = this.paddles[1];
+    const right = this.paddles[2];
+    if (ball.vx < 0 && this.intersects(ball, left)) {
+      this.reflectFromPaddle(ball, left, 1);
+    } else if (ball.vx > 0 && this.intersects(ball, right)) {
+      this.reflectFromPaddle(ball, right, -1);
+    }
+
+    if (ball.x + this.ball.radius < 0) this.score(2);
+    if (ball.x - this.ball.radius > this.width) this.score(1);
+  }
+
+  intersects(ball, paddle) {
+    return (
+      ball.x - this.ball.radius < paddle.x + this.paddle.width &&
+      ball.x + this.ball.radius > paddle.x &&
+      ball.y + this.ball.radius > paddle.y &&
+      ball.y - this.ball.radius < paddle.y + this.paddle.height
+    );
+  }
+
+  reflectFromPaddle(ball, paddle, direction) {
+    const relativeHit = (ball.y - (paddle.y + this.paddle.height / 2)) / (this.paddle.height / 2);
+    const angle = clamp(relativeHit, -1, 1) * this.ball.maxBounceAngle;
+    const speed = Math.min(Math.hypot(ball.vx, ball.vy) * 1.04, 760);
+    ball.vx = Math.cos(angle) * speed * direction;
+    ball.vy = Math.sin(angle) * speed;
+    ball.x = direction === 1
+      ? paddle.x + this.paddle.width + this.ball.radius
+      : paddle.x - this.ball.radius;
+  }
+
+  score(playerId) {
+    this.scores[playerId] += 1;
+    if (this.scores[playerId] >= this.winningScore) {
+      this.running = false;
+      this.gameOver = true;
+      this.winner = playerId;
+      return;
+    }
+    this.serve(playerId === 1 ? 1 : -1);
+  }
+
+  draw() {
+    const ctx = this.context;
+    ctx.clearRect(0, 0, this.width, this.height);
+    ctx.fillStyle = "#080d1b";
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.setLineDash([10, 18]);
+    ctx.strokeStyle = "rgba(137, 237, 255, 0.28)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(this.width / 2, 0);
+    ctx.lineTo(this.width / 2, this.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
+    this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#ffffff";
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(this.ballState.x, this.ballState.y, this.ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  drawGlowRect(ctx, x, y, color) {
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = color;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, this.paddle.width, this.paddle.height);
+    ctx.shadowBlur = 0;
+  }
+}

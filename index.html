@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gyro Pong</title>
+  </head>
+  <body>
+    <main class="arcade">
+      <header class="header">
+        <div>
+          <p class="eyebrow">HEADPILOT ARCADE</p>
+          <h1>GYRO PONG</h1>
+        </div>
+        <div id="mode-label" class="mode-label">1P // VS AI</div>
+      </header>
+
+      <section class="game-shell" aria-label="Gyro Pong game">
+        <div class="scoreboard" aria-live="polite">
+          <span id="player-score">0</span>
+          <span class="score-divider">:</span>
+          <span id="opponent-score">0</span>
+        </div>
+        <canvas id="game-canvas" width="960" height="540" aria-label="Pong playing field"></canvas>
+        <div id="message" class="message">PRESS START</div>
+      </section>
+
+      <section class="controls">
+        <button id="start-button" class="primary" type="button">START GAME</button>
+        <button id="restart-button" type="button">RESTART</button>
+        <button id="mode-button" type="button">2P MODE</button>
+      </section>
+
+      <p class="instructions">
+        <strong>Player 1</strong> W / S
+        <span aria-hidden="true">·</span>
+        <strong>Player 2</strong> ↑ / ↓
+        <span aria-hidden="true">·</span>
+        First to 7 wins
+      </p>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
