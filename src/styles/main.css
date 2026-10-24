@@ -1,15 +1,18 @@
 :root {
-  color: #f4f7f2;
-  background: #0c100d;
+  color: #f5f7f2;
+  background: #0b0f0d;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --field-green: #167343;
   --line-green: #cce7cf;
   --cyan: #78e4d1;
   --pink: #f3a7d4;
-  --panel: #141b16;
-  --panel-raised: #1b241d;
-  --muted: #9ba99d;
-  --line: rgba(204, 231, 207, 0.14);
+  --ink: #f5f7f2;
+  --muted: #8f9d91;
+  --muted-bright: #b8c3b9;
+  --panel: rgba(18, 25, 20, 0.88);
+  --panel-raised: #1a241d;
+  --line: rgba(205, 231, 208, 0.15);
+  --line-strong: rgba(205, 231, 208, 0.24);
 }
 
 * {
@@ -19,15 +22,17 @@
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
   background:
-    radial-gradient(circle at 50% -10%, #263b2a 0, transparent 42%),
-    #0c100d;
+    radial-gradient(circle at 50% -18%, rgba(47, 83, 56, 0.48) 0, transparent 38%),
+    linear-gradient(135deg, rgba(120, 228, 209, 0.025), transparent 38%),
+    #0b0f0d;
 }
 
 .arcade {
-  width: min(1160px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
-  padding: 44px 28px 30px;
+  padding: 34px 32px 26px;
 }
 
 .header,
@@ -39,50 +44,78 @@ body {
   gap: 16px;
 }
 
+.header {
+  align-items: flex-start;
+  padding-bottom: 25px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: #0d1711;
+  background: var(--line-green);
+  border-radius: 6px;
+  font-size: 0.59rem;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+}
+
 .eyebrow,
 .mode-label {
   color: var(--muted);
-  letter-spacing: 0.16em;
-  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  font-size: 0.65rem;
 }
 
 .eyebrow {
-  margin: 0 0 12px;
+  margin: 0;
   font-weight: 700;
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(2.2rem, 6vw, 4.8rem);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
-  font-weight: 800;
+  color: var(--ink);
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+  font-weight: 850;
 }
 
 .subtitle {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
+  margin: 13px 0 0;
+  color: var(--muted-bright);
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
 }
 
 .status {
   display: flex;
   align-items: center;
   gap: 9px;
-  align-self: flex-start;
-  padding: 10px 13px;
-  color: var(--line-green);
-  background: rgba(20, 27, 22, 0.8);
+  margin-top: 2px;
+  padding: 9px 12px;
+  color: var(--muted-bright);
+  background: rgba(15, 21, 17, 0.72);
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.63rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
 }
 
 .status-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--cyan);
   box-shadow: 0 0 0 4px rgba(120, 228, 209, 0.12);
@@ -90,11 +123,14 @@ h1 {
 
 .game-shell {
   position: relative;
-  margin: 38px 0 18px;
+  margin: 28px 0 14px;
   overflow: hidden;
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
   background: #101710;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.32),
+    0 0 0 5px rgba(205, 231, 208, 0.025);
 }
 
 .game-shell.shake {
@@ -106,8 +142,8 @@ canvas {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
 }
 
 canvas[hidden] {
@@ -180,10 +216,11 @@ canvas[hidden] {
 }
 
 .controls {
-  padding: 10px;
+  padding: 8px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
 }
 
 .control-group {
@@ -192,23 +229,26 @@ canvas[hidden] {
 }
 
 button {
+  min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 11px 16px;
-  color: #e9f1ea;
+  border-radius: 7px;
+  padding: 10px 15px;
+  color: var(--muted-bright);
   background: var(--panel-raised);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
 }
 
 button:hover:not(:disabled),
 button:focus-visible {
+  color: var(--ink);
   border-color: var(--cyan);
-  box-shadow: 0 0 12px rgba(100, 244, 255, 0.35);
+  background: #202d24;
+  box-shadow: 0 0 0 3px rgba(100, 244, 255, 0.08);
 }
 
 button:disabled {
@@ -224,18 +264,32 @@ button.primary {
   color: #10221d;
   background: var(--line-green);
   border-color: var(--cyan);
+  box-shadow: 0 5px 14px rgba(120, 228, 209, 0.12);
 }
 
 .instructions {
-  margin: 16px 0 0;
+  margin: 15px 0 0;
   justify-content: center;
   flex-wrap: wrap;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
 }
 
 .instructions strong {
-  color: #ecf9ff;
+  color: var(--muted-bright);
+}
+
+.footer-note {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 36px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(205, 231, 208, 0.08);
+  color: #607064;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
 }
 
 @keyframes screen-shake {
@@ -252,6 +306,10 @@ button.primary {
 }
 
 @media (max-width: 620px) {
+  .arcade {
+    padding: 24px 16px 20px;
+  }
+
   .header,
   .controls {
     align-items: stretch;
@@ -260,6 +318,10 @@ button.primary {
 
   .mode-label {
     text-align: left;
+  }
+
+  .status {
+    align-self: flex-start;
   }
 
   .controls,
@@ -273,5 +335,9 @@ button.primary {
 
   button {
     flex: 1;
+  }
+
+  .footer-note {
+    font-size: 0.5rem;
   }
 }

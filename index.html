@@ -9,11 +9,14 @@
     <main class="arcade">
       <header class="header">
         <div class="brand">
-          <p class="eyebrow">HEADPILOT / ARCADE 01</p>
+          <div class="brand-line">
+            <span class="brand-mark" aria-hidden="true">HP</span>
+            <p class="eyebrow">HEADPILOT / ARCADE 01</p>
+          </div>
           <h1 id="game-title">SOCCER PONG</h1>
           <p id="game-subtitle" class="subtitle">A quick match. First to seven.</p>
         </div>
-        <div class="status">
+        <div class="status" aria-label="Current game mode">
           <span class="status-dot" aria-hidden="true"></span>
           <span id="mode-label">1P // VS AI</span>
         </div>
@@ -57,6 +60,10 @@
         <span aria-hidden="true">·</span>
         First to 7 wins
       </p>
+      <footer class="footer-note">
+        <span>HEADPILOT ARCADE</span>
+        <span>BUILT FOR PLAY · 2026</span>
+      </footer>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>
