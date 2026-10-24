@@ -284,12 +284,12 @@ function onHeadPilotMotion(sample) {
 	keyboardAim = clampMotionValue(horizontal, -1.0, 1.0);
 	localPlayer.physics.positionBall(position);
 
-	if (forward <= 0.28) {
+	if (forward <= 0.22) {
 		gyroSwingArmed = true;
 		setBowlingStatus("AIMING");
 		updatePowerMeter(0.0);
 	}
-	if (gyroSwingArmed && forward >= 0.48) {
+	if (gyroSwingArmed && forward >= 0.36) {
 		gyroSwingArmed = false;
 		var velocity = BALL_VELOCITY_MIN
 				+ clampMotionValue(forward, 0.0, 1.0) * (BALL_VELOCITY_MAX - BALL_VELOCITY_MIN);

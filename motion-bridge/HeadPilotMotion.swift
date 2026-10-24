@@ -86,8 +86,9 @@ final class HeadPilotMotionNormalizer {
         var roll = 0.0
         if let origin, let relative = deviceMotion.attitude.copy() as? CMAttitude {
             relative.multiply(byInverseOf: origin)
-            yaw = relative.yaw
-            pitch = relative.pitch
+            // AirPods yaw/pitch are opposite the arcade (look right was left, look up was down).
+            yaw = -relative.yaw
+            pitch = -relative.pitch
             roll = relative.roll
         }
 
