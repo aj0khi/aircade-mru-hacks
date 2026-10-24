@@ -35,11 +35,15 @@ export class Bowling {
       this.pointerStart = null;
     });
     this.reset();
-    this.initializePhysics();
   }
 
   async initializePhysics() {
-    if (typeof Ammo !== "function") return;
+    if (this.physicsReady || this.physicsInitializing) return;
+    this.physicsInitializing = true;
+    if (typeof Ammo !== "function") {
+      this.physicsInitializing = false;
+      return;
+    }
     try {
       const ammo = await Ammo();
       this.physics = { ammo, bodies: [], accumulator: 0 };
@@ -47,6 +51,8 @@ export class Bowling {
       this.resetPhysicsBodies();
     } catch (error) {
       console.warn("HeadPilot Bowling physics unavailable; using local fallback.", error);
+    } finally {
+      this.physicsInitializing = false;
     }
   }
 
@@ -89,6 +95,9 @@ export class Bowling {
 
   start() {
     if (this.gameOver) this.reset();
+    if (!this.physicsReady && !this.physicsInitializing) {
+      window.setTimeout(() => this.initializePhysics(), 0);
+    }
     this.running = true;
     this.paused = false;
     this.message = "AIM THE LANE";
