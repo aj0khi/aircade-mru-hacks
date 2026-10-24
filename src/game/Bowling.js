@@ -47,7 +47,16 @@ export class Bowling {
       [0, 0],
     ];
     return formation.map(([x, row]) => ({
-      x, row, standing: true, fallen: false, fall: 0, fallDirection: 1,
+      x,
+      z: 0.78 + row * 0.035,
+      row,
+      standing: true,
+      fallen: false,
+      fall: 0,
+      fallDirection: 1,
+      vx: 0,
+      vz: 0,
+      spin: 0,
     }));
   }
 
@@ -92,8 +101,9 @@ export class Bowling {
     if (!this.running || this.paused || this.gameOver || this.ball) return;
     this.power = clamp(power, 0.25, 1);
     this.ball = {
-      progress: 0,
-      laneX: this.aim,
+      x: this.aim * 0.74,
+      z: 0,
+      targetX: this.aim * 0.74,
       speed: 0.52 + this.power * 0.28,
       rotation: 0,
       impact: false,
@@ -110,31 +120,57 @@ export class Bowling {
   update(deltaSeconds) {
     if (!this.running || this.paused || this.gameOver || !this.ball) return;
     const delta = Math.min(deltaSeconds, 0.05);
-    this.ball.progress += delta * this.ball.speed;
+    this.ball.z += delta * this.ball.speed;
+    this.ball.x += (this.ball.targetX - this.ball.x) * delta * 2.2;
     this.ball.rotation += delta * (12 + this.power * 18);
     this.updateFallenPins(delta);
-    if (!this.ball.impact && this.ball.progress >= 0.77) this.hitPins();
-    if (this.ball.impact && this.ball.progress >= 1.08) this.finishRoll();
+    if (!this.ball.impact && this.ball.z >= 0.76) this.hitPins();
+    if (this.ball.impact && this.ball.z >= 1.08) this.finishRoll();
   }
 
   hitPins() {
-    const accuracy = Math.abs(this.ball.laneX);
-    const hitCount = accuracy < 0.16 ? 10 : accuracy < 0.34 ? 6 : accuracy < 0.58 ? 3 : 1;
-    const standing = this.pins.filter((pin) => pin.standing);
-    standing.slice(0, hitCount).forEach((pin, index) => {
-      pin.standing = false;
-      pin.fallen = true;
-      pin.fall = 0.05 + index * 0.05;
-      pin.fallDirection = pin.x < this.ball.laneX ? -1 : 1;
-    });
-    this.score += hitCount;
+    const impacted = this.pins.filter((pin) => pin.standing
+      && Math.abs(pin.x - this.ball.x) < 0.19
+      && Math.abs(pin.z - this.ball.z) < 0.1);
+    const fallback = this.pins
+      .filter((pin) => pin.standing)
+      .sort((a, b) => Math.abs(a.x - this.ball.x) - Math.abs(b.x - this.ball.x))[0];
+    const firstHit = impacted[0] ?? fallback;
+    if (firstHit) {
+      this.knockPin(firstHit, this.ball.x - firstHit.x);
+      for (const pin of this.pins) {
+        const distance = Math.hypot(pin.x - firstHit.x, (pin.z - firstHit.z) * 2);
+        if (pin !== firstHit && pin.standing && distance < 0.25) {
+          this.knockPin(pin, pin.x - firstHit.x);
+        }
+      }
+    }
+    const hitCount = this.pins.filter((pin) => pin.fallen).length;
+    const newPins = hitCount - this.pins.filter((pin) => pin.fallen && pin.counted).length;
+    this.pins.forEach((pin) => { if (pin.fallen) pin.counted = true; });
+    this.score += newPins;
     this.ball.impact = true;
-    this.message = hitCount === 10 ? "STRIKE!" : `${hitCount} PINS DOWN`;
+    this.message = newPins >= 10 ? "STRIKE!" : `${newPins} PINS DOWN`;
+  }
+
+  knockPin(pin, direction) {
+    pin.standing = false;
+    pin.fallen = true;
+    pin.fallDirection = direction < 0 ? -1 : 1;
+    pin.vx = pin.fallDirection * (0.16 + this.power * 0.16);
+    pin.vz = 0.06 + this.power * 0.1;
+    pin.spin = pin.fallDirection * (2.4 + this.power * 2);
   }
 
   updateFallenPins(delta) {
     for (const pin of this.pins) {
-      if (pin.fallen && pin.fall < 1) pin.fall = Math.min(1, pin.fall + delta * 3.2);
+      if (!pin.fallen) continue;
+      pin.vx *= Math.pow(0.12, delta);
+      pin.vz *= Math.pow(0.18, delta);
+      pin.x += pin.vx * delta;
+      pin.z += pin.vz * delta;
+      pin.spin *= Math.pow(0.22, delta);
+      pin.fall = Math.min(1, pin.fall + delta * 2.8);
     }
   }
 
@@ -263,13 +299,13 @@ export class Bowling {
 
   drawPins(ctx) {
     for (const pin of this.pins) {
-      const point = this.lanePoint(0.77 + pin.row * 0.025, pin.x);
-      const size = 8 + pin.row * 0.7;
+      const point = this.lanePoint(pin.z, pin.x);
+      const size = 7 + pin.z * 3.2;
       ctx.save();
       ctx.translate(point.x, point.y);
       if (pin.fallen) {
-        ctx.rotate(pin.fallDirection * pin.fall * Math.PI * 0.48);
-        ctx.translate(size * 0.8 * pin.fallDirection, size * 0.35 * pin.fall);
+        ctx.rotate(pin.spin * pin.fall);
+        ctx.translate(size * 0.8 * pin.fallDirection * pin.fall, size * 0.35 * pin.fall);
       }
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
       ctx.shadowBlur = 8;
@@ -304,9 +340,9 @@ export class Bowling {
 
   drawBall(ctx) {
     const point = this.ball
-      ? this.lanePoint(this.ball.progress, this.ball.laneX)
+      ? this.lanePoint(this.ball.z, this.ball.x)
       : this.lanePoint(0, this.aim);
-    const radius = this.ball ? 18 - this.ball.progress * 10 : 20;
+    const radius = this.ball ? 18 - this.ball.z * 10 : 20;
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.beginPath(); ctx.ellipse(point.x + 6, point.y + 10, radius * 1.1, radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = "#22d8ff";
