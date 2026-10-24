@@ -12,19 +12,40 @@ Send one JSON object per sample:
 ```json
 {
   "type": "motion",
-  "roll": -0.35,
+  "yaw": -0.35,
   "pitch": 0.12,
-  "swing": 0.04,
+  "roll": 0.02,
+  "accelX": 0.0,
+  "accelY": 0.0,
+  "accelZ": -0.55,
+  "swing": -0.55,
   "timestamp": 1792800000000
 }
 ```
 
-All motion values are normalized to `-1...1`:
+Values are normalized to `-1...1`. Each game uses only the axes it needs:
 
-- `roll`: left/right wrist rotation; Pong paddle and Bowling aim.
-- `pitch`: up/down wrist rotation; Snake vertical direction.
-- `swing`: forward acceleration pulse; Bowling throw.
-- `timestamp`: Unix time in milliseconds.
+- **X / yaw:** look left and right. Breakout, Snake left/right, bowling aim.
+- **Y / pitch:** nod. Pong paddle, Snake up/down.
+- **Z / accelZ:** forward bowl swing. Bowling throw only.
+- Ear-to-shoulder `roll`, accel X/Y, and gyro are sent for logging and ignored by the cabinets.
+
+## Run the Mac sender
+
+Pair AirPods to the **Mac**, then start the sender and the arcade:
+
+```bash
+open motion-bridge/DerivedData/Build/Products/Release/HeadPilotSender.app
+npm run dev
+```
+
+Allow Motion if macOS asks. The sender window should show samples increasing once AirPods are in-ear. In the arcade, click **Connect motion**.
+
+To rebuild from Xcode:
+
+```bash
+open motion-bridge/HeadPilotSender.xcodeproj
+```
 
 The browser listens by default at `ws://127.0.0.1:8787`. Connect it with:
 
@@ -35,7 +56,7 @@ window.gyroArcade.connectMotionBridge("ws://127.0.0.1:8787");
 The bridge can also be tested without AirPods:
 
 ```js
-window.gyroArcade.setMotionSample({ roll: 0.5, pitch: 0, swing: 0 });
+window.gyroArcade.setMotionSample({ yaw: 0.5, pitch: 0, accelZ: 0 });
 ```
 
 ## Swift usage

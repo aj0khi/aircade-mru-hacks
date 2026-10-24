@@ -12,14 +12,14 @@ let package = Package(
             name: "RevitilizationHacks",
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
-            ],
+            ]
         ),
         .testTarget(
             name: "RevitilizationHacksTests",
             dependencies: ["RevitilizationHacks"],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
-            ],
+            ]
         ),
     ]
 )
