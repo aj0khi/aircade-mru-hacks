@@ -166,8 +166,8 @@ export class Game {
     this.drawNeonGrid(ctx);
     this.drawScoringZones(ctx);
     this.drawPitch(ctx);
-    this.drawGoal(ctx, 0, "#64f4ff");
-    this.drawGoal(ctx, this.width, "#ff64d8");
+    this.drawGoal(ctx, 0, "#ffffff");
+    this.drawGoal(ctx, this.width, "#ffffff");
     this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
     this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
     this.drawSoccerBall(ctx);
