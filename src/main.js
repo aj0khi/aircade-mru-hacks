@@ -61,8 +61,23 @@ function forwardBowlingMotion(sample = {}) {
     forward: Math.max(-1, Math.min(1, forward)),
     timestamp: sample.timestamp ?? performance.now(),
   };
+  if (gameType === "pong") {
+    pong.setPaddleInput(1, normalized.forward);
+  } else if (gameType === "snake") {
+    updateSnakeMotion(normalized.horizontal, normalized.forward);
+  }
   sendBowling3dMotion(normalized);
   return true;
+}
+
+function updateSnakeMotion(horizontal, forward) {
+  const deadzone = 0.32;
+  if (Math.max(Math.abs(horizontal), Math.abs(forward)) < deadzone) return;
+  if (Math.abs(horizontal) >= Math.abs(forward)) {
+    snake.handleKey(horizontal < 0 ? "ArrowLeft" : "ArrowRight");
+  } else {
+    snake.handleKey(forward < 0 ? "ArrowUp" : "ArrowDown");
+  }
 }
 
 function sendBowling3dCommand(command) {
@@ -186,7 +201,7 @@ function updateModeUI() {
     ? "Neon Snake playing field"
     : bowling3dMode ? "3D physics bowling game" : "Horizontal soccer pitch");
   instructions.innerHTML = snakeMode
-    ? "<strong>Move</strong> Arrow Keys <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
+    ? "<strong>Move</strong> Arrow Keys or tilt <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> Eat the gold food"
     : bowling3dMode
       ? "<strong>Drag</strong> the ball left/right <span aria-hidden=\"true\">·</span> Flick forward to bowl <span aria-hidden=\"true\">·</span> Physics by Ammo.js"
       : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 7 wins";
@@ -273,4 +288,14 @@ window.gyroBowling = {
   setMotionSample: forwardBowlingMotion,
   calibrate: calibrateBowlingMotion,
   throwBall: (power = 1) => forwardBowlingMotion({ horizontal: 0, forward: power }),
+};
+window.gyroSnake = {
+  setDirection: (horizontalValue, forwardValue) => updateSnakeMotion(
+    Number(horizontalValue),
+    Number(forwardValue),
+  ),
+};
+window.gyroArcade = {
+  setMotionSample: forwardBowlingMotion,
+  calibrate: calibrateBowlingMotion,
 };

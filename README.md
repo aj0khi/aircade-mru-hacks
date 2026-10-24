@@ -377,7 +377,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
+Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`. `window.gyroArcade.setMotionSample({ horizontal, forward })` routes forward tilt to Player 1's paddle.
 
 ## 3D Bowling mode
 
@@ -428,4 +428,4 @@ After each goal, play pauses briefly while the scoring player is shown, with a s
 
 ## Neon Snake
 
-Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys, pause with P/Escape, and restart with RESTART. Eat gold food to grow and score; hitting the wall or yourself ends the round.
+Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys or motion input, pause with P/Escape, and restart with RESTART. Horizontal motion selects left/right and forward motion selects up/down; a deadzone prevents jitter. Eat gold food to grow and score; hitting the wall or yourself ends the round. The direct motion API is `window.gyroSnake.setDirection(horizontal, forward)`.
