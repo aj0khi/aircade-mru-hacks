@@ -12,6 +12,8 @@ export class ArcadeAudio {
     this.snakeMusicStep = 0;
     this.bowlingMusicTimer = null;
     this.bowlingMusicStep = 0;
+    this.breakoutMusicTimer = null;
+    this.breakoutMusicStep = 0;
   }
 
   ensureContext() {
@@ -59,6 +61,7 @@ export class ArcadeAudio {
   silence() {
     this.stopSnakeMusic();
     this.stopBowlingMusic();
+    this.stopBreakoutMusic();
     for (const voice of this.voices) {
       try {
         voice.stop();
@@ -83,6 +86,10 @@ export class ArcadeAudio {
       this.stopBowlingMusic();
       return;
     }
+    if (game === "breakout" && (type === "pause" || type === "lose-life" || type === "die" || type === "win")) {
+      this.stopBreakoutMusic();
+      if (type === "pause") return;
+    }
     if (this.muted) return;
     const context = this.ensureContext();
     if (!context) return;
@@ -101,6 +108,7 @@ export class ArcadeAudio {
     if (game === "pong") this.playPong(type, detail);
     if (game === "snake") this.playSnake(type, detail);
     if (game === "bowling") this.playBowling(type, detail);
+    if (game === "breakout") this.playBreakout(type, detail);
   }
 
   playPong(type, detail) {
@@ -570,6 +578,141 @@ export class ArcadeAudio {
     this.tone({ frequency: 523, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: -0.25 });
     this.tone({ frequency: 784, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: 0.25 });
     this.tone({ frequency: 1047, duration: 0.55, type: "square", gain: 0.09, delay: 0.62, slide: 50, pan: 0 });
+  }
+
+  playBreakout(type, detail) {
+    const pan = this.panFromDetail(detail);
+    if (type === "start") {
+      this.startBreakoutMusic();
+      this.tone({
+        frequency: 370,
+        duration: 0.12,
+        type: "triangle",
+        gain: 0.06,
+        slide: 190,
+        pan: 0,
+      });
+      return;
+    }
+    if (type === "resume") {
+      this.startBreakoutMusic();
+      return;
+    }
+    if (type === "wall") {
+      this.tone({
+        frequency: 280,
+        duration: 0.05,
+        type: "square",
+        gain: 0.065,
+        slide: -45,
+        pan,
+      });
+      this.tone({
+        frequency: 760,
+        duration: 0.03,
+        type: "triangle",
+        gain: 0.035,
+        pan,
+      });
+      return;
+    }
+    if (type === "paddle") {
+      const edge = Math.abs(Number(detail.hit) || 0);
+      const base = 460 + edge * 160;
+      this.tone({
+        frequency: base,
+        duration: 0.085,
+        type: "square",
+        gain: 0.1,
+        slide: 110,
+        pan,
+      });
+      this.tone({
+        frequency: base * 2,
+        duration: 0.045,
+        type: "triangle",
+        gain: 0.045,
+        delay: 0.012,
+        pan,
+      });
+      return;
+    }
+    if (type === "brick") {
+      const row = clamp(Number(detail.row) || 0, 0, 4);
+      const rowScale = [880, 784, 659, 587, 523];
+      const base = rowScale[row] || 659;
+      this.noise({ duration: 0.045, gain: 0.032, pan });
+      this.tone({
+        frequency: base,
+        duration: 0.09,
+        type: "square",
+        gain: 0.095,
+        slide: 120,
+        pan,
+      });
+      this.tone({
+        frequency: base * 1.5,
+        duration: 0.07,
+        type: "triangle",
+        gain: 0.05,
+        delay: 0.035,
+        slide: 90,
+        pan: -pan * 0.5,
+      });
+      return;
+    }
+    if (type === "lose-life") {
+      this.noise({ duration: 0.12, gain: 0.045, pan });
+      this.tone({ frequency: 392, duration: 0.12, type: "sawtooth", gain: 0.09, slide: -90, pan });
+      this.tone({ frequency: 262, duration: 0.18, type: "sawtooth", gain: 0.085, delay: 0.1, slide: -80, pan: 0 });
+      return;
+    }
+    if (type === "die") {
+      this.playSnakeGameOver(pan);
+      return;
+    }
+    if (type === "win") {
+      this.playPongWin(pan);
+    }
+  }
+
+  startBreakoutMusic() {
+    this.stopBreakoutMusic();
+    this.breakoutMusicStep = 0;
+    const bass = [147, 147, 175, 196, 220, 220, 196, 165];
+    const arp = [587, 740, 880, 0, 659, 784, 988, 0];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.breakoutMusicStep % bass.length;
+      const stepPan = step % 2 === 0 ? -0.36 : 0.36;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.15,
+        type: "triangle",
+        gain: 0.04,
+        pan: -stepPan * 0.5,
+      });
+      if (arp[step]) {
+        this.tone({
+          frequency: arp[step],
+          duration: 0.09,
+          type: "square",
+          gain: 0.022,
+          delay: 0.02,
+          slide: 20,
+          pan: stepPan,
+        });
+      }
+      this.breakoutMusicStep += 1;
+    };
+    tick();
+    this.breakoutMusicTimer = window.setInterval(tick, 200);
+  }
+
+  stopBreakoutMusic() {
+    if (!this.breakoutMusicTimer) return;
+    window.clearInterval(this.breakoutMusicTimer);
+    this.breakoutMusicTimer = null;
   }
 
   playPongWin(pan) {
