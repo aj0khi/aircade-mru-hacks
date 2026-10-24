@@ -376,6 +376,6 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **A/D** for Player 1, **J/L** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
+Open the local URL printed by Vite. The game uses a horizontal 16:9 soccer pitch. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. Press **P** or **Escape**, or click **PAUSE**, to pause and resume. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
 
 After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
