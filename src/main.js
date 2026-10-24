@@ -319,6 +319,7 @@ window.addEventListener("keydown", (event) => {
     ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code)
   ) {
     event.preventDefault();
+    unlockAudio();
 
     const gameByKey = {
       Digit1: "pong",
@@ -329,6 +330,7 @@ window.addEventListener("keydown", (event) => {
     };
 
     selectGame(gameByKey[event.code]);
+    arcadeAudio.play("ui", "select");
     return;
   }
 
@@ -496,6 +498,8 @@ motionCalibrateButton.addEventListener("click", () => {
 });
 
 modeButton.addEventListener("click", () => {
+  unlockAudio();
+  arcadeAudio.play("ui", "click");
   pong.setMode(
     pong.mode === "single" ? "two-player" : "single"
   );
@@ -504,10 +508,13 @@ modeButton.addEventListener("click", () => {
 });
 
 menuButton.addEventListener("click", () => {
+  unlockAudio();
   selectGame(null);
+  arcadeAudio.play("ui", "back");
 });
 
 gameButton.addEventListener("click", () => {
+  unlockAudio();
   const gameOrder = [
     "pong",
     "snake",
@@ -520,13 +527,31 @@ gameButton.addEventListener("click", () => {
     (gameOrder.indexOf(gameType) + 1) % gameOrder.length;
 
   selectGame(gameOrder[nextIndex]);
+  arcadeAudio.play("ui", "select");
 });
 
-gameChoices.forEach((choice) => {
+gameChoices.forEach((choice, index) => {
+  choice.addEventListener("pointerenter", () => {
+    unlockAudio();
+    if (!gameType) arcadeAudio.play("ui", "menu-start");
+    arcadeAudio.play("ui", "hover", { index, pan: ((index - 2) / 2) * 0.55 });
+  });
   choice.addEventListener("click", () => {
+    unlockAudio();
     selectGame(choice.dataset.game);
+    arcadeAudio.play("ui", "select", { index, pan: ((index - 2) / 2) * 0.55 });
   });
 });
+
+window.addEventListener("pointerdown", () => {
+  unlockAudio();
+  if (!gameType) arcadeAudio.play("ui", "menu-start");
+}, { once: false });
+
+window.addEventListener("keydown", () => {
+  unlockAudio();
+  if (!gameType) arcadeAudio.play("ui", "menu-start");
+}, { once: false });
 
 // Unlock audio from direct user interaction.
 controls.addEventListener("pointerdown", () => unlockAudio());
@@ -534,6 +559,7 @@ controls.addEventListener("pointerdown", () => unlockAudio());
 muteButton.addEventListener("click", () => {
   unlockAudio();
   arcadeAudio.toggleMute();
+  if (!arcadeAudio.muted) arcadeAudio.play("ui", "click");
   updateMuteUI();
 });
 
