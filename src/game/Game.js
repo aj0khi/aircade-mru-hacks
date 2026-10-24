@@ -9,6 +9,7 @@ export class Game {
     this.height = canvas.height;
     this.paddle = { width: 14, height: 100, speed: 440, inset: 32 };
     this.ball = { radius: 9, speed: 390, maxBounceAngle: Math.PI / 3 };
+    this.goalPauseDuration = 1.25;
     this.mode = "single";
     this.reset();
   }
@@ -19,6 +20,9 @@ export class Game {
     this.running = false;
     this.gameOver = false;
     this.winner = null;
+    this.pauseRemaining = 0;
+    this.goalSequence = 0;
+    this.lastScorer = null;
     this.paddles = {
       1: { x: this.paddle.inset, y: this.height / 2 - this.paddle.height / 2 },
       2: {
@@ -61,8 +65,13 @@ export class Game {
   }
 
   update(deltaSeconds) {
-    if (!this.running || this.gameOver) return;
     const delta = Math.min(deltaSeconds, 0.05);
+    if (this.pauseRemaining > 0) {
+      this.pauseRemaining = Math.max(0, this.pauseRemaining - delta);
+      if (this.pauseRemaining === 0 && !this.gameOver) this.running = true;
+      return;
+    }
+    if (!this.running || this.gameOver) return;
     this.movePaddle(1, this.inputs[1], delta);
     if (this.mode === "two-player") {
       this.movePaddle(2, this.inputs[2], delta);
@@ -127,6 +136,8 @@ export class Game {
 
   score(playerId) {
     this.scores[playerId] += 1;
+    this.lastScorer = playerId;
+    this.goalSequence += 1;
     if (this.scores[playerId] >= this.winningScore) {
       this.running = false;
       this.gameOver = true;
@@ -134,6 +145,8 @@ export class Game {
       return;
     }
     this.serve(playerId === 1 ? 1 : -1);
+    this.running = false;
+    this.pauseRemaining = this.goalPauseDuration;
   }
 
   draw() {

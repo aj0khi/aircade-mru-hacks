@@ -10,8 +10,10 @@ const message = document.querySelector("#message");
 const modeLabel = document.querySelector("#mode-label");
 const playerScore = document.querySelector("#player-score");
 const opponentScore = document.querySelector("#opponent-score");
+const gameShell = document.querySelector(".game-shell");
 const pressedKeys = new Set();
 let lastTime = performance.now();
+let seenGoalSequence = 0;
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -63,6 +65,9 @@ function updateUI() {
   if (game.gameOver) {
     message.textContent = `PLAYER ${game.winner} WINS`;
     message.classList.add("visible");
+  } else if (game.pauseRemaining > 0) {
+    message.textContent = `PLAYER ${game.lastScorer} SCORES`;
+    message.classList.add("visible");
   } else if (!game.running) {
     message.textContent = "PRESS START";
     message.classList.add("visible");
@@ -71,9 +76,30 @@ function updateUI() {
   }
 }
 
+function celebrateGoal() {
+  gameShell.classList.remove("shake");
+  void gameShell.offsetWidth;
+  gameShell.classList.add("shake");
+  for (let index = 0; index < 24; index += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti";
+    piece.style.setProperty("--x", `${(Math.random() - 0.5) * 520}px`);
+    piece.style.setProperty("--y", `${120 + Math.random() * 260}px`);
+    piece.style.setProperty("--r", `${Math.random() * 720 - 360}deg`);
+    piece.style.setProperty("--delay", `${Math.random() * 120}ms`);
+    piece.style.backgroundColor = index % 2 ? "#ff64d8" : "#64f4ff";
+    gameShell.append(piece);
+    window.setTimeout(() => piece.remove(), 1100);
+  }
+}
+
 function frame(now) {
   game.update((now - lastTime) / 1000);
   lastTime = now;
+  if (game.goalSequence !== seenGoalSequence) {
+    seenGoalSequence = game.goalSequence;
+    celebrateGoal();
+  }
   game.draw();
   updateUI();
   requestAnimationFrame(frame);
