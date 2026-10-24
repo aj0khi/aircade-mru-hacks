@@ -55,23 +55,26 @@ class Imitation {
 
 function init() {
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color(0.047, 0.063, 0.051);
+	scene.background = new THREE.Color(0.035, 0.025, 0.09);
 
 	camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight,
 			CAMERA_NEAR, CAMERA_FAR);
 	camera.position.set(0.0, 1.7, 5.0);
 	camera.rotation.x = -25.0 / 180.0 * Math.PI;
 
-	var ambient = new THREE.AmbientLight(0xdfffea, 0.58);
+	var ambient = new THREE.AmbientLight(0xaaa0ff, 0.7);
 	scene.add(ambient);
 
-	var light = new THREE.DirectionalLight(0x9fffe4, 0.9);
+	var light = new THREE.DirectionalLight(0x64f4ff, 1.05);
 	light.position.set(-0.4, 0.8, 1.0);
 	scene.add(light);
 
-	var accentLight = new THREE.PointLight(0xf3a7d4, 0.35, 5.0);
+	var accentLight = new THREE.PointLight(0xff3fba, 0.75, 5.0);
 	accentLight.position.set(0.8, 1.5, 1.8);
 	scene.add(accentLight);
+	var railLight = new THREE.PointLight(0xffe44a, 0.35, 4.0);
+	railLight.position.set(-1.2, 1.2, 0.4);
+	scene.add(railLight);
 
 	touchPoint = new THREE.Vector2();
 	pickPoint = new THREE.Vector3();
@@ -91,7 +94,7 @@ function init() {
 	container.appendChild(renderer.domElement);
 
 	scoresDiv = document.createElement("div");
-	scoresDiv.style = "position: fixed; left: 50%; top: 58px; transform: translate(-50%, 0); padding: 8px 12px; color: #f4f7f2; background: rgba(12, 16, 13, 0.7); border: 1px solid rgba(204, 231, 207, 0.18); border-radius: 8px; white-space: pre; font: 700 12px/1.3 ui-monospace, monospace; letter-spacing: 0.12em;";
+	scoresDiv.style = "position: fixed; left: 50%; top: 58px; transform: translate(-50%, 0); padding: 8px 12px; color: #f7f3ff; background: rgba(13, 10, 30, 0.86); border: 2px solid #41356e; border-radius: 2px; box-shadow: 3px 3px 0 #080614, 0 0 12px rgba(34, 216, 255, 0.22); white-space: pre; font: 700 12px/1.3 Tahoma, Geneva, sans-serif; letter-spacing: 0.12em;";
 	container.appendChild(scoresDiv);
 	statusLabel = document.getElementById("headpilot-status");
 

@@ -161,8 +161,9 @@ export class Game {
   draw() {
     const ctx = this.context;
     ctx.clearRect(0, 0, this.width, this.height);
-    ctx.fillStyle = "#167343";
+    ctx.fillStyle = "#0b0920";
     ctx.fillRect(0, 0, this.width, this.height);
+    this.drawNeonGrid(ctx);
     this.drawScoringZones(ctx);
     this.drawPitch(ctx);
     this.drawGoal(ctx, 0, "#64f4ff");
@@ -170,6 +171,38 @@ export class Game {
     this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
     this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
     this.drawSoccerBall(ctx);
+  }
+
+  drawNeonGrid(ctx) {
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(123, 77, 255, 0.18)";
+    for (let x = 0; x <= this.width; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, this.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= this.height; y += 48) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+    }
+    const glow = ctx.createRadialGradient(
+      this.width / 2,
+      this.height / 2,
+      40,
+      this.width / 2,
+      this.height / 2,
+      this.width * 0.7,
+    );
+    glow.addColorStop(0, "rgba(34, 216, 255, 0.08)");
+    glow.addColorStop(0.55, "rgba(255, 63, 186, 0.025)");
+    glow.addColorStop(1, "rgba(9, 8, 23, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.restore();
   }
 
   drawScoringZones(ctx) {
@@ -196,7 +229,7 @@ export class Game {
   }
 
   drawPitch(ctx) {
-    ctx.strokeStyle = "rgba(229, 255, 235, 0.72)";
+    ctx.strokeStyle = "rgba(216, 246, 255, 0.86)";
     ctx.lineWidth = 3;
     ctx.setLineDash([]);
     ctx.strokeRect(18, 18, this.width - 36, this.height - 36);
@@ -209,7 +242,7 @@ export class Game {
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(this.width / 2, this.height / 2, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#e5ffeb";
+    ctx.fillStyle = "#d8f6ff";
     ctx.fill();
     ctx.strokeRect(18, this.height / 2 - 145, 110, 290);
     ctx.strokeRect(this.width - 128, this.height / 2 - 145, 110, 290);
@@ -230,11 +263,11 @@ export class Game {
     const { x, y } = this.ballState;
     ctx.shadowBlur = 20;
     ctx.shadowColor = "#ffffff";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#f8fbff";
     ctx.beginPath();
     ctx.arc(x, y, this.ball.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#18252b";
+    ctx.fillStyle = "#241d45";
     for (const angle of [0, Math.PI * 0.4, Math.PI * 0.8, Math.PI * 1.2, Math.PI * 1.6]) {
       ctx.beginPath();
       ctx.arc(x + Math.cos(angle) * 4, y + Math.sin(angle) * 4, 2.2, 0, Math.PI * 2);
