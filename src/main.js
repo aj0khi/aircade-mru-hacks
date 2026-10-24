@@ -397,11 +397,8 @@ window.addEventListener("message", (event) => {
   }
 
   bowling3dReady = true;
+  latestBowling3dSample = null;
   sendBowling3dCommand("start");
-
-  if (latestBowling3dSample) {
-    sendBowling3dMotion(latestBowling3dSample);
-  }
 });
 
 function updateKeyboardInput() {
@@ -743,6 +740,8 @@ function selectGame(nextGame) {
 
   // Bowling uses the iframe; other games use canvas.
   if (gameType === "bowling-3d") {
+    latestBowling3dSample = null;
+    motionNeedsCalibrate = true;
     loadBowling3dFrame();
   } else {
     bowling3dFrame.hidden = true;
