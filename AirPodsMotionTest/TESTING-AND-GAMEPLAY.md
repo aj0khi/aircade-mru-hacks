@@ -1,6 +1,6 @@
 # AirPods motion testing and how the games should use it
 
-This note explains what `AirPodsMotionTest` actually measures, what that is based on, and how HeadPilot Arcade should consume those values. It is not a claim that AirPods give a true X/Y position in the room.
+This note explains what `AirPodsMotionTest` actually measures, what that is based on, and how AIRCADE should consume those values. It is not a claim that AirPods give a true X/Y position in the room.
 
 ## What the tester is based on
 

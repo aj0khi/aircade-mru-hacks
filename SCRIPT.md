@@ -1,4 +1,4 @@
-# HeadPilot Arcade — Video Script
+# AIRCADE — Video Script
 
 ## Recording brief
 
@@ -49,7 +49,7 @@ three game choices. Do not click yet.
 > Classic arcade games were physical. You walked up to a cabinet, grabbed a
 > controller, and reacted with your whole body.
 >
-> We built **HeadPilot Arcade**, a desktop browser arcade that brings that physical
+> We built **AIRCADE**, a desktop browser arcade that brings that physical
 > feeling back through motion, familiar games, and a cabinet designed to feel like
 > a real place.
 
@@ -244,12 +244,12 @@ into the recording unless showing the repository is part of the event format.
 ### Scene 9 — Closing: connect to Revitalize
 
 **Time:** 3:35–3:50  
-**Screen action:** End on the HeadPilot Arcade lobby. Leave the marquee and all
+**Screen action:** End on the AIRCADE lobby. Leave the marquee and all
 three game choices visible.
 
 **Narration:**
 
-> HeadPilot Arcade revitalizes classic games in two ways.
+> AIRCADE revitalizes classic games in two ways.
 >
 > It revitalizes their **interaction** by bringing tilt, direction, and swing into
 > a browser. And it revitalizes their **sense of place** by turning separate games
@@ -258,14 +258,14 @@ three game choices visible.
 > We are not trying to replace the arcade. We are asking how that feeling can live
 > on in a modern Mac and browser experience.
 >
-> This is HeadPilot Arcade: choose a cabinet, move with the controls, and play one
+> This is AIRCADE: choose a cabinet, move with the controls, and play one
 > more round.
 
 ## Short 90-second version
 
 Use this version if the recording must be brief.
 
-> Classic arcade games were physical. We built HeadPilot Arcade to bring that
+> Classic arcade games were physical. We built AIRCADE to bring that
 > feeling into a modern desktop browser.
 >
 > The lobby offers Soccer Pong, Neon Snake, and 3D Bowling in one early-2000s
@@ -284,7 +284,7 @@ Use this version if the recording must be brief.
 > scene cleanly.
 >
 > We interpreted “revitalize” as more than adding neon colors. We revitalized the
-> interaction and the sense of place. HeadPilot Arcade makes the browser feel like
+> interaction and the sense of place. AIRCADE makes the browser feel like
 > a cabinet again—something you choose from, move with, and want to play one more
 > round.
 

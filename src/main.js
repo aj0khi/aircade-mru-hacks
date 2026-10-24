@@ -318,7 +318,7 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   });
 
   motionSocket.addEventListener("error", () => {
-    updateMotionConnectionUI("Can't reach sender — open HeadPilot Sender");
+    updateMotionConnectionUI("Can't reach sender — open the AIRCADE motion sender");
   });
 
   updateMotionConnectionUI();
@@ -743,7 +743,7 @@ function updateModeUI() {
   // Arcade selection menu.
   if (!gameType) {
     gameTitle.classList.add("marquee-sign");
-    gameTitle.textContent = "HeadPilot Arcade";
+    gameTitle.textContent = "AIRCADE";
     gameSubtitle.textContent =
       "Pick a cabinet and start playing.";
 
@@ -758,7 +758,7 @@ function updateModeUI() {
 
     gameShell.setAttribute(
       "aria-label",
-      "HeadPilot game selection"
+      "AIRCADE game selection"
     );
 
     instructions.innerHTML =
@@ -786,7 +786,7 @@ function updateModeUI() {
   gameTitle.textContent = snakeMode
     ? "Snake"
     : bowling3dMode
-      ? "HeadPilot Bowling"
+      ? "AIRCADE Bowling"
       : breakoutMode
         ? "Breakout"
         : tankMode
@@ -796,7 +796,7 @@ function updateModeUI() {
   gameSubtitle.textContent = snakeMode
     ? "Guide the snake. Find the apple."
     : bowling3dMode
-      ? "Our custom HeadPilot lane. Drag and flick to bowl."
+      ? "Our custom AIRCADE lane. Drag and flick to bowl."
       : breakoutMode
         ? "Clear the wall brick by brick."
         : tankMode
@@ -804,7 +804,7 @@ function updateModeUI() {
           : "Two paddles. One ball.";
 
   gameButton.textContent = snakeMode
-    ? "HeadPilot Bowling"
+    ? "AIRCADE Bowling"
     : bowling3dMode
       ? "Breakout"
       : breakoutMode
@@ -829,7 +829,7 @@ function updateModeUI() {
     snakeMode
       ? "Neon Snake playing field"
       : bowling3dMode
-        ? "HeadPilot Bowling lane"
+        ? "AIRCADE Bowling lane"
         : breakoutMode
           ? "Breakout playing field"
           : tankMode

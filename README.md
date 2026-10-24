@@ -1,10 +1,10 @@
-# HeadPilot Arcade
+# AIRCADE
 
 **A motion-controlled arcade revival powered by AirPods**
 
 ## 1. Project Overview
 
-HeadPilot Arcade is a browser-based arcade collection that revitalizes familiar games with a new input method: AirPods head-motion tracking. Players can tilt, roll, and swing naturally, while keyboard controls keep every cabinet playable without special hardware.
+AIRCADE is a browser-based arcade collection that revitalizes familiar games with a new input method: AirPods head-motion tracking. Players can tilt, roll, and swing naturally, while keyboard controls keep every cabinet playable without special hardware.
 
 The goal is to transform familiar arcade games into an accessible, social gaming experience using consumer hardware that players may already own. The shared cabinet brings together classic Pong, Snake, and Breakout presentations with 3D Bowling and Neon Tanks.
 
@@ -65,7 +65,7 @@ the next polish and reliability milestones.
 
 ## Platform scope
 
-HeadPilot Arcade is intentionally **macOS-only for live motion controls**.
+AIRCADE is intentionally **macOS-only for live motion controls**.
 
 - **Required for AirPods motion:** macOS, Xcode, compatible AirPods, and
   `CMHeadphoneMotionManager`.
@@ -435,7 +435,7 @@ The project is ready to demonstrate when:
 
 The ideal demonstration:
 
-1. Launch HeadPilot Arcade.
+1. Launch AIRCADE.
 2. Show the normal keyboard-controlled game.
 3. Connect AirPods and demonstrate head-controlled paddle movement.
 4. Challenge a teammate to a match.
@@ -468,7 +468,7 @@ Player 1's paddle through
 
 ## 3D Bowling mode
 
-The arcade's **HEADPILOT BOWLING** cabinet is a deeply customized 3D lane. We
+The arcade's **AIRCADE BOWLING** cabinet is a deeply customized 3D lane. We
 kept the proven Ammo/Bullet rigid-body and scoring foundations, then rebuilt the
 experience around them: HeadPilot HUD and frame display, neon rails and foul
 line, custom lighting and camera composition, power feedback, keyboard aiming,

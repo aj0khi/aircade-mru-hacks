@@ -1,4 +1,4 @@
-# HeadPilot Arcade — Judging Scripts
+# AIRCADE — Judging Scripts
 
 > **Primary event format:** MRUHacks 2026 live, science-fair-style judging at the team table. **3 minutes presenting and demonstrating + 2 minutes of Q&A.** Show the working app; do **not** use a slide deck. This document is a team rehearsal script, not something to read from the screen while judges are playing.
 >
@@ -6,7 +6,7 @@
 
 ## Live judging: objective and message
 
-**Product name in this repository:** **HeadPilot Arcade** (replace only if the team agrees to rename the product).  
+**Product name in this repository:** **AIRCADE**.
 **Theme:** Revitalize.  
 **Main demo:** Judge tries Soccer Pong with compatible AirPods; a teammate plays using keyboard controls.  
 **Secondary proof:** Show one other reliably working arcade game only if time permits.  
@@ -20,7 +20,7 @@
 >
 > Today, we're bringing back that joy of classic arcade gaming—but reinventing how we experience it.
 >
-> Introducing **HeadPilot Arcade**, where we're turning compatible AirPods into motion controllers for classic-inspired games.
+> Introducing **AIRCADE**, where we're turning compatible AirPods into motion controllers for classic-inspired games.
 >
 > Move your head—or, for certain experimental controls, move an AirPod in your hand.
 >
@@ -77,7 +77,7 @@ Show **one** other reliable game from the lobby: **Snake, Breakout, Neon Tanks, 
 >
 > **We're not just revitalizing the games we grew up with. We're revitalizing the way we play them.**
 >
-> That's **HeadPilot Arcade**. Thank you!
+> That's **AIRCADE**. Thank you!
 
 ## If live motion integration is not working
 
