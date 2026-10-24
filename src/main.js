@@ -9,6 +9,7 @@ const restartButton = document.querySelector("#restart-button");
 const modeButton = document.querySelector("#mode-button");
 const gameButton = document.querySelector("#game-button");
 const gameTitle = document.querySelector("#game-title");
+const gameSubtitle = document.querySelector("#game-subtitle");
 const message = document.querySelector("#message");
 const modeLabel = document.querySelector("#mode-label");
 const playerScore = document.querySelector("#player-score");
@@ -78,6 +79,7 @@ function updateModeUI() {
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";
   gameTitle.textContent = snakeMode ? "NEON SNAKE" : "SOCCER PONG";
+  gameSubtitle.textContent = snakeMode ? "Eat, grow, and own the grid." : "A quick match. First to seven.";
   gameButton.textContent = snakeMode ? "SOCCER PONG" : "SNAKE";
   modeButton.hidden = snakeMode;
   modeLabel.textContent = snakeMode ? "ARCADE // SOLO" : (twoPlayer ? "2P // LOCAL BATTLE" : "1P // VS AI");

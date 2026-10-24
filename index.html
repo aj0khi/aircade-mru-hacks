@@ -8,11 +8,15 @@
   <body>
     <main class="arcade">
       <header class="header">
-        <div>
-          <p class="eyebrow">HEADPILOT ARCADE</p>
+        <div class="brand">
+          <p class="eyebrow">HEADPILOT / ARCADE 01</p>
           <h1 id="game-title">SOCCER PONG</h1>
+          <p id="game-subtitle" class="subtitle">A quick match. First to seven.</p>
         </div>
-        <div id="mode-label" class="mode-label">1P // VS AI</div>
+        <div class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="mode-label">1P // VS AI</span>
+        </div>
       </header>
 
       <section class="game-shell" aria-label="Soccer Pong game">
@@ -25,18 +29,22 @@
         <div id="message" class="message">PRESS START</div>
       </section>
 
-      <section class="controls">
-        <button id="start-button" class="primary" type="button">START GAME</button>
-        <button id="pause-button" type="button">PAUSE</button>
-        <button id="restart-button" type="button">RESTART</button>
-        <button id="mode-button" type="button">2P MODE</button>
-        <button id="game-button" type="button">SNAKE</button>
+      <section class="controls" aria-label="Game controls">
+        <div class="control-group primary-actions">
+          <button id="start-button" class="primary" type="button">START GAME</button>
+          <button id="pause-button" type="button">PAUSE</button>
+          <button id="restart-button" type="button">RESTART</button>
+        </div>
+        <div class="control-group mode-actions">
+          <button id="mode-button" type="button">2P MODE</button>
+          <button id="game-button" type="button">SNAKE</button>
+        </div>
       </section>
 
       <p id="instructions" class="instructions">
-        <strong>Player 1</strong> W / S
+        <span><strong>Player 1</strong> W / S</span>
         <span aria-hidden="true">·</span>
-        <strong>Player 2</strong> ↑ / ↓
+        <span><strong>Player 2</strong> ↑ / ↓</span>
         <span aria-hidden="true">·</span>
         P / Esc pauses
         <span aria-hidden="true">·</span>
