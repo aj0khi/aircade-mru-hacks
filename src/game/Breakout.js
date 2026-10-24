@@ -1,6 +1,71 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-const BRICK_COLORS = ["#e44b3a", "#ef8c3a", "#f2c94c", "#66a64a", "#4b8bc5"];
+/** 5×7 uppercase block-letter bitmaps (1 = brick, 0 = empty). */
+const LETTER_PATTERNS = {
+  A: [
+    [0, 1, 1, 1, 0],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+  ],
+  I: [
+    [1, 1, 1, 1, 1],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [1, 1, 1, 1, 1],
+  ],
+  R: [
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0],
+    [1, 0, 1, 0, 0],
+    [1, 0, 0, 1, 0],
+    [1, 0, 0, 0, 1],
+  ],
+  C: [
+    [0, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1],
+  ],
+  D: [
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0],
+  ],
+  E: [
+    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1],
+  ],
+};
+
+const LETTER_COLS = 5;
+const LETTER_ROWS = 7;
+
+/** Per-letter colors for the AIR / CADE layout (exact hex required). */
+const LINE_LETTER_COLORS = [
+  ["#E44B3A", "#F2C94C", "#4B8BC5"], // A I R
+  ["#EF8C3A", "#F2C94C", "#66A64A", "#4B8BC5"], // C A D E
+];
 
 export class Breakout {
   constructor(canvas) {
@@ -29,25 +94,84 @@ export class Breakout {
     this.serve();
   }
 
-  createBricks() {
-    const bricks = [];
-    const columns = 10;
-    const rows = 5;
-    const gap = 8;
-    const width = (this.width - 96 - gap * (columns - 1)) / columns;
-    for (let row = 0; row < rows; row += 1) {
-      for (let column = 0; column < columns; column += 1) {
+  letterPixelWidth(brickWidth, gapX) {
+    return LETTER_COLS * brickWidth + (LETTER_COLS - 1) * gapX;
+  }
+
+  wordPixelWidth(letterCount, brickWidth, gapX, letterGap) {
+    if (letterCount <= 0) return 0;
+    const letterWidth = this.letterPixelWidth(brickWidth, gapX);
+    return letterCount * letterWidth + (letterCount - 1) * letterGap;
+  }
+
+  appendLetterBricks(bricks, letter, originX, originY, brickWidth, brickHeight, gapX, gapY, color, row) {
+    const pattern = LETTER_PATTERNS[letter];
+    if (!pattern) return;
+    for (let rowIndex = 0; rowIndex < LETTER_ROWS; rowIndex += 1) {
+      for (let colIndex = 0; colIndex < LETTER_COLS; colIndex += 1) {
+        if (!pattern[rowIndex][colIndex]) continue;
         bricks.push({
-          x: 48 + column * (width + gap),
-          y: 48 + row * 26,
-          width,
-          height: 16,
+          x: originX + colIndex * (brickWidth + gapX),
+          y: originY + rowIndex * (brickHeight + gapY),
+          width: brickWidth,
+          height: brickHeight,
           row,
-          color: BRICK_COLORS[row % BRICK_COLORS.length],
+          color,
           visible: true,
         });
       }
     }
+  }
+
+  createBricks() {
+    const bricks = [];
+    const lines = ["AIR", "CADE"];
+    const marginX = Math.max(24, this.width * 0.04);
+    const availableWidth = this.width - marginX * 2;
+    const maxLineLetters = Math.max(...lines.map((line) => line.length));
+    const letterGap = Math.max(70, Math.round(this.width * 0.032));
+    const gapX = 2;
+    const gapY = 2;
+
+    // Fit brick size so the longest line (CADE) stays inside the canvas.
+    let brickWidth = 14;
+    while (
+      brickWidth > 10
+      && this.wordPixelWidth(maxLineLetters, brickWidth, gapX, letterGap) > availableWidth
+    ) {
+      brickWidth -= 1;
+    }
+    const brickHeight = clamp(Math.round(brickWidth * 0.85), 9, 12);
+    const letterHeight = LETTER_ROWS * brickHeight + (LETTER_ROWS - 1) * gapY;
+    const lineGap = Math.max(18, Math.round(brickHeight * 2.2));
+    // Keep letters in the upper playfield, clear of the paddle.
+    const topY = Math.max(40, Math.round(this.height * 0.08));
+
+    lines.forEach((word, lineIndex) => {
+      const colors = LINE_LETTER_COLORS[lineIndex];
+      const wordWidth = this.wordPixelWidth(word.length, brickWidth, gapX, letterGap);
+      const startX = Math.round((this.width - wordWidth) / 2);
+      const startY = topY + lineIndex * (letterHeight + lineGap);
+      const letterWidth = this.letterPixelWidth(brickWidth, gapX);
+
+      for (let letterIndex = 0; letterIndex < word.length; letterIndex += 1) {
+        const letter = word[letterIndex];
+        const originX = startX + letterIndex * (letterWidth + letterGap);
+        this.appendLetterBricks(
+          bricks,
+          letter,
+          originX,
+          startY,
+          brickWidth,
+          brickHeight,
+          gapX,
+          gapY,
+          colors[letterIndex],
+          lineIndex,
+        );
+      }
+    });
+
     return bricks;
   }
 
