@@ -281,14 +281,15 @@ function onHeadPilotMotion(sample) {
 	}
 
 	var position = clampMotionValue(horizontal, -1.0, 1.0) * BALL_POSITION_MAX;
+	keyboardAim = clampMotionValue(horizontal, -1.0, 1.0);
 	localPlayer.physics.positionBall(position);
 
-	if (forward <= 0.28) {
+	if (forward <= 0.22) {
 		gyroSwingArmed = true;
 		setBowlingStatus("AIMING");
 		updatePowerMeter(0.0);
 	}
-	if (gyroSwingArmed && forward >= 0.68) {
+	if (gyroSwingArmed && forward >= 0.36) {
 		gyroSwingArmed = false;
 		var velocity = BALL_VELOCITY_MIN
 				+ clampMotionValue(forward, 0.0, 1.0) * (BALL_VELOCITY_MAX - BALL_VELOCITY_MIN);
@@ -453,26 +454,40 @@ function initScene() {
 	window.parent.postMessage({ type: "headpilot-bowling-ready" }, window.location.origin);
 }
 
-function onKeyboardInput(event) {
+function aimBowling(delta) {
 	var localPlayer = getLocalPlayer();
 	if (!localPlayer || localPlayer.physics.simulationActive) return;
-	if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+	keyboardAim = clampMotionValue(keyboardAim + delta, -1.0, 1.0);
+	localPlayer.physics.positionBall(keyboardAim * BALL_POSITION_MAX);
+	emitBowlingAudio("aim", { pan: keyboardAim * 0.8 });
+	setBowlingStatus("AIMING");
+}
+
+function throwBowlingFromKeyboard() {
+	var localPlayer = getLocalPlayer();
+	if (!localPlayer || localPlayer.physics.simulationActive) return;
+	localPlayer.physics.releaseBall(BALL_VELOCITY_MAX * 0.78, keyboardAim * BALL_ANGLE_MAX * 0.35);
+	localPlayer.lastStandingMask = localPlayer.physics.currentPinsMask;
+	localPlayer.inGutter = false;
+	localPlayer.impactPlayed = false;
+	localPlayer.outcomePlayed = false;
+	emitBowlingAudio("throw", { pan: keyboardAim * 0.85, power: 0.78 });
+	setBowlingStatus("ROLLING");
+	updatePowerMeter(0.78);
+}
+
+function onKeyboardInput(event) {
+	if (event.code === "ArrowLeft" || event.code === "KeyA") {
 		event.preventDefault();
-		keyboardAim = clampMotionValue(keyboardAim + (event.code === "ArrowLeft" ? -0.08 : 0.08), -1.0, 1.0);
-		localPlayer.physics.positionBall(keyboardAim * BALL_POSITION_MAX);
-		emitBowlingAudio("aim", { pan: keyboardAim * 0.8 });
-		setBowlingStatus("AIMING");
+		aimBowling(-0.08);
 	}
-	if (event.code === "Space") {
+	if (event.code === "ArrowRight" || event.code === "KeyD") {
 		event.preventDefault();
-		localPlayer.physics.releaseBall(BALL_VELOCITY_MAX * 0.78, keyboardAim * BALL_ANGLE_MAX * 0.35);
-		localPlayer.lastStandingMask = localPlayer.physics.currentPinsMask;
-		localPlayer.inGutter = false;
-		localPlayer.impactPlayed = false;
-		localPlayer.outcomePlayed = false;
-		emitBowlingAudio("throw", { pan: keyboardAim * 0.85, power: 0.78 });
-		setBowlingStatus("ROLLING");
-		updatePowerMeter(0.78);
+		aimBowling(0.08);
+	}
+	if (event.code === "Space" || event.code === "KeyW") {
+		event.preventDefault();
+		throwBowlingFromKeyboard();
 	}
 }
 
@@ -494,6 +509,9 @@ window.addEventListener("message", (event) => {
 			emitBowlingAudio("start");
 			setBowlingStatus("READY");
 		}
+		if (event.data.command === "aim-left") aimBowling(-0.08);
+		if (event.data.command === "aim-right") aimBowling(0.08);
+		if (event.data.command === "throw") throwBowlingFromKeyboard();
 	}
 });
 

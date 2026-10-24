@@ -126,6 +126,8 @@ export class Tank {
     // Hull and barrel collide using the same oriented rectangles that are drawn.
     this.keys = new Set();
     this.onEvent = null;
+    this.motionDrive = 0;
+    this.motionTurn = 0;
     this.reset();
   }
 
@@ -151,8 +153,15 @@ export class Tank {
     this.gameOver = false;
     this.winner = null;
     this.keys.clear();
+    this.motionDrive = 0;
+    this.motionTurn = 0;
     // Stays monotonic so the UI can react to a new win exactly once.
     this.winSequence = this.winSequence || 0;
+  }
+
+  setMotionInput(drive, turn) {
+    this.motionDrive = clamp(Number(drive) || 0, -1, 1);
+    this.motionTurn = clamp(Number(turn) || 0, -1, 1);
   }
 
   start() {
@@ -230,8 +239,10 @@ export class Tank {
 
   moveTank(tank, forward, backward, left, right, dt) {
     if (tank.destroyed) return;
-    const turn = Number(this.keys.has(right)) - Number(this.keys.has(left));
-    const move = Number(this.keys.has(forward)) - Number(this.keys.has(backward));
+    const keyTurn = Number(this.keys.has(right)) - Number(this.keys.has(left));
+    const keyMove = Number(this.keys.has(forward)) - Number(this.keys.has(backward));
+    const turn = keyTurn !== 0 ? keyTurn : (tank.player === 1 ? this.motionTurn : 0);
+    const move = keyMove !== 0 ? keyMove : (tank.player === 1 ? this.motionDrive : 0);
     const rotationBefore = tank.rotation;
     tank.rotation += turn * 2.4 * dt;
     if (!this.canOccupy(tank, tank.x, tank.y)) tank.rotation = rotationBefore;

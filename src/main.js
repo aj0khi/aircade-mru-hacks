@@ -59,23 +59,58 @@ let seenTankWinSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
 let bowling3dReady = false;
-let motionNeutral = { roll: 0, pitch: 0, swing: 0 };
+let motionNeutral = { roll: 0, pitch: 0, swing: 0, tilt: 0 };
 let motionSocket = null;
 let motionSocketUrl = null;
 let lastMotionTimestamp = 0;
 let motionStaleTimer = null;
 
-const keyToInput = {
+const pongTwoPlayerKeys = {
   KeyW: [1, -1],
   KeyS: [1, 1],
   ArrowUp: [2, -1],
   ArrowDown: [2, 1],
 };
 
+const pongSingleKeys = {
+  KeyW: [1, -1],
+  KeyS: [1, 1],
+  ArrowUp: [1, -1],
+  ArrowDown: [1, 1],
+};
+
+const snakeKeys = new Set([
+  "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+  "KeyW", "KeyA", "KeyS", "KeyD",
+]);
+
+const breakoutLeftKeys = new Set(["ArrowLeft", "KeyA"]);
+const breakoutRightKeys = new Set(["ArrowRight", "KeyD"]);
+const breakoutKeys = new Set([...breakoutLeftKeys, ...breakoutRightKeys]);
+
+const bowlingKeys = new Set([
+  "ArrowLeft", "ArrowRight", "KeyA", "KeyD", "Space", "KeyW",
+]);
+
 const tankKeys = new Set([
   "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
   "KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyF",
 ]);
+
+function pongKeyBinding(code) {
+  return (pong.mode === "single" ? pongSingleKeys : pongTwoPlayerKeys)[code];
+}
+
+function pongP1KeysHeld() {
+  const codes = pong.mode === "single"
+    ? ["KeyW", "KeyS", "ArrowUp", "ArrowDown"]
+    : ["KeyW", "KeyS"];
+  return codes.some((code) => pressedKeys.has(code));
+}
+
+function breakoutKeysHeld() {
+  return [...breakoutKeys].some((code) => pressedKeys.has(code));
+}
 
 function sendBowling3dMotion(sample) {
   latestBowling3dSample = sample;
@@ -87,72 +122,122 @@ function sendBowling3dMotion(sample) {
   }, window.location.origin);
 }
 
-function calibrateBowlingMotion(sample = {}) {
-  const roll = sample.roll ?? sample.horizontal ?? 0;
-  const pitch = sample.pitch ?? 0;
-  const swing = sample.swing ?? sample.forward ?? 0;
+const MOTION_DEADZONE = 0.08;
+let motionNeedsCalibrate = true;
+let tankFireArmed = true;
 
+function clampAxis(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  const clamped = Math.max(-1, Math.min(1, numeric));
+  return Math.abs(clamped) < MOTION_DEADZONE ? 0 : clamped;
+}
+
+function rawAxes(sample = {}) {
+  return {
+    x: sample.yaw ?? sample.roll ?? sample.horizontal ?? 0,
+    y: sample.pitch ?? 0,
+    z: sample.accelZ ?? sample.swing ?? sample.forward ?? 0,
+  };
+}
+
+function calibrateBowlingMotion(sample = {}) {
+  const axes = rawAxes(sample);
   motionNeutral = {
-    roll: Number.isFinite(Number(roll)) ? Number(roll) : 0,
-    pitch: Number.isFinite(Number(pitch)) ? Number(pitch) : 0,
-    swing: Number.isFinite(Number(swing)) ? Number(swing) : 0,
+    roll: Number.isFinite(Number(axes.x)) ? Number(axes.x) : 0,
+    pitch: Number.isFinite(Number(axes.y)) ? Number(axes.y) : 0,
+    swing: Number.isFinite(Number(axes.z)) ? Number(axes.z) : 0,
+    tilt: Number.isFinite(Number(sample.roll)) ? Number(sample.roll) : 0,
   };
 }
 
 function forwardBowlingMotion(sample = {}) {
-  const rollValue = sample.roll ?? sample.horizontal ?? 0;
-  const pitchValue = sample.pitch ?? 0;
-  const swingValue = sample.swing ?? sample.forward ?? 0;
+  const axes = rawAxes(sample);
+  if (motionNeedsCalibrate) {
+    calibrateBowlingMotion(sample);
+    motionNeedsCalibrate = false;
+  }
+  const x = clampAxis(Number(axes.x) - motionNeutral.roll);
+  const y = clampAxis(Number(axes.y) - motionNeutral.pitch);
+  const z = clampAxis(Number(axes.z) - motionNeutral.swing);
+  const timestamp = sample.timestamp ?? performance.now();
 
-  const roll = Number(rollValue) - motionNeutral.roll;
-  const pitch = Number(pitchValue) - motionNeutral.pitch;
-  const swing = Number(swingValue) - motionNeutral.swing;
-
-  if (![roll, pitch, swing].every(Number.isFinite)) return false;
-
-  const normalized = {
-    roll: Math.max(-1, Math.min(1, roll)),
-    pitch: Math.max(-1, Math.min(1, pitch)),
-    swing: Math.max(-1, Math.min(1, swing)),
-    horizontal: Math.max(-1, Math.min(1, roll)),
-    forward: Math.max(-1, Math.min(1, swing)),
-    timestamp: sample.timestamp ?? performance.now(),
-  };
-
-  updateMotionPanel(normalized);
-
-  if (gameType === "pong") {
-    pong.setPaddleInput(1, normalized.roll);
-  } else if (gameType === "snake") {
-    updateSnakeMotion(normalized.roll, normalized.pitch);
-  } else if (gameType === "breakout") {
-    breakout.setPaddleInput(normalized.roll);
+  if (gameType === "tank") {
+    const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
+    updateMotionPanel(Math.abs(y) >= Math.abs(x) ? y : x);
+    tank.setMotionInput(y, x);
+    if (Math.abs(tilt) <= 0.22) tankFireArmed = true;
+    if (tankFireArmed && Math.abs(tilt) >= 0.36) {
+      tankFireArmed = false;
+      tank.fire(tank.tanks[1]);
+    }
+    return true;
   }
 
-  sendBowling3dMotion(normalized);
+  if (gameType === "pong") {
+    updateMotionPanel(y);
+    if (!pongP1KeysHeld()) pong.setPaddleInput(1, y);
+    return true;
+  }
+
+  if (gameType === "breakout") {
+    updateMotionPanel(x);
+    if (!breakoutKeysHeld()) breakout.setPaddleInput(x);
+    return true;
+  }
+
+  if (gameType === "snake") {
+    updateMotionPanel(Math.abs(x) >= Math.abs(y) ? x : y);
+    updateSnakeMotion(x, y);
+    return true;
+  }
+
+  if (gameType === "bowling-3d") {
+    const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
+    const nodDown = Math.max(0, -y);
+    const forward = Math.max(Math.abs(z), nodDown, Math.abs(tilt));
+    updateMotionPanel(forward > 0.2 ? forward : x);
+    sendBowling3dMotion({
+      roll: x,
+      pitch: 0,
+      swing: forward,
+      horizontal: x,
+      forward,
+      timestamp,
+    });
+    return true;
+  }
+
+  updateMotionPanel(x);
   return true;
 }
 
-function updateMotionPanel(sample = {}) {
-  const roll = Number(sample.roll) || 0;
-  const percent = `${50 + roll * 50}%`;
-
-  motionMeterFill.style.left = percent;
-  motionMeterValue.textContent = roll.toFixed(2);
+function updateMotionPanel(value = 0) {
+  const numeric = Number(value) || 0;
+  motionMeterFill.style.left = `${50 + numeric * 50}%`;
+  motionMeterValue.textContent = numeric.toFixed(2);
 }
 
-function updateMotionConnectionUI() {
+function updateMotionConnectionUI(statusText) {
   const connected = motionSocket?.readyState === WebSocket.OPEN;
+  const failed = Boolean(statusText) && !connected;
 
   motionStatus.classList.toggle("connected", connected);
   motionStatus.innerHTML =
-    `<span class="status-dot" aria-hidden="true"></span>${connected ? "Motion connected" : "Keyboard fallback"}`;
+    `<span class="status-dot" aria-hidden="true"></span>${
+      connected
+        ? "Motion connected"
+        : failed
+          ? statusText
+          : "Keyboard fallback"
+    }`;
 
   motionConnectButton.textContent =
-    connected ? "Disconnect motion" : "Connect motion";
+    connected || motionSocket?.readyState === WebSocket.CONNECTING
+      ? "Disconnect motion"
+      : "Connect motion";
 
-  motionCalibrateButton.disabled =
-    !connected || !latestBowling3dSample;
+  motionCalibrateButton.disabled = !connected;
 }
 
 function handleMotionBridgeMessage(event) {
@@ -190,18 +275,39 @@ function clearStaleMotion() {
     return;
   }
 
-  forwardBowlingMotion({ roll: 0, pitch: 0, swing: 0 });
   lastMotionTimestamp = 0;
+  if (gameType === "pong") {
+    updateKeyboardInput();
+    return;
+  }
+  if (gameType === "breakout") {
+    applyBreakoutKeys();
+    return;
+  }
+  if (gameType === "tank") {
+    tank.setMotionInput(0, 0);
+    return;
+  }
+  if (gameType === "bowling-3d" && latestBowling3dSample) {
+    sendBowling3dMotion({
+      ...latestBowling3dSample,
+      swing: 0,
+      forward: 0,
+      pitch: 0,
+    });
+  }
 }
 
 function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   disconnectMotionBridge();
 
+  motionNeedsCalibrate = true;
+  tankFireArmed = true;
   motionSocketUrl = url;
   motionSocket = new WebSocket(url);
 
   motionSocket.addEventListener("message", handleMotionBridgeMessage);
-  motionSocket.addEventListener("open", updateMotionConnectionUI);
+  motionSocket.addEventListener("open", () => updateMotionConnectionUI());
 
   motionSocket.addEventListener("close", () => {
     if (motionSocket?.url === url) {
@@ -212,7 +318,7 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   });
 
   motionSocket.addEventListener("error", () => {
-    motionSocket?.close();
+    updateMotionConnectionUI("Can't reach sender — open HeadPilot Sender");
   });
 
   updateMotionConnectionUI();
@@ -224,6 +330,8 @@ function disconnectMotionBridge() {
   motionSocket = null;
   motionSocketUrl = null;
   lastMotionTimestamp = 0;
+  tank.setMotionInput(0, 0);
+  tankFireArmed = true;
 
   if (motionStaleTimer) {
     window.clearInterval(motionStaleTimer);
@@ -234,7 +342,7 @@ function disconnectMotionBridge() {
 }
 
 function updateSnakeMotion(roll, pitch) {
-  const deadzone = 0.32;
+  const deadzone = 0.18;
 
   if (Math.max(Math.abs(roll), Math.abs(pitch)) < deadzone) {
     return;
@@ -296,24 +404,18 @@ window.addEventListener("message", (event) => {
 
 function updateKeyboardInput() {
   for (const playerId of [1, 2]) {
-    const up = [...pressedKeys].some(
-      (key) =>
-        keyToInput[key]?.[0] === playerId &&
-        keyToInput[key][1] < 0
-    );
-
-    const down = [...pressedKeys].some(
-      (key) =>
-        keyToInput[key]?.[0] === playerId &&
-        keyToInput[key][1] > 0
-    );
-
-    pong.setPaddleInput(
-      playerId,
-      up === down ? 0 : (up ? -1 : 1)
-    );
+    const up = [...pressedKeys].some((key) => pongKeyBinding(key)?.[0] === playerId && pongKeyBinding(key)[1] < 0);
+    const down = [...pressedKeys].some((key) => pongKeyBinding(key)?.[0] === playerId && pongKeyBinding(key)[1] > 0);
+    pong.setPaddleInput(playerId, up === down ? 0 : (up ? -1 : 1));
   }
 }
+
+function applyBreakoutKeys() {
+  const left = [...breakoutLeftKeys].some((code) => pressedKeys.has(code));
+  const right = [...breakoutRightKeys].some((code) => pressedKeys.has(code));
+  breakout.setPaddleInput(left === right ? 0 : (left ? -1 : 1));
+}
+
 
 window.addEventListener("keydown", (event) => {
   // Select one of the five arcade games.
@@ -337,47 +439,40 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  // Pong controls
-  if (gameType === "pong" && keyToInput[event.code]) {
+  // Pong: WASD/arrows. In 1P both map to player 1. Tank keeps exclusive 2P keys.
+  if (gameType === "pong" && pongKeyBinding(event.code)) {
     event.preventDefault();
     pressedKeys.add(event.code);
     updateKeyboardInput();
   }
 
-  // Snake controls
-  if (
-    gameType === "snake" &&
-    event.code.startsWith("Arrow")
-  ) {
+  if (gameType === "snake" && snakeKeys.has(event.code)) {
     event.preventDefault();
     snake.handleKey(event.code);
   }
 
-  // Breakout controls
-  if (
-    gameType === "breakout" &&
-    ["ArrowLeft", "ArrowRight"].includes(event.code)
-  ) {
+  if (gameType === "breakout" && breakoutKeys.has(event.code)) {
     event.preventDefault();
-
-    breakout.setPaddleInput(
-      event.code === "ArrowLeft" ? -1 : 1
-    );
+    pressedKeys.add(event.code);
+    applyBreakoutKeys();
   }
 
-  // Tank Arena controls
-  if (
-    gameType === "tank" &&
-    tankKeys.has(event.code)
-  ) {
+  if (gameType === "bowling-3d" && bowlingKeys.has(event.code)) {
+    event.preventDefault();
+    if (event.code === "ArrowLeft" || event.code === "KeyA") sendBowling3dCommand("aim-left");
+    if (event.code === "ArrowRight" || event.code === "KeyD") sendBowling3dCommand("aim-right");
+    if (event.code === "Space" || event.code === "KeyW") sendBowling3dCommand("throw");
+  }
+
+  if (gameType === "tank" && tankKeys.has(event.code)) {
     event.preventDefault();
     tank.handleKeyDown(event.code);
   }
 
-  // Space starts games that have not started yet.
   if (
     event.code === "Space" &&
     gameType !== "bowling-3d" &&
+    gameType !== "tank" &&
     activeGame &&
     !activeGame.running
   ) {
@@ -398,7 +493,6 @@ window.addEventListener("keydown", (event) => {
         bowling3dPaused ? "pause" : "start"
       );
       arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
-      sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     } else {
       activeGame?.togglePause();
     }
@@ -406,25 +500,17 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  // Pong
-  if (keyToInput[event.code]) {
+  if (pongKeyBinding(event.code)) {
     pressedKeys.delete(event.code);
     updateKeyboardInput();
   }
 
-  // Breakout
-  if (
-    gameType === "breakout" &&
-    ["ArrowLeft", "ArrowRight"].includes(event.code)
-  ) {
-    breakout.setPaddleInput(0);
+  if (gameType === "breakout" && breakoutKeys.has(event.code)) {
+    pressedKeys.delete(event.code);
+    applyBreakoutKeys();
   }
 
-  // Tank Arena
-  if (
-    gameType === "tank" &&
-    tankKeys.has(event.code)
-  ) {
+  if (gameType === "tank" && tankKeys.has(event.code)) {
     tank.handleKeyUp(event.code);
   }
 });
@@ -434,6 +520,7 @@ window.addEventListener("blur", () => {
   pressedKeys.clear();
   tank.clearKeys();
   updateKeyboardInput();
+  if (gameType === "breakout") applyBreakoutKeys();
 });
 
 startButton.addEventListener("click", () => {
@@ -459,7 +546,6 @@ pauseButton.addEventListener("click", () => {
     );
 
     arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
-    sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     updateUI();
     return;
   }
@@ -478,7 +564,6 @@ restartButton.addEventListener("click", () => {
       `/bowling-3d/index.html?restart=${Date.now()}`;
 
     arcadeAudio.play("bowling", "start");
-    bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
     return;
   }
 
@@ -497,10 +582,8 @@ motionConnectButton.addEventListener("click", () => {
 });
 
 motionCalibrateButton.addEventListener("click", () => {
-  if (latestBowling3dSample) {
-    calibrateBowlingMotion(latestBowling3dSample);
-    updateMotionPanel({ roll: 0 });
-  }
+  motionNeedsCalibrate = true;
+  updateMotionPanel(0);
 });
 
 modeButton.addEventListener("click", () => {
@@ -755,14 +838,14 @@ function updateModeUI() {
   );
 
   instructions.innerHTML = snakeMode
-    ? '<strong>Move</strong> with the arrow keys or motion <span aria-hidden="true">·</span> P / Esc pauses <span aria-hidden="true">·</span> Find the apple'
+    ? '<strong>Move</strong> arrows or WASD, or look left/right and nod <span aria-hidden="true">·</span> P / Esc pauses'
     : bowling3dMode
-      ? '<strong>Roll</strong> to aim <span aria-hidden="true">·</span> Swing forward to bowl <span aria-hidden="true">·</span> Drag also works'
+      ? '<strong>Aim</strong> ← / → or A / D or look left/right <span aria-hidden="true">·</span> Space / W, or nod / tilt / swing to throw'
       : breakoutMode
-        ? '<strong>Move</strong> with ← / → or roll <span aria-hidden="true">·</span> P / Esc pauses <span aria-hidden="true">·</span> Clear every brick'
+        ? '<strong>Move</strong> ← / → or A / D, or look left/right <span aria-hidden="true">·</span> P / Esc pauses'
         : tankMode
-          ? "<strong>Player 1</strong> arrows + Space <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
-        : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 3";
+          ? "<strong>Player 1</strong> arrows + Space, or nod to drive, look left/right to turn, tilt to shoot <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
+        : "<strong>Player 1</strong> W / S or arrows, or nod <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses";
 }
 
 function updateUI() {
@@ -1018,6 +1101,12 @@ window.gyroBreakout = {
 
   setPaddleInput: (rollValue) =>
     breakout.setPaddleInput(rollValue),
+};
+
+window.gyroTank = {
+  game: tank,
+  setMotionInput: (drive, turn) => tank.setMotionInput(drive, turn),
+  fire: () => tank.fire(tank.tanks[1]),
 };
 
 window.gyroArcade = {

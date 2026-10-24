@@ -5,3 +5,7 @@
 swiftly-x86_64.tar.gz
 node_modules/
 dist/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
