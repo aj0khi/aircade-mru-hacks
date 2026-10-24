@@ -17,10 +17,10 @@ let lastTime = performance.now();
 let seenGoalSequence = 0;
 
 const keyToInput = {
-  KeyA: [1, -1],
-  KeyD: [1, 1],
-  KeyJ: [2, -1],
-  KeyL: [2, 1],
+  KeyW: [1, -1],
+  KeyS: [1, 1],
+  ArrowUp: [2, -1],
+  ArrowDown: [2, 1],
 };
 
 function updateKeyboardInput() {
