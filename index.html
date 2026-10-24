@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HeadPilot Arcade</title>
+    <title>AIRCADE</title>
     <link rel="stylesheet" href="/src/styles/main.css" />
   </head>
   <body>
@@ -11,11 +11,11 @@
       <header class="header">
         <div class="brand">
           <div class="brand-line">
-            <span class="brand-mark" aria-hidden="true">HP</span>
-            <p class="eyebrow">HeadPilot // Arcade Division</p>
+            <span class="brand-mark" aria-hidden="true">AI</span>
+            <p class="eyebrow">AIRCADE // Arcade Division</p>
           </div>
           <h1 id="game-title">Soccer Pong</h1>
-          <p id="game-subtitle" class="subtitle">A quick match. First to seven.</p>
+          <p id="game-subtitle" class="subtitle">A quick match. First to three.</p>
         </div>
         <div class="status" aria-label="Current game mode">
           <span class="status-dot" aria-hidden="true"></span>
@@ -23,9 +23,9 @@
         </div>
       </header>
 
-      <section class="game-shell" aria-label="HeadPilot game selection">
+      <section class="game-shell" aria-label="AIRCADE game selection">
         <div id="game-menu" class="game-menu" aria-labelledby="game-menu-title">
-          <p class="menu-kicker">HEADPILOT ARCADE // SELECT A CABINET</p>
+          <p class="menu-kicker">AIRCADE // SELECT A CABINET</p>
           <h2 id="game-menu-title">Choose your game</h2>
           <div class="game-menu-options">
             <button class="game-choice choice-pong" type="button" data-game="pong">
@@ -38,7 +38,7 @@
             </button>
             <button class="game-choice choice-bowling" type="button" data-game="bowling">
               <span class="choice-number">03</span>
-              <span><strong>HeadPilot Bowling</strong><small>Our own lane. Aim and roll.</small></span>
+              <span><strong>AIRCADE Bowling</strong><small>Our own lane. Aim and roll.</small></span>
             </button>
             <button class="game-choice choice-breakout" type="button" data-game="breakout">
               <span class="choice-number">04</span>
@@ -68,6 +68,11 @@
 
       <section id="game-controls" class="controls" aria-label="Game controls">
         <div class="control-group primary-actions">
+          <label class="soundbar" for="volume-slider" aria-label="Game volume">
+            <span class="soundbar-label">VOL</span>
+            <input id="volume-slider" class="soundbar-slider" type="range" min="0" max="100" value="85" />
+            <span id="volume-value" class="soundbar-value">85%</span>
+          </label>
           <button id="start-button" class="primary" type="button">Start game</button>
           <button id="pause-button" type="button">Pause</button>
           <button id="restart-button" type="button">Restart</button>
@@ -82,7 +87,7 @@
 
       <section class="motion-panel" aria-labelledby="motion-title">
         <div>
-          <p class="motion-kicker">HEADPILOT INPUT // AIRPODS MOTION</p>
+          <p class="motion-kicker">AIRCADE INPUT // AIRPODS MOTION</p>
           <h2 id="motion-title">Play with your movement</h2>
           <p id="motion-help">Keyboard fallback is ready. Connect the macOS motion bridge to steer with tilt and swing.</p>
         </div>
@@ -111,7 +116,7 @@
         First to 3 wins
       </p>
       <footer class="footer-note">
-        <span>HeadPilot Arcade · revive the classics with motion</span>
+        <span>AIRCADE · revive the classics with motion</span>
         <span>INSERT COIN // 2026</span>
       </footer>
     </main>

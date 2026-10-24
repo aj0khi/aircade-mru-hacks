@@ -6,6 +6,8 @@ export class ArcadeAudio {
     this.master = null;
     this.bus = null;
     this.muted = false;
+    this.volume = 0.85;
+    this.maxGain = 0.65;
     this.voices = new Set();
     this.unlocked = false;
     this.snakeMusicTimer = null;
@@ -16,6 +18,8 @@ export class ArcadeAudio {
     this.breakoutMusicStep = 0;
     this.pongMusicTimer = null;
     this.pongMusicStep = 0;
+    this.tankMusicTimer = null;
+    this.tankMusicStep = 0;
     this.menuMusicTimer = null;
     this.menuMusicStep = 0;
   }
@@ -28,13 +32,17 @@ export class ArcadeAudio {
     const master = context.createGain();
     const bus = context.createGain();
     bus.gain.value = 1;
-    master.gain.value = this.muted ? 0 : 0.22;
+    master.gain.value = this.effectiveGain();
     bus.connect(master);
     master.connect(context.destination);
     this.context = context;
     this.master = master;
     this.bus = bus;
     return context;
+  }
+
+  effectiveGain() {
+    return this.muted ? 0 : this.volume * this.maxGain;
   }
 
   async unlock() {
@@ -51,10 +59,24 @@ export class ArcadeAudio {
     return this.unlocked;
   }
 
+  setVolume(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return this.volume;
+    this.volume = clamp(numeric, 0, 1);
+    this.muted = this.volume === 0;
+    if (this.master && this.context) {
+      this.master.gain.setTargetAtTime(this.effectiveGain(), this.context.currentTime, 0.02);
+    }
+    return this.volume;
+  }
+
   setMuted(muted) {
     this.muted = Boolean(muted);
+    if (!this.muted && this.volume === 0) {
+      this.volume = 0.85;
+    }
     if (!this.master || !this.context) return this.muted;
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 0.22, this.context.currentTime, 0.02);
+    this.master.gain.setTargetAtTime(this.effectiveGain(), this.context.currentTime, 0.02);
     return this.muted;
   }
 
@@ -67,6 +89,7 @@ export class ArcadeAudio {
     this.stopBowlingMusic();
     this.stopBreakoutMusic();
     this.stopPongMusic();
+    this.stopTankMusic();
     this.stopMenuMusic();
     for (const voice of this.voices) {
       try {
@@ -100,6 +123,10 @@ export class ArcadeAudio {
       this.stopBreakoutMusic();
       if (type === "pause") return;
     }
+    if (game === "tank" && (type === "pause" || type === "explode")) {
+      this.stopTankMusic();
+      if (type === "pause") return;
+    }
     if (game === "ui" && type === "menu-stop") {
       this.stopMenuMusic();
       return;
@@ -123,6 +150,7 @@ export class ArcadeAudio {
     if (game === "snake") this.playSnake(type, detail);
     if (game === "bowling") this.playBowling(type, detail);
     if (game === "breakout") this.playBreakout(type, detail);
+    if (game === "tank") this.playTank(type, detail);
     if (game === "ui") this.playUI(type, detail);
   }
 
@@ -1038,6 +1066,177 @@ export class ArcadeAudio {
     // 4. Final silly cartoon boing-oing
     this.tone({ frequency: 180, duration: 0.13, type: "sine", gain: 0.085, delay: 1.96, slide: 420, pan: -0.35 });
     this.tone({ frequency: 600, duration: 0.15, type: "sine", gain: 0.075, delay: 2.07, slide: -360, pan: 0.35 });
+  }
+
+  playTank(type, detail) {
+    const pan = this.panFromDetail(detail);
+    if (type === "start") {
+      this.stopMenuMusic();
+      this.startTankMusic();
+      this.tone({
+        frequency: 220,
+        duration: 0.12,
+        type: "sawtooth",
+        gain: 0.075,
+        slide: 110,
+        pan: -0.25,
+      });
+      this.tone({
+        frequency: 330,
+        duration: 0.15,
+        type: "square",
+        gain: 0.08,
+        delay: 0.08,
+        slide: 140,
+        pan: 0.25,
+      });
+      return;
+    }
+    if (type === "resume") {
+      this.startTankMusic();
+      return;
+    }
+    if (type === "fire") {
+      const p1 = detail.playerId === 1;
+      this.noise({ duration: 0.11, gain: 0.07, pan });
+      this.tone({
+        frequency: p1 ? 210 : 185,
+        duration: 0.14,
+        type: "sawtooth",
+        gain: 0.12,
+        slide: -135,
+        pan,
+      });
+      this.tone({
+        frequency: p1 ? 520 : 460,
+        duration: 0.06,
+        type: "square",
+        gain: 0.075,
+        slide: -280,
+        pan,
+      });
+      return;
+    }
+    if (type === "ricochet") {
+      const bounces = clamp(Number(detail.bounces) || 1, 1, 12);
+      const base = 780 + bounces * 65;
+      this.tone({
+        frequency: base,
+        duration: 0.055,
+        type: "triangle",
+        gain: 0.075,
+        slide: 260,
+        pan,
+      });
+      this.tone({
+        frequency: base * 1.5,
+        duration: 0.035,
+        type: "sine",
+        gain: 0.04,
+        delay: 0.01,
+        pan: -pan * 0.5,
+      });
+      return;
+    }
+    if (type === "cover-hit") {
+      const hp = clamp(Number(detail.hp) || 1, 1, 2);
+      this.noise({ duration: 0.08, gain: 0.055, pan });
+      this.tone({
+        frequency: hp === 2 ? 310 : 250,
+        duration: 0.1,
+        type: "square",
+        gain: 0.09,
+        slide: -110,
+        pan,
+      });
+      return;
+    }
+    if (type === "cover-break") {
+      this.noise({ duration: 0.2, gain: 0.085, pan });
+      this.tone({ frequency: 190, duration: 0.18, type: "sawtooth", gain: 0.11, slide: -120, pan });
+      this.tone({ frequency: 420, duration: 0.09, type: "square", gain: 0.08, delay: 0.03, slide: -220, pan: -pan * 0.6 });
+      this.tone({ frequency: 280, duration: 0.12, type: "triangle", gain: 0.07, delay: 0.08, slide: -150, pan: pan * 0.6 });
+      return;
+    }
+    if (type === "explode") {
+      this.stopTankMusic();
+      this.playTankExplosion(pan);
+    }
+  }
+
+  startTankMusic() {
+    this.stopTankMusic();
+    this.tankMusicStep = 0;
+    const bass = [110, 110, 131, 110, 147, 131, 98, 98];
+    const lead = [220, 0, 262, 247, 294, 0, 196, 220];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.tankMusicStep % bass.length;
+      const pan = step % 2 === 0 ? -0.34 : 0.34;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.16,
+        type: "sawtooth",
+        gain: 0.042,
+        pan: -pan * 0.5,
+      });
+      if (lead[step]) {
+        this.tone({
+          frequency: lead[step],
+          duration: 0.1,
+          type: "square",
+          gain: 0.026,
+          delay: 0.025,
+          slide: 16,
+          pan,
+        });
+      }
+      if (step % 2 === 0) {
+        this.noise({ duration: 0.035, gain: 0.015, pan: 0 });
+      }
+      this.tankMusicStep += 1;
+    };
+    tick();
+    this.tankMusicTimer = window.setInterval(tick, 220);
+  }
+
+  stopTankMusic() {
+    if (!this.tankMusicTimer) return;
+    window.clearInterval(this.tankMusicTimer);
+    this.tankMusicTimer = null;
+  }
+
+  playTankExplosion(pan) {
+    // Heavy tank blast + shrapnel + victory fanfare
+    this.noise({ duration: 0.38, gain: 0.11, pan });
+    this.tone({ frequency: 140, duration: 0.34, type: "sawtooth", gain: 0.14, slide: -95, pan });
+    this.tone({ frequency: 75, duration: 0.45, type: "triangle", gain: 0.13, delay: 0.02, slide: -35, pan: 0 });
+    this.tone({ frequency: 520, duration: 0.1, type: "square", gain: 0.085, delay: 0.04, slide: -340, pan: -pan * 0.7 });
+    this.tone({ frequency: 680, duration: 0.08, type: "square", gain: 0.07, delay: 0.1, slide: -420, pan: pan * 0.7 });
+
+    const fanfare = [392, 523, 659, 784, 1047];
+    fanfare.forEach((frequency, index) => {
+      const notePan = index % 2 === 0 ? -0.6 : 0.6;
+      this.tone({
+        frequency,
+        duration: 0.13,
+        type: "square",
+        gain: 0.095,
+        delay: 0.36 + index * 0.085,
+        slide: 35,
+        pan: notePan,
+      });
+    });
+    [523, 659, 784, 1047].forEach((frequency, index) => {
+      this.tone({
+        frequency,
+        duration: 0.46,
+        type: "square",
+        gain: 0.075,
+        delay: 0.82,
+        pan: (index - 1.5) * 0.3,
+      });
+    });
   }
 
   playPongWin(pan) {

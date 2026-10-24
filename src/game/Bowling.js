@@ -50,7 +50,7 @@ export class Bowling {
       this.physicsReady = true;
       this.resetPhysicsBodies();
     } catch (error) {
-      console.warn("HeadPilot Bowling physics unavailable; using local fallback.", error);
+      console.warn("AIRCADE Bowling physics unavailable; using local fallback.", error);
     } finally {
       this.physicsInitializing = false;
     }
@@ -384,7 +384,7 @@ export class Bowling {
     ctx.fillRect(0, 0, this.width, 80);
     ctx.fillStyle = "#ffe44a";
     ctx.font = "900 16px Arial";
-    ctx.fillText("HEADPILOT LANES", 34, 31);
+    ctx.fillText("AIRCADE LANES", 34, 31);
     ctx.fillStyle = "#8d86ad";
     ctx.font = "700 11px Arial";
     ctx.fillText("LANE 01  //  MOTION BOWLING", 34, 52);

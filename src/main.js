@@ -11,6 +11,8 @@ const startButton = document.querySelector("#start-button");
 const pauseButton = document.querySelector("#pause-button");
 const restartButton = document.querySelector("#restart-button");
 const muteButton = document.querySelector("#mute-button");
+const volumeSlider = document.querySelector("#volume-slider");
+const volumeValue = document.querySelector("#volume-value");
 const modeButton = document.querySelector("#mode-button");
 const menuButton = document.querySelector("#menu-button");
 const gameButton = document.querySelector("#game-button");
@@ -47,6 +49,9 @@ snake.onEvent = (type, detail) => arcadeAudio.play("snake", type, detail);
 breakout.onEvent = (type, detail) => {
   arcadeAudio.play("breakout", type, detail);
   if (type === "win") celebrateGoal();
+};
+tank.onEvent = (type, detail) => {
+  arcadeAudio.play("tank", type, detail);
 };
 let activeGame = null;
 let gameType = null;
@@ -315,7 +320,7 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   });
 
   motionSocket.addEventListener("error", () => {
-    updateMotionConnectionUI("Can't reach sender — open HeadPilot Sender");
+    updateMotionConnectionUI("Can't reach sender — open the AIRCADE motion sender");
   });
 
   updateMotionConnectionUI();
@@ -649,6 +654,13 @@ muteButton.addEventListener("click", () => {
   updateMuteUI();
 });
 
+volumeSlider?.addEventListener("input", (event) => {
+  unlockAudio();
+  const percent = Number(event.target.value);
+  arcadeAudio.setVolume(percent / 100);
+  updateMuteUI();
+});
+
 function unlockAudio() {
   void arcadeAudio.unlock();
 }
@@ -666,6 +678,18 @@ function updateMuteUI() {
     "muted",
     arcadeAudio.muted
   );
+
+  const displayPercent = arcadeAudio.muted
+    ? 0
+    : Math.round(arcadeAudio.volume * 100);
+
+  if (volumeSlider) {
+    volumeSlider.value = String(displayPercent);
+    volumeSlider.style.setProperty("--vol", `${displayPercent}%`);
+  }
+  if (volumeValue) {
+    volumeValue.textContent = `${displayPercent}%`;
+  }
 }
 
 function selectGame(nextGame) {
@@ -740,7 +764,7 @@ function updateModeUI() {
   // Arcade selection menu.
   if (!gameType) {
     gameTitle.classList.add("marquee-sign");
-    gameTitle.textContent = "HeadPilot Arcade";
+    gameTitle.textContent = "AIRCADE";
     gameSubtitle.textContent =
       "Pick a cabinet and start playing.";
 
@@ -755,7 +779,7 @@ function updateModeUI() {
 
     gameShell.setAttribute(
       "aria-label",
-      "HeadPilot game selection"
+      "AIRCADE game selection"
     );
 
     instructions.innerHTML =
@@ -783,7 +807,7 @@ function updateModeUI() {
   gameTitle.textContent = snakeMode
     ? "Snake"
     : bowling3dMode
-      ? "HeadPilot Bowling"
+      ? "AIRCADE Bowling"
       : breakoutMode
         ? "Breakout"
         : tankMode
@@ -793,7 +817,7 @@ function updateModeUI() {
   gameSubtitle.textContent = snakeMode
     ? "Guide the snake. Find the apple."
     : bowling3dMode
-      ? "Our custom HeadPilot lane. Drag and flick to bowl."
+      ? "Our custom AIRCADE lane. Drag and flick to bowl."
       : breakoutMode
         ? "Clear the wall brick by brick."
         : tankMode
@@ -801,7 +825,7 @@ function updateModeUI() {
           : "Two paddles. One ball.";
 
   gameButton.textContent = snakeMode
-    ? "HeadPilot Bowling"
+    ? "AIRCADE Bowling"
     : bowling3dMode
       ? "Breakout"
       : breakoutMode
@@ -826,7 +850,7 @@ function updateModeUI() {
     snakeMode
       ? "Neon Snake playing field"
       : bowling3dMode
-        ? "HeadPilot Bowling lane"
+        ? "AIRCADE Bowling lane"
         : breakoutMode
           ? "Breakout playing field"
           : tankMode

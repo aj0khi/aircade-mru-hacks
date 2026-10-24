@@ -486,16 +486,7 @@ h1.marquee-sign {
 
 /* Tank Arena game selection */
 .choice-tank strong {
-  color: #ff9672;
-}
-
-.choice-tank {
-  border-color: #a85b72;
-}
-
-.choice-tank:hover,
-.choice-tank:focus-visible {
-  border-color: #ff9672;
+  color: var(--blue);
 }
 .game-choice:nth-child(5) {
   grid-column: 2 / 3;
@@ -640,17 +631,19 @@ button[hidden],
 }
 
 .controls {
-  padding: 10px;
+  position: relative;
+  padding: 12px 10px 10px;
   border: 2px solid var(--line);
   background: var(--panel);
   box-shadow: 0 4px 0 #0c0a1c, 0 14px 28px rgba(0, 0, 0, 0.16);
 }
 
 .controls::before {
-  display: block;
-  width: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
   height: 2px;
-  margin: -1px 0 8px;
   content: "";
   background: var(--purple);
   box-shadow: 0 0 8px rgba(123, 77, 255, 0.6);
@@ -659,7 +652,115 @@ button[hidden],
 
 .control-group {
   display: flex;
+  align-items: center;
   gap: 9px;
+}
+
+.primary-actions {
+  margin-right: auto;
+}
+
+.soundbar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 2px solid #5a4b8f;
+  border-radius: 2px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 38%),
+    var(--panel-light);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), 3px 3px 0 #0b0819;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.soundbar:hover,
+.soundbar:focus-within {
+  border-color: var(--blue);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 3px 3px 0 #0b0819, 0 0 14px rgba(34, 216, 255, 0.22);
+}
+
+.soundbar-label {
+  color: var(--blue);
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(34, 216, 255, 0.45);
+}
+
+.soundbar-slider {
+  --vol: 85%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 96px;
+  height: 8px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--blue) 0%,
+    var(--pink) var(--vol),
+    rgba(13, 10, 30, 0.85) var(--vol),
+    rgba(13, 10, 30, 0.85) 100%
+  );
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.soundbar-slider:focus-visible {
+  outline: 1px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+.soundbar-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 16px;
+  border: 1px solid #fff4a1;
+  border-radius: 1px;
+  background: var(--yellow);
+  box-shadow: 0 0 8px var(--yellow), 2px 2px 0 #0b0819;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.soundbar-slider::-webkit-slider-thumb:hover {
+  background: #ffffff;
+  transform: scale(1.1);
+}
+
+.soundbar-slider::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  border: 1px solid #fff4a1;
+  border-radius: 1px;
+  background: var(--yellow);
+  box-shadow: 0 0 8px var(--yellow), 2px 2px 0 #0b0819;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.soundbar-slider::-moz-range-thumb:hover {
+  background: #ffffff;
+  transform: scale(1.1);
+}
+
+.soundbar-value {
+  min-width: 36px;
+  color: var(--yellow);
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: right;
+  text-shadow: 2px 2px 0 #140d29;
 }
 
 button {
@@ -962,7 +1063,8 @@ button.muted {
     align-items: stretch;
   }
 
-  button {
+  button,
+  .soundbar {
     flex: 1;
     padding-inline: 8px;
   }
