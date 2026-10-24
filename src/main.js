@@ -223,7 +223,7 @@ function updateKeyboardInput() {
 window.addEventListener("keydown", (event) => {
   if (!gameType && ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6"].includes(event.code)) {
     event.preventDefault();
-    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling", Digit4: "breakout", Digit5: "tank", Digit6: "bowling-3d" };
+    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d", Digit4: "breakout", Digit5: "tank", Digit6: "bowling" };
     selectGame(gameByKey[event.code]);
     return;
   }
@@ -325,11 +325,11 @@ gameButton.addEventListener("click", () => {
   const nextGame = gameType === "pong"
     ? "snake"
     : gameType === "snake"
-      ? "bowling"
-      : gameType === "bowling"
-        ? "breakout"
+      ? "bowling-3d"
       : gameType === "bowling-3d"
         ? "breakout"
+        : gameType === "bowling"
+          ? "breakout"
         : gameType === "breakout"
           ? "tank"
           : "pong";
@@ -412,7 +412,7 @@ function updateModeUI() {
       ? "Open-source physics lane. Drag and flick to bowl."
       : breakoutMode ? "Clear the wall brick by brick." : tankMode ? "Ricochet. Reload. Dominate." : "Two paddles. One ball.";
   gameButton.textContent = snakeMode
-    ? "HeadPilot Bowling"
+    ? "3D Bowling"
     : bowlingMode ? "Breakout" : bowling3dMode ? "Breakout" : breakoutMode ? "Neon Tanks" : tankMode ? "Pong" : "Snake";
   modeButton.hidden = snakeMode || bowlingMode || bowling3dMode || breakoutMode || tankMode;
   modeLabel.textContent = snakeMode || bowlingMode || bowling3dMode || breakoutMode
