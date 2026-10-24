@@ -44,6 +44,10 @@ const arcadeAudio = new ArcadeAudio();
 pong.onEvent = (type, detail) => arcadeAudio.play("pong", type, detail);
 snake.onEvent = (type, detail) => arcadeAudio.play("snake", type, detail);
 
+breakout.onEvent = (type, detail) => {
+  arcadeAudio.play("breakout", type, detail);
+  if (type === "win") celebrateGoal();
+};
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
@@ -263,11 +267,19 @@ bowling3dFrame.addEventListener("load", () => {
 });
 
 window.addEventListener("message", (event) => {
-  if (
-    event.origin !== window.location.origin ||
-    event.source !== bowling3dFrame.contentWindow ||
-    event.data?.type !== "headpilot-bowling-ready"
-  ) {
+  if (event.origin !== window.location.origin
+    || event.source !== bowling3dFrame.contentWindow) {
+    return;
+  }
+  if (event.data?.type === "headpilot-bowling-audio" && gameType === "bowling-3d") {
+    unlockAudio();
+    arcadeAudio.play("bowling", event.data.event, event.data.detail);
+    if (event.data.event === "strike" || event.data.event === "spare") {
+      celebrateGoal();
+    }
+    return;
+  }
+  if (event.data?.type !== "headpilot-bowling-ready") {
     return;
   }
 
@@ -380,6 +392,8 @@ window.addEventListener("keydown", (event) => {
       sendBowling3dCommand(
         bowling3dPaused ? "pause" : "start"
       );
+      arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
+      sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     } else {
       activeGame?.togglePause();
     }
@@ -422,6 +436,7 @@ startButton.addEventListener("click", () => {
 
   if (gameType === "bowling-3d") {
     bowling3dPaused = false;
+    arcadeAudio.play("bowling", "start");
     sendBowling3dCommand("start");
     updateUI();
     return;
@@ -438,6 +453,8 @@ pauseButton.addEventListener("click", () => {
       bowling3dPaused ? "pause" : "start"
     );
 
+    arcadeAudio.play("bowling", bowling3dPaused ? "pause" : "resume");
+    sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     updateUI();
     return;
   }
@@ -455,6 +472,8 @@ restartButton.addEventListener("click", () => {
     bowling3dFrame.src =
       `/bowling-3d/index.html?restart=${Date.now()}`;
 
+    arcadeAudio.play("bowling", "start");
+    bowling3dFrame.src = `/bowling-3d/index.html?restart=${Date.now()}`;
     return;
   }
 
@@ -542,6 +561,7 @@ function updateMuteUI() {
 
 function selectGame(nextGame) {
   // Silence previous game audio.
+  unlockAudio();
   if (gameType && nextGame !== gameType) {
     arcadeAudio.silence();
   }
@@ -712,8 +732,8 @@ function updateModeUI() {
       : breakoutMode
         ? '<strong>Move</strong> with ← / → or roll <span aria-hidden="true">·</span> P / Esc pauses <span aria-hidden="true">·</span> Clear every brick'
         : tankMode
-          ? '<strong>Blue Tank</strong> Arrow keys + Space to fire <span aria-hidden="true">·</span> <strong>Red Tank</strong> WASD + F to fire <span aria-hidden="true">·</span> P / Esc pauses'
-          : '<strong>Player 1</strong> W / S <span aria-hidden="true">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden="true">·</span> P / Esc pauses <span aria-hidden="true">·</span> First to 7';
+          ? "<strong>Player 1</strong> arrows + Space <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
+        : "<strong>Player 1</strong> W / S <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses <span aria-hidden=\"true\">·</span> First to 3";
 }
 
 function updateUI() {
