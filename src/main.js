@@ -11,6 +11,11 @@ const restartButton = document.querySelector("#restart-button");
 const modeButton = document.querySelector("#mode-button");
 const menuButton = document.querySelector("#menu-button");
 const gameButton = document.querySelector("#game-button");
+const motionStatus = document.querySelector("#motion-status");
+const motionConnectButton = document.querySelector("#motion-connect-button");
+const motionCalibrateButton = document.querySelector("#motion-calibrate-button");
+const motionMeterFill = document.querySelector("#motion-meter-fill");
+const motionMeterValue = document.querySelector("#motion-meter-value");
 const gameTitle = document.querySelector("#game-title");
 const gameSubtitle = document.querySelector("#game-subtitle");
 const message = document.querySelector("#message");
@@ -85,12 +90,28 @@ function forwardBowlingMotion(sample = {}) {
     forward: Math.max(-1, Math.min(1, swing)),
     timestamp: sample.timestamp ?? performance.now(),
   };
+  updateMotionPanel(normalized);
   if (gameType === "pong") {
     pong.setPaddleInput(1, normalized.roll);
   } else if (gameType === "snake") {
     updateSnakeMotion(normalized.roll, normalized.pitch);
   } else if (gameType === "breakout") {
     breakout.setPaddleInput(normalized.roll);
+  }
+
+  function updateMotionPanel(sample = {}) {
+    const roll = Number(sample.roll) || 0;
+    const percent = `${50 + roll * 50}%`;
+    motionMeterFill.style.left = percent;
+    motionMeterValue.textContent = roll.toFixed(2);
+  }
+
+  function updateMotionConnectionUI() {
+    const connected = motionSocket?.readyState === WebSocket.OPEN;
+    motionStatus.classList.toggle("connected", connected);
+    motionStatus.innerHTML = `<span class="status-dot" aria-hidden="true"></span>${connected ? "Motion connected" : "Keyboard fallback"}`;
+    motionConnectButton.textContent = connected ? "Disconnect motion" : "Connect motion";
+    motionCalibrateButton.disabled = !connected || !latestBowling3dSample;
   }
   sendBowling3dMotion(normalized);
   return true;
@@ -124,12 +145,15 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   motionSocketUrl = url;
   motionSocket = new WebSocket(url);
   motionSocket.addEventListener("message", handleMotionBridgeMessage);
+  motionSocket.addEventListener("open", updateMotionConnectionUI);
   motionSocket.addEventListener("close", () => {
     if (motionSocket?.url === url) motionSocket = null;
+    updateMotionConnectionUI();
   });
   motionSocket.addEventListener("error", () => {
     motionSocket?.close();
   });
+  updateMotionConnectionUI();
   return motionSocket;
 }
 
@@ -142,6 +166,7 @@ function disconnectMotionBridge() {
     window.clearInterval(motionStaleTimer);
     motionStaleTimer = null;
   }
+  updateMotionConnectionUI();
 }
 
 function updateSnakeMotion(roll, pitch) {
@@ -267,6 +292,19 @@ restartButton.addEventListener("click", () => {
     return;
   }
   activeGame.restart();
+});
+motionConnectButton.addEventListener("click", () => {
+  if (motionSocket?.readyState === WebSocket.OPEN || motionSocket?.readyState === WebSocket.CONNECTING) {
+    disconnectMotionBridge();
+  } else {
+    connectMotionBridge();
+  }
+});
+motionCalibrateButton.addEventListener("click", () => {
+  if (latestBowling3dSample) {
+    calibrateBowlingMotion(latestBowling3dSample);
+    updateMotionPanel({ roll: 0 });
+  }
 });
 modeButton.addEventListener("click", () => {
   pong.setMode(pong.mode === "single" ? "two-player" : "single");
@@ -503,3 +541,4 @@ window.gyroArcade = {
 };
 
 motionStaleTimer = window.setInterval(clearStaleMotion, 100);
+updateMotionConnectionUI();
