@@ -9,7 +9,12 @@ export class Breakout {
     this.width = canvas.width;
     this.height = canvas.height;
     this.paddle = { width: 132, height: 14, speed: 620 };
+    this.onEvent = null;
     this.reset();
+  }
+
+  emit(type, detail = {}) {
+    this.onEvent?.(type, { ...detail, width: this.width, height: this.height });
   }
 
   reset() {
@@ -37,6 +42,7 @@ export class Breakout {
           y: 48 + row * 26,
           width,
           height: 16,
+          row,
           color: BRICK_COLORS[row % BRICK_COLORS.length],
           visible: true,
         });
@@ -56,19 +62,25 @@ export class Breakout {
   }
 
   start() {
+    const alreadyRunning = this.running && !this.gameOver;
     if (this.gameOver) this.reset();
     this.running = true;
     this.paused = false;
+    if (!alreadyRunning) {
+      this.emit("start", { x: this.ball.x, y: this.ball.y });
+    }
   }
 
   restart() {
     this.reset();
     this.running = true;
+    this.emit("start", { x: this.ball.x, y: this.ball.y });
   }
 
   togglePause() {
     if (!this.running || this.gameOver) return this.paused;
     this.paused = !this.paused;
+    this.emit(this.paused ? "pause" : "resume");
     return this.paused;
   }
 
@@ -95,10 +107,12 @@ export class Breakout {
     if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= this.width) {
       ball.x = clamp(ball.x, ball.radius, this.width - ball.radius);
       ball.vx *= -1;
+      this.emit("wall", { x: ball.x, y: ball.y });
     }
     if (ball.y - ball.radius <= 0) {
       ball.y = ball.radius;
       ball.vy = Math.abs(ball.vy);
+      this.emit("wall", { x: ball.x, y: ball.y });
     }
     const paddle = this.paddleState;
     if (ball.vy > 0 && this.intersects(ball, paddle.x, paddle.y, this.paddle.width, this.paddle.height)) {
@@ -106,17 +120,25 @@ export class Breakout {
       ball.y = paddle.y - ball.radius;
       ball.vx = clamp(hit, -1, 1) * 430;
       ball.vy = -Math.max(290, Math.abs(ball.vy) * 1.02);
+      this.emit("paddle", { x: ball.x, y: ball.y, hit: clamp(hit, -1, 1) });
     }
     for (const brick of this.bricks) {
       if (!brick.visible || !this.intersects(ball, brick.x, brick.y, brick.width, brick.height)) continue;
       brick.visible = false;
       this.score += 10;
       ball.vy *= -1;
+      this.emit("brick", {
+        x: brick.x + brick.width / 2,
+        y: brick.y + brick.height / 2,
+        row: brick.row ?? 0,
+        score: this.score,
+      });
       break;
     }
     if (this.bricks.every((brick) => !brick.visible)) {
       this.running = false;
       this.gameOver = true;
+      this.emit("win", { x: ball.x, y: ball.y, score: this.score });
       return;
     }
     if (ball.y - ball.radius > this.height) {
@@ -124,9 +146,11 @@ export class Breakout {
       if (this.lives <= 0) {
         this.running = false;
         this.gameOver = true;
+        this.emit("die", { x: ball.x, y: ball.y });
       } else {
         this.running = false;
         this.serve();
+        this.emit("lose-life", { x: ball.x, y: ball.y, lives: this.lives });
       }
     }
   }
@@ -153,8 +177,35 @@ export class Breakout {
     for (const brick of this.bricks) {
       if (brick.visible) this.drawGlowRect(ctx, brick.x, brick.y, brick.width, brick.height, brick.color);
     }
+    this.drawBallsLeft(ctx);
     this.drawGlowRect(ctx, this.paddleState.x, this.paddleState.y, this.paddle.width, this.paddle.height, "#f5f1df");
     this.drawBall(ctx);
+  }
+
+  drawBallsLeft(ctx) {
+    const startX = this.width - 142;
+    const y = 24;
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 11px Tahoma, sans-serif";
+    ctx.fillStyle = "#f7f3ff";
+    ctx.fillText("BALLS", startX, y + 2);
+    for (let index = 0; index < 3; index += 1) {
+      const x = startX + 52 + index * 20;
+      const available = index < this.lives;
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = available ? "#f7f3ff" : "rgba(247, 243, 255, 0.2)";
+      ctx.fill();
+      ctx.strokeStyle = available ? "#22d8ff" : "rgba(247, 243, 255, 0.35)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.font = "900 11px Tahoma, sans-serif";
+    ctx.fillStyle = "#22d8ff";
+    ctx.fillText(`x${this.lives}`, startX + 118, y + 2);
+    ctx.restore();
   }
 
   drawGlowRect(ctx, x, y, width, height, color) {

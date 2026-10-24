@@ -35,15 +35,25 @@ export class Bowling {
       this.pointerStart = null;
     });
     this.reset();
-    this.initializePhysics();
   }
 
   async initializePhysics() {
-    if (typeof Ammo !== "function") return;
-    const ammo = await Ammo();
-    this.physics = { ammo, bodies: [], accumulator: 0 };
-    this.physicsReady = true;
-    this.resetPhysicsBodies();
+    if (this.physicsReady || this.physicsInitializing) return;
+    this.physicsInitializing = true;
+    if (typeof Ammo !== "function") {
+      this.physicsInitializing = false;
+      return;
+    }
+    try {
+      const ammo = await Ammo();
+      this.physics = { ammo, bodies: [], accumulator: 0 };
+      this.physicsReady = true;
+      this.resetPhysicsBodies();
+    } catch (error) {
+      console.warn("HeadPilot Bowling physics unavailable; using local fallback.", error);
+    } finally {
+      this.physicsInitializing = false;
+    }
   }
 
   reset() {
@@ -57,8 +67,8 @@ export class Bowling {
     this.power = 0;
     this.ball = null;
     this.scoredPins = 0;
-    if (this.physicsReady) this.resetPhysicsBodies();
     this.pins = this.createPins();
+    if (this.physicsReady) this.resetPhysicsBodies();
     this.message = "PRESS START";
   }
 
@@ -85,6 +95,9 @@ export class Bowling {
 
   start() {
     if (this.gameOver) this.reset();
+    if (!this.physicsReady && !this.physicsInitializing) {
+      window.setTimeout(() => this.initializePhysics(), 0);
+    }
     this.running = true;
     this.paused = false;
     this.message = "AIM THE LANE";
@@ -123,7 +136,6 @@ export class Bowling {
   throwBall(power = 0.9) {
     if (!this.running || this.paused || this.gameOver || this.ball) return;
     this.power = clamp(power, 0.25, 1);
-    if (this.physicsReady) this.releasePhysicsBall();
     this.ball = {
       x: this.aim * 0.74,
       z: 0,
@@ -132,6 +144,7 @@ export class Bowling {
       rotation: 0,
       impact: false,
     };
+    if (this.physicsReady) this.releasePhysicsBall();
     this.message = "ROLLING";
   }
 
@@ -178,11 +191,12 @@ export class Bowling {
     if (this.physics.world) {
       for (const body of this.physics.bodies) this.physics.world.removeRigidBody(body);
     } else {
+      const collisionConfiguration = new ammo.btDefaultCollisionConfiguration();
       this.physics.world = new ammo.btDiscreteDynamicsWorld(
-        new ammo.btCollisionDispatcher(new ammo.btDefaultCollisionConfiguration()),
+        new ammo.btCollisionDispatcher(collisionConfiguration),
         new ammo.btDbvtBroadphase(),
         new ammo.btSequentialImpulseConstraintSolver(),
-        new ammo.btDefaultCollisionConfiguration(),
+        collisionConfiguration,
       );
     }
     this.physics.bodies = [];

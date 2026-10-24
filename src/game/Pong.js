@@ -1,7 +1,7 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export class Game {
-  constructor(canvas, { winningScore = 7 } = {}) {
+  constructor(canvas, { winningScore = 3 } = {}) {
     this.canvas = canvas;
     this.context = canvas.getContext("2d");
     this.winningScore = winningScore;
@@ -11,7 +11,12 @@ export class Game {
     this.ball = { radius: 9, speed: 390, maxBounceAngle: Math.PI / 3 };
     this.goalPauseDuration = 1.25;
     this.mode = "single";
+    this.onEvent = null;
     this.reset();
+  }
+
+  emit(type, detail = {}) {
+    this.onEvent?.(type, { ...detail, width: this.width, height: this.height });
   }
 
   reset() {
@@ -45,19 +50,25 @@ export class Game {
   }
 
   start() {
+    const alreadyRunning = this.running && !this.gameOver;
     if (this.gameOver) this.reset();
     this.running = true;
     this.paused = false;
+    if (!alreadyRunning) {
+      this.emit("start", { x: this.ballState.x, y: this.ballState.y });
+    }
   }
 
   restart() {
     this.reset();
     this.running = true;
+    this.emit("start", { x: this.ballState.x, y: this.ballState.y });
   }
 
   togglePause() {
     if (!this.running || this.gameOver || this.pauseRemaining > 0) return this.paused;
     this.paused = !this.paused;
+    this.emit(this.paused ? "pause" : "resume");
     return this.paused;
   }
 
@@ -76,7 +87,10 @@ export class Game {
     const delta = Math.min(deltaSeconds, 0.05);
     if (this.pauseRemaining > 0) {
       this.pauseRemaining = Math.max(0, this.pauseRemaining - delta);
-      if (this.pauseRemaining === 0 && !this.gameOver) this.running = true;
+      if (this.pauseRemaining === 0 && !this.gameOver) {
+        this.running = true;
+        this.emit("serve", { x: this.ballState.x, y: this.ballState.y });
+      }
       return;
     }
     if (!this.running || this.gameOver || this.paused) return;
@@ -108,6 +122,7 @@ export class Game {
     if (ball.y - this.ball.radius <= 0 || ball.y + this.ball.radius >= this.height) {
       ball.y = clamp(ball.y, this.ball.radius, this.height - this.ball.radius);
       ball.vy *= -1;
+      this.emit("wall", { x: ball.x, y: ball.y });
     }
 
     const left = this.paddles[1];
@@ -140,6 +155,12 @@ export class Game {
     ball.x = direction === 1
       ? paddle.x + this.paddle.width + this.ball.radius
       : paddle.x - this.ball.radius;
+    this.emit("paddle", {
+      playerId: direction === 1 ? 1 : 2,
+      speed,
+      x: ball.x,
+      y: ball.y,
+    });
   }
 
   score(playerId) {
@@ -150,8 +171,10 @@ export class Game {
       this.running = false;
       this.gameOver = true;
       this.winner = playerId;
+      this.emit("win", { playerId, x: this.ballState.x, y: this.ballState.y });
       return;
     }
+    this.emit("score", { playerId, x: this.ballState.x, y: this.ballState.y });
     this.serve(playerId === 1 ? 1 : -1);
     this.running = false;
     this.paused = false;
@@ -174,7 +197,27 @@ export class Game {
     ctx.lineTo(this.width / 2, this.height);
     ctx.stroke();
     ctx.setLineDash([]);
+    this.drawCenterTally(ctx);
     this.drawSoccerBall(ctx);
+  }
+
+  drawCenterTally(ctx) {
+    const center = this.width / 2;
+    const top = 28;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 13px Arial, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("P1", center - 42, top);
+    ctx.fillText("P2", center + 42, top);
+    ctx.font = "900 30px Arial, sans-serif";
+    ctx.fillText(String(this.scores[1]), center - 42, top + 31);
+    ctx.fillText(String(this.scores[2]), center + 42, top + 31);
+    ctx.font = "900 10px Arial, sans-serif";
+    ctx.fillStyle = "#a8a8a8";
+    ctx.fillText("SCORE", center, top + 31);
+    ctx.restore();
   }
 
   drawNeonGrid(ctx) {
