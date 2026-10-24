@@ -290,6 +290,10 @@ h1.marquee-sign {
   color: var(--pink);
 }
 
+.choice-breakout strong {
+  color: var(--yellow);
+}
+
 .game-menu[hidden] {
   display: none;
 }

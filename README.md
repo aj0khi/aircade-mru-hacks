@@ -447,3 +447,12 @@ After each goal, play pauses briefly while the scoring player is shown, with a s
 ## Neon Snake
 
 Use the **SNAKE** button to switch to the second arcade game. Start with the button or Space, steer with the arrow keys or motion input, pause with P/Escape, and restart with RESTART. Wrist roll selects left/right and wrist pitch selects up/down; a deadzone prevents jitter. Eat gold food to grow and score; hitting the wall or yourself ends the round. The direct motion API is `window.gyroSnake.setDirection(roll, pitch)`.
+
+## Neon Breakout
+
+Use the **NEON BREAKOUT** cabinet or press **4** from the game menu. Start with
+the button or Space, move the paddle with the left/right arrow keys or wrist
+roll, pause with P/Escape, and restart with RESTART. Clear the cyan, pink,
+yellow, and purple brick wall to finish the round. The direct motion API is
+`window.gyroBreakout.setPaddleInput(value)`, where `value` is normalized to
+`-1...1`.
