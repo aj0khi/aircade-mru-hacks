@@ -39,6 +39,11 @@ var sceneInitialized = false;
 var loadingPreview = [];
 var animationStarted = false;
 
+var matchScores = [0, 0];
+var currentPlayer = 0;
+var targetScore = 50;
+var matchWinner = null;
+
 function emitBowlingAudio(type, detail = {}) {
 	if (!window.parent || window.parent === window) return;
 	window.parent.postMessage({
@@ -258,7 +263,7 @@ function setAnisotropy(parent, anisotropy) {
 }
 
 function getLocalPlayer() {
-	if (!players) {
+	if (!players || matchWinner !== null || gamePaused) {
 		return undefined;
 	}
 	return players.find(p => p.local);
@@ -315,15 +320,16 @@ function setBowlingStatus(label) {
 }
 
 function updateHud(player) {
-	if (!player || !scoreLabel) return;
-	var frame = Math.min(player.scores.frameNumber + 1, FRAME_COUNT);
-	scoreLabel.innerHTML = "FRAME " + String(frame).padStart(2, "0")
-			+ " &nbsp;·&nbsp; SCORE <strong>" + player.scores.totalScore + "</strong>";
-	if (frame !== lastFrameNumber) {
-		lastFrameNumber = frame;
-		setBowlingStatus("AIMING");
+  if (!player || !scoreLabel) return;
+
+  scoreLabel.innerHTML =
+    `P1: <strong>${matchScores[0]}</strong> &nbsp;·&nbsp; ` +
+    `P2: <strong>${matchScores[1]}</strong> &nbsp;·&nbsp; ` +
+    (matchWinner !== null
+      ? `PLAYER ${matchWinner + 1} WINS!`
+      : `PLAYER ${currentPlayer + 1} TURN`);
+
 	}
-}
 
 function updatePowerMeter(value) {
 	if (powerMeter) {
@@ -495,15 +501,22 @@ window.addEventListener("message", (event) => {
 	if (event.origin !== window.location.origin || !event.data) {
 		return;
 	}
+
 	if (event.data.type === "headpilot-bowling-motion") {
 		onHeadPilotMotion(event.data);
 	}
+
 	if (event.data.type === "headpilot-bowling-command") {
+		if (matchWinner !== null) {
+			return;
+		}
+
 		if (event.data.command === "pause") {
 			gamePaused = true;
 			emitBowlingAudio("pause");
 			setBowlingStatus("PAUSED");
 		}
+
 		if (event.data.command === "start") {
 			gamePaused = false;
 			emitBowlingAudio("start");
@@ -516,6 +529,12 @@ window.addEventListener("message", (event) => {
 });
 
 function updateGame(player, dt) {
+	if (matchWinner !== null && player.local) {
+		updateHud(player);
+		syncView(player);
+		return;
+	}
+
 	player.physics.updatePhysics(dt);
 
 	if (player.local && player.physics.simulationActive && player.physics.ballBody) {
@@ -523,17 +542,21 @@ function updateGame(player, dt) {
 		var ballX = ballOrigin.x();
 		var ballZ = ballOrigin.z();
 		var ballPan = clampMotionValue(ballX / TRACK_HALF_WIDTH, -0.85, 0.85);
+
 		if (!player.inGutter && Math.abs(ballX) > LANE_HALF_WIDTH && ballZ > LANE_END_Z) {
 			player.inGutter = true;
 			emitBowlingAudio("gutter", { pan: ballPan });
 		}
+
 		if (!player.impactPlayed && !player.inGutter && ballZ <= 0.22) {
 			for (var pIdx = 0; pIdx < player.physics.pinBodies.length; pIdx++) {
 				var pBody = player.physics.pinBodies[pIdx];
 				if (!pBody) continue;
+
 				var pOrig = pBody.getCenterOfMassTransform().getOrigin();
 				var dx = ballX - pOrig.x();
 				var dz = ballZ - pOrig.z();
+
 				if (dx * dx + dz * dz <= 0.042) {
 					player.impactPlayed = true;
 					emitBowlingAudio("impact", { pan: ballPan });
@@ -541,19 +564,27 @@ function updateGame(player, dt) {
 				}
 			}
 		}
+
 		var liveStandingMask = player.physics.detectStandingPins();
 		var newlyDownMask = player.lastStandingMask & (~liveStandingMask);
+
 		if (newlyDownMask !== 0) {
 			var newlyDownCount = player.physics.countPins(newlyDownMask);
+
 			if (!player.impactPlayed) {
 				player.impactPlayed = true;
 				emitBowlingAudio("impact", { pan: ballPan });
 			}
+
 			player.lastStandingMask = liveStandingMask;
 			emitBowlingAudio("pin", { count: newlyDownCount, pan: ballPan });
+
 			if (!player.outcomePlayed && liveStandingMask === 0) {
 				player.outcomePlayed = true;
-				var wasFullRack = player.physics.countPins(player.physics.currentPinsMask) === PIN_COUNT;
+
+				var wasFullRack =
+					player.physics.countPins(player.physics.currentPinsMask) === PIN_COUNT;
+
 				if (wasFullRack) {
 					setBowlingStatus("STRIKE!");
 					emitBowlingAudio("strike", { pan: ballPan });
@@ -565,53 +596,54 @@ function updateGame(player, dt) {
 		}
 	}
 
-	if (player.physics.simulationActive && (player.physics.simulationTime > FRAME_ROLL_TIME)) {
+	if (
+		matchWinner === null &&
+		player.local &&
+		player.physics.simulationActive &&
+		player.physics.simulationTime > FRAME_ROLL_TIME
+	) {
 		var standingPinsMask = player.physics.detectStandingPins();
-		var beatenPinsMask = player.physics.currentPinsMask & (~standingPinsMask);
-		var beatenPinCount = player.physics.countPins(beatenPinsMask);
-		var startedFullRack = player.physics.countPins(player.physics.currentPinsMask) === PIN_COUNT;
+		var knockedPinsMask = player.physics.currentPinsMask & (~standingPinsMask);
+		var pinsDown = player.physics.countPins(knockedPinsMask);
 
-		var prevFrameNumber = player.scores.frameNumber;
-		player.scores.addThrowResult(beatenPinCount);
-		if (player.local) {
-			scoresDiv.innerHTML = "  1  2  3  4  5  6  7  8  9  10<br/>| "
-					+ player.scores.getResultString() + " | " + player.scores.totalScore + " |";
-			if (player.scores.gameOver) {
-				emitBowlingAudio("gameover", { score: player.scores.totalScore });
-			} else if (!player.outcomePlayed && standingPinsMask === 0 && startedFullRack) {
-				setBowlingStatus("STRIKE!");
-				emitBowlingAudio("strike");
-			} else if (!player.outcomePlayed && standingPinsMask === 0) {
-				setBowlingStatus("SPARE!");
-				emitBowlingAudio("spare");
-			} else if (beatenPinCount === 0) {
-				emitBowlingAudio("miss");
-			} else if (!player.outcomePlayed) {
-				emitBowlingAudio("frame", { count: beatenPinCount });
-			}
+		matchScores[currentPlayer] += pinsDown;
+
+		if (pinsDown === 0) {
+			emitBowlingAudio("miss");
+		} else if (pinsDown === PIN_COUNT && !player.outcomePlayed) {
+			emitBowlingAudio("strike");
+		} else if (!player.outcomePlayed) {
+			emitBowlingAudio("frame", { count: pinsDown });
 		}
 
-		if (!player.scores.gameOver) {
-			var pinsMask;
-			if ((prevFrameNumber != player.scores.frameNumber) || (standingPinsMask == 0)) {
-				pinsMask = -1;
-			} else {
-				pinsMask = standingPinsMask;
-			}
-			player.physics.resetPhysics(false, pinsMask);
+		if (matchScores[currentPlayer] >= targetScore) {
+			matchWinner = currentPlayer;
+
+			setBowlingStatus(`PLAYER ${currentPlayer + 1} WINS!`);
+
+			emitBowlingAudio("gameover", {
+				score: matchScores[currentPlayer]
+			});
+
+			updatePowerMeter(0);
+		} else {
+			currentPlayer = (currentPlayer + 1) % 2;
+
+			player.physics.resetPhysics(false, -1);
+
 			player.lastStandingMask = player.physics.currentPinsMask;
 			player.inGutter = false;
 			player.impactPlayed = false;
 			player.outcomePlayed = false;
-			updatePowerMeter(0.0);
-		} else if (player.local) {
-			setBowlingStatus("GAME OVER");
-			player.scores = new Scores();
-			player.physics.resetPhysics();
-			player.lastStandingMask = player.physics.currentPinsMask;
-			player.inGutter = false;
-			player.impactPlayed = false;
-			player.outcomePlayed = false;
+
+			keyboardAim = 0;
+			gyroSwingArmed = false;
+			pickingBall = false;
+			positioningBall = false;
+			rollingBall = false;
+
+			updatePowerMeter(0);
+			setBowlingStatus(`PLAYER ${currentPlayer + 1} TURN`);
 		}
 	}
 
