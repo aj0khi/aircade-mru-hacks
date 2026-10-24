@@ -159,7 +159,7 @@ export class Breakout {
   }
 
   drawBallsLeft(ctx) {
-    const startX = this.width - 122;
+    const startX = this.width - 142;
     const y = 24;
     ctx.save();
     ctx.textAlign = "left";
