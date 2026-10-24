@@ -28,6 +28,10 @@ let seenGoalSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
 let motionNeutral = { roll: 0, pitch: 0, swing: 0 };
+let motionSocket = null;
+let motionSocketUrl = null;
+let lastMotionTimestamp = 0;
+let motionStaleTimer = null;
 
 const keyToInput = {
   KeyW: [1, -1],
@@ -79,6 +83,54 @@ function forwardBowlingMotion(sample = {}) {
   }
   sendBowling3dMotion(normalized);
   return true;
+}
+
+function handleMotionBridgeMessage(event) {
+  let sample;
+  try {
+    sample = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+  } catch {
+    console.warn("HeadPilot motion bridge sent invalid JSON.");
+    return false;
+  }
+  if (!sample || sample.type !== "motion") {
+    console.warn("HeadPilot motion bridge sent an unsupported message.");
+    return false;
+  }
+  const accepted = forwardBowlingMotion(sample);
+  if (accepted) lastMotionTimestamp = performance.now();
+  return accepted;
+}
+
+function clearStaleMotion() {
+  if (!lastMotionTimestamp || performance.now() - lastMotionTimestamp < 300) return;
+  forwardBowlingMotion({ roll: 0, pitch: 0, swing: 0 });
+  lastMotionTimestamp = 0;
+}
+
+function connectMotionBridge(url = "ws://127.0.0.1:8787") {
+  disconnectMotionBridge();
+  motionSocketUrl = url;
+  motionSocket = new WebSocket(url);
+  motionSocket.addEventListener("message", handleMotionBridgeMessage);
+  motionSocket.addEventListener("close", () => {
+    if (motionSocket?.url === url) motionSocket = null;
+  });
+  motionSocket.addEventListener("error", () => {
+    motionSocket?.close();
+  });
+  return motionSocket;
+}
+
+function disconnectMotionBridge() {
+  motionSocket?.close();
+  motionSocket = null;
+  motionSocketUrl = null;
+  lastMotionTimestamp = 0;
+  if (motionStaleTimer) {
+    window.clearInterval(motionStaleTimer);
+    motionStaleTimer = null;
+  }
 }
 
 function updateSnakeMotion(roll, pitch) {
@@ -309,4 +361,14 @@ window.gyroSnake = {
 window.gyroArcade = {
   setMotionSample: forwardBowlingMotion,
   calibrate: calibrateBowlingMotion,
+  connectMotionBridge,
+  disconnectMotionBridge,
+  get motionBridge() {
+    return {
+      connected: motionSocket?.readyState === WebSocket.OPEN,
+      url: motionSocketUrl,
+    };
+  },
 };
+
+motionStaleTimer = window.setInterval(clearStaleMotion, 100);

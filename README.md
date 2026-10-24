@@ -228,7 +228,17 @@ Example:
 }
 ```
 
-These numbers are illustrative.
+These numbers are illustrative. The implemented browser receiver listens on
+`ws://127.0.0.1:8787` by default. Start your local WebSocket relay, then run:
+
+```js
+window.gyroArcade.connectMotionBridge("ws://127.0.0.1:8787");
+```
+
+The reusable macOS adapter is in
+[`motion-bridge/HeadPilotMotion.swift`](./motion-bridge/HeadPilotMotion.swift).
+It converts `CMHeadphoneMotionManager` values into the normalized `roll`,
+`pitch`, and `swing` contract without coupling Core Motion to any game.
 
 Requirements:
 
@@ -239,6 +249,9 @@ Requirements:
 - Treat macOS and Xcode as prerequisites for the live AirPods bridge.
 - Handle disconnects gracefully.
 - Never let a stale motion reading continue moving a paddle indefinitely.
+
+The browser drops stale motion back to neutral after 300 ms without a valid
+sample, so a disconnected bridge cannot leave a paddle moving forever.
 
 The game can use pitch or yaw changes for continuous paddle movement. Rotation rate can be evaluated for a special move, but its axis and gesture thresholds must be validated experimentally.
 
