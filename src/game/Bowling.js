@@ -1,5 +1,15 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+// Adapted from public/bowling-3d/js/bowlphysics.js, used under the included GPLv3 license.
+const BALL_RADIUS = 0.109;
+const BALL_MASS = 13 * 0.45359237;
+const PIN_MASS = 1.53;
+const PIN_DISTANCE = 0.304;
+const LANE_WIDTH = 1.06;
+const LANE_START_Z = 3;
+const LANE_END_Z = -0.9;
+const FIXED_TIME_STEP = 0.01;
+
 export class Bowling {
   constructor(canvas) {
     this.canvas = canvas;
@@ -7,6 +17,8 @@ export class Bowling {
     this.width = canvas.width;
     this.height = canvas.height;
     this.lastSwing = 0;
+    this.physicsReady = false;
+    this.physics = null;
     this.pointerStart = null;
     canvas.addEventListener("pointerdown", (event) => {
       this.pointerStart = { x: event.offsetX, y: event.offsetY };
@@ -23,6 +35,15 @@ export class Bowling {
       this.pointerStart = null;
     });
     this.reset();
+    this.initializePhysics();
+  }
+
+  async initializePhysics() {
+    if (typeof Ammo !== "function") return;
+    const ammo = await Ammo();
+    this.physics = { ammo, bodies: [], accumulator: 0 };
+    this.physicsReady = true;
+    this.resetPhysicsBodies();
   }
 
   reset() {
@@ -35,6 +56,8 @@ export class Bowling {
     this.aim = 0;
     this.power = 0;
     this.ball = null;
+    this.scoredPins = 0;
+    if (this.physicsReady) this.resetPhysicsBodies();
     this.pins = this.createPins();
     this.message = "PRESS START";
   }
@@ -100,6 +123,7 @@ export class Bowling {
   throwBall(power = 0.9) {
     if (!this.running || this.paused || this.gameOver || this.ball) return;
     this.power = clamp(power, 0.25, 1);
+    if (this.physicsReady) this.releasePhysicsBall();
     this.ball = {
       x: this.aim * 0.74,
       z: 0,
@@ -120,12 +144,122 @@ export class Bowling {
   update(deltaSeconds) {
     if (!this.running || this.paused || this.gameOver || !this.ball) return;
     const delta = Math.min(deltaSeconds, 0.05);
+    if (this.physicsReady) {
+      this.updatePhysics(delta);
+      return;
+    }
     this.ball.z += delta * this.ball.speed;
     this.ball.x += (this.ball.targetX - this.ball.x) * delta * 2.2;
     this.ball.rotation += delta * (12 + this.power * 18);
     this.updateFallenPins(delta);
     if (!this.ball.impact && this.ball.z >= 0.76) this.hitPins();
     if (this.ball.impact && this.ball.z >= 1.08) this.finishRoll();
+  }
+
+  createBody(shape, mass, position, friction, rollingFriction) {
+    const { ammo } = this.physics;
+    const transform = new ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new ammo.btVector3(position.x, position.y, position.z));
+    const motionState = new ammo.btDefaultMotionState(transform);
+    const localInertia = new ammo.btVector3(0, 0, 0);
+    if (mass) shape.calculateLocalInertia(mass, localInertia);
+    const info = new ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
+    info.set_m_friction(friction);
+    info.set_m_rollingFriction(rollingFriction);
+    const body = new ammo.btRigidBody(info);
+    this.physics.world.addRigidBody(body);
+    this.physics.bodies.push(body);
+    return body;
+  }
+
+  resetPhysicsBodies() {
+    const { ammo } = this.physics;
+    if (this.physics.world) {
+      for (const body of this.physics.bodies) this.physics.world.removeRigidBody(body);
+    } else {
+      this.physics.world = new ammo.btDiscreteDynamicsWorld(
+        new ammo.btCollisionDispatcher(new ammo.btDefaultCollisionConfiguration()),
+        new ammo.btDbvtBroadphase(),
+        new ammo.btSequentialImpulseConstraintSolver(),
+        new ammo.btDefaultCollisionConfiguration(),
+      );
+    }
+    this.physics.bodies = [];
+    this.physics.world.setGravity(new ammo.btVector3(0, -9.81, 0));
+    const laneShape = new ammo.btBoxShape(new ammo.btVector3(LANE_WIDTH / 2, 0.05, 2.05));
+    this.createBody(laneShape, 0, { x: 0, y: -0.05, z: 1.05 }, 0.7, 0.02);
+    const ballShape = new ammo.btSphereShape(BALL_RADIUS);
+    this.physics.ballBody = this.createBody(ballShape, BALL_MASS, { x: 0, y: 0.16, z: LANE_START_Z }, 0.35, 0.04);
+    this.physics.ballBody.setActivationState(4);
+    this.physics.pinBodies = [];
+    for (const pin of this.pins) {
+      const pinShape = new ammo.btCompoundShape();
+      const foot = new ammo.btCylinderShape(new ammo.btVector3(0.025, 0.015, 0.025));
+      const transform = new ammo.btTransform();
+      transform.setIdentity();
+      transform.setOrigin(new ammo.btVector3(0, 0.04, 0));
+      pinShape.addChildShape(transform, foot);
+      const head = new ammo.btSphereShape(0.032);
+      transform.setOrigin(new ammo.btVector3(0, 0.32, 0));
+      pinShape.addChildShape(transform, head);
+      const body = this.createBody(pinShape, PIN_MASS, {
+        x: pin.x, y: 0.2, z: LANE_END_Z + pin.z * 1.7,
+      }, 0.4, 0.02);
+      this.physics.pinBodies.push(body);
+    }
+    this.physics.accumulator = 0;
+  }
+
+  releasePhysicsBall() {
+    const { ammo, ballBody } = this.physics;
+    const transform = new ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new ammo.btVector3(this.ball.x, 0.16, LANE_START_Z));
+    ballBody.setWorldTransform(transform);
+    ballBody.getMotionState().setWorldTransform(transform);
+    ballBody.setLinearVelocity(new ammo.btVector3(this.ball.x * 0.2, 0, -(3 + this.power * 3)));
+    ballBody.setAngularVelocity(new ammo.btVector3(8 + this.power * 8, 0, 0));
+    ballBody.activate();
+  }
+
+  updatePhysics(delta) {
+    const { ammo, world, ballBody, pinBodies } = this.physics;
+    this.physics.accumulator += delta;
+    while (this.physics.accumulator >= FIXED_TIME_STEP) {
+      world.stepSimulation(FIXED_TIME_STEP, 1, FIXED_TIME_STEP);
+      this.physics.accumulator -= FIXED_TIME_STEP;
+    }
+    const transform = new ammo.btTransform();
+    ballBody.getMotionState().getWorldTransform(transform);
+    const origin = transform.getOrigin();
+    if (this.ball) {
+      this.ball.x = origin.x();
+      this.ball.z = (LANE_START_Z - origin.z()) / (LANE_START_Z - LANE_END_Z);
+      this.ball.rotation += delta * (12 + this.power * 18);
+      if (this.ball.z > 0.76 && !this.ball.impact) this.hitPhysicsPins();
+      if (this.ball.z > 1.08) this.finishRoll();
+    }
+    this.pins.forEach((pin, index) => {
+      const pinTransform = new ammo.btTransform();
+      pinBodies[index].getMotionState().getWorldTransform(pinTransform);
+      const pinOrigin = pinTransform.getOrigin();
+      pin.x = pinOrigin.x();
+      pin.z = clamp((pinOrigin.z() - LANE_END_Z) / 1.7, 0, 1);
+      pin.fallen = pinOrigin.y() < 0.14;
+      pin.standing = !pin.fallen;
+    });
+    const fallenPins = this.pins.filter((pin) => pin.fallen).length;
+    if (fallenPins > this.scoredPins) {
+      this.score += fallenPins - this.scoredPins;
+      this.scoredPins = fallenPins;
+      this.message = fallenPins === 10 ? "STRIKE!" : `${fallenPins} PINS DOWN`;
+    }
+  }
+
+  hitPhysicsPins() {
+    this.ball.impact = true;
+    this.message = "IMPACT!";
   }
 
   hitPins() {
