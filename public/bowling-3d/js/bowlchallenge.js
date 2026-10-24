@@ -39,6 +39,15 @@ var sceneInitialized = false;
 var loadingPreview = [];
 var animationStarted = false;
 
+function emitBowlingAudio(type, detail = {}) {
+	if (!window.parent || window.parent === window) return;
+	window.parent.postMessage({
+		type: "headpilot-bowling-audio",
+		event: type,
+		detail: detail,
+	}, window.location.origin);
+}
+
 class Player {
 	constructor(id, local, physics, scores, ballMesh, pinMeshes) {
 		this.id = id;
@@ -47,6 +56,8 @@ class Player {
 		this.scores = scores;
 		this.ballMesh = ballMesh;
 		this.pinMeshes = pinMeshes;
+		this.lastStandingMask = physics.currentPinsMask;
+		this.inGutter = false;
 	}
 }
 
@@ -281,6 +292,12 @@ function onHeadPilotMotion(sample) {
 				+ clampMotionValue(forward, 0.0, 1.0) * (BALL_VELOCITY_MAX - BALL_VELOCITY_MIN);
 		var angle = clampMotionValue(horizontal, -1.0, 1.0) * BALL_ANGLE_MAX * 0.35;
 		localPlayer.physics.releaseBall(velocity, angle);
+		localPlayer.lastStandingMask = localPlayer.physics.currentPinsMask;
+		localPlayer.inGutter = false;
+		emitBowlingAudio("throw", {
+			pan: clampMotionValue(position / BALL_POSITION_MAX, -0.85, 0.85),
+			power: clampMotionValue(forward, 0.0, 1.0),
+		});
 		setBowlingStatus("ROLLING");
 		updatePowerMeter(clampMotionValue(forward, 0.0, 1.0));
 	}
@@ -439,11 +456,15 @@ function onKeyboardInput(event) {
 		event.preventDefault();
 		keyboardAim = clampMotionValue(keyboardAim + (event.code === "ArrowLeft" ? -0.08 : 0.08), -1.0, 1.0);
 		localPlayer.physics.positionBall(keyboardAim * BALL_POSITION_MAX);
+		emitBowlingAudio("aim", { pan: keyboardAim * 0.8 });
 		setBowlingStatus("AIMING");
 	}
 	if (event.code === "Space") {
 		event.preventDefault();
 		localPlayer.physics.releaseBall(BALL_VELOCITY_MAX * 0.78, keyboardAim * BALL_ANGLE_MAX * 0.35);
+		localPlayer.lastStandingMask = localPlayer.physics.currentPinsMask;
+		localPlayer.inGutter = false;
+		emitBowlingAudio("throw", { pan: keyboardAim * 0.85, power: 0.78 });
 		setBowlingStatus("ROLLING");
 		updatePowerMeter(0.78);
 	}
@@ -459,10 +480,12 @@ window.addEventListener("message", (event) => {
 	if (event.data.type === "headpilot-bowling-command") {
 		if (event.data.command === "pause") {
 			gamePaused = true;
+			emitBowlingAudio("pause");
 			setBowlingStatus("PAUSED");
 		}
 		if (event.data.command === "start") {
 			gamePaused = false;
+			emitBowlingAudio("start");
 			setBowlingStatus("READY");
 		}
 	}
@@ -471,16 +494,46 @@ window.addEventListener("message", (event) => {
 function updateGame(player, dt) {
 	player.physics.updatePhysics(dt);
 
+	if (player.local && player.physics.simulationActive && player.physics.ballBody) {
+		var ballOrigin = player.physics.ballBody.getCenterOfMassTransform().getOrigin();
+		var ballX = ballOrigin.x();
+		var ballZ = ballOrigin.z();
+		var ballPan = clampMotionValue(ballX / TRACK_HALF_WIDTH, -0.85, 0.85);
+		if (!player.inGutter && Math.abs(ballX) > LANE_HALF_WIDTH && ballZ > LANE_END_Z) {
+			player.inGutter = true;
+			emitBowlingAudio("gutter", { pan: ballPan });
+		}
+		var liveStandingMask = player.physics.detectStandingPins();
+		var newlyDownMask = player.lastStandingMask & (~liveStandingMask);
+		if (newlyDownMask !== 0) {
+			var newlyDownCount = player.physics.countPins(newlyDownMask);
+			player.lastStandingMask = liveStandingMask;
+			emitBowlingAudio("pin", { count: newlyDownCount, pan: ballPan });
+		}
+	}
+
 	if (player.physics.simulationActive && (player.physics.simulationTime > FRAME_ROLL_TIME)) {
 		var standingPinsMask = player.physics.detectStandingPins();
 		var beatenPinsMask = player.physics.currentPinsMask & (~standingPinsMask);
 		var beatenPinCount = player.physics.countPins(beatenPinsMask);
+		var startedFullRack = player.physics.countPins(player.physics.currentPinsMask) === PIN_COUNT;
 
 		var prevFrameNumber = player.scores.frameNumber;
 		player.scores.addThrowResult(beatenPinCount);
 		if (player.local) {
 			scoresDiv.innerHTML = "  1  2  3  4  5  6  7  8  9  10<br/>| "
 					+ player.scores.getResultString() + " | " + player.scores.totalScore + " |";
+			if (player.scores.gameOver) {
+				emitBowlingAudio("gameover", { score: player.scores.totalScore });
+			} else if (standingPinsMask === 0 && startedFullRack) {
+				emitBowlingAudio("strike");
+			} else if (standingPinsMask === 0) {
+				emitBowlingAudio("spare");
+			} else if (beatenPinCount === 0) {
+				emitBowlingAudio("miss");
+			} else {
+				emitBowlingAudio("frame", { count: beatenPinCount });
+			}
 		}
 
 		if (!player.scores.gameOver) {
@@ -491,11 +544,15 @@ function updateGame(player, dt) {
 				pinsMask = standingPinsMask;
 			}
 			player.physics.resetPhysics(false, pinsMask);
+			player.lastStandingMask = player.physics.currentPinsMask;
+			player.inGutter = false;
 			updatePowerMeter(0.0);
 		} else if (player.local) {
 			setBowlingStatus("GAME OVER");
 			player.scores = new Scores();
 			player.physics.resetPhysics();
+			player.lastStandingMask = player.physics.currentPinsMask;
+			player.inGutter = false;
 		}
 	}
 
@@ -679,7 +736,12 @@ function onActionUp(clientX, clientY, time) {
 				: BALL_VELOCITY_MAX;
 		var angle = Math.atan2(-releaseVector.x, -releaseVector.z);
 		localPlayer.physics.releaseBall(velocity, angle);
-		updatePowerMeter(clampMotionValue(velocity / BALL_VELOCITY_MAX, 0.0, 1.0));
+		localPlayer.lastStandingMask = localPlayer.physics.currentPinsMask;
+		localPlayer.inGutter = false;
+		var normPower = clampMotionValue(velocity / BALL_VELOCITY_MAX, 0.0, 1.0);
+		var normPan = clampMotionValue(localPlayer.physics.releasePosition / BALL_POSITION_MAX, -0.85, 0.85);
+		emitBowlingAudio("throw", { pan: normPan, power: normPower });
+		updatePowerMeter(normPower);
 		setBowlingStatus("ROLLING");
 	}
 

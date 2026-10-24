@@ -10,6 +10,8 @@ export class ArcadeAudio {
     this.unlocked = false;
     this.snakeMusicTimer = null;
     this.snakeMusicStep = 0;
+    this.bowlingMusicTimer = null;
+    this.bowlingMusicStep = 0;
   }
 
   ensureContext() {
@@ -56,6 +58,7 @@ export class ArcadeAudio {
 
   silence() {
     this.stopSnakeMusic();
+    this.stopBowlingMusic();
     for (const voice of this.voices) {
       try {
         voice.stop();
@@ -76,6 +79,10 @@ export class ArcadeAudio {
       this.stopSnakeMusic();
       if (type === "pause") return;
     }
+    if (game === "bowling" && type === "pause") {
+      this.stopBowlingMusic();
+      return;
+    }
     if (this.muted) return;
     const context = this.ensureContext();
     if (!context) return;
@@ -93,6 +100,7 @@ export class ArcadeAudio {
   playGame(game, type, detail) {
     if (game === "pong") this.playPong(type, detail);
     if (game === "snake") this.playSnake(type, detail);
+    if (game === "bowling") this.playBowling(type, detail);
   }
 
   playPong(type, detail) {
@@ -289,6 +297,233 @@ export class ArcadeAudio {
     });
     this.tone({ frequency: 98, duration: 0.55, type: "triangle", gain: 0.1, delay: thudAt, slide: -30, pan: 0 });
     this.noise({ duration: 0.24, gain: 0.03, delay: thudAt + 0.04, pan: 0 });
+  }
+
+  playBowling(type, detail) {
+    const pan = this.panFromDetail(detail);
+    if (type === "start" || type === "resume") {
+      this.startBowlingMusic();
+      this.tone({
+        frequency: 330,
+        duration: 0.12,
+        type: "triangle",
+        gain: 0.055,
+        slide: 140,
+        pan: 0,
+      });
+      return;
+    }
+    if (type === "aim") {
+      this.tone({
+        frequency: 520,
+        duration: 0.035,
+        type: "triangle",
+        gain: 0.03,
+        slide: 40,
+        pan,
+      });
+      return;
+    }
+    if (type === "throw") {
+      const power = clamp(Number(detail.power) || 0.75, 0.25, 1);
+      this.noise({ duration: 0.18, gain: 0.035 * power, pan });
+      this.tone({
+        frequency: 110 + power * 45,
+        duration: 0.34,
+        type: "triangle",
+        gain: 0.075,
+        slide: 95,
+        pan,
+      });
+      this.tone({
+        frequency: 220 + power * 80,
+        duration: 0.18,
+        type: "sine",
+        gain: 0.04,
+        delay: 0.05,
+        slide: 120,
+        pan,
+      });
+      return;
+    }
+    if (type === "pin") {
+      const count = clamp(Number(detail.count) || 1, 1, 10);
+      const bursts = Math.min(count, 5);
+      this.noise({ duration: 0.09 + bursts * 0.02, gain: 0.045 + bursts * 0.006, pan });
+      for (let i = 0; i < bursts; i += 1) {
+        const hitPan = clamp(pan + (i % 2 === 0 ? -0.22 : 0.22) * (i + 1) * 0.3, -0.9, 0.9);
+        const baseFreq = 580 + i * 115 + (count * 18);
+        this.tone({
+          frequency: baseFreq,
+          duration: 0.075,
+          type: "square",
+          gain: 0.075,
+          delay: i * 0.032,
+          slide: -160,
+          pan: hitPan,
+        });
+        this.tone({
+          frequency: baseFreq * 1.65,
+          duration: 0.045,
+          type: "triangle",
+          gain: 0.04,
+          delay: i * 0.032 + 0.01,
+          slide: -90,
+          pan: -hitPan * 0.6,
+        });
+      }
+      return;
+    }
+    if (type === "gutter") {
+      this.noise({ duration: 0.14, gain: 0.04, pan });
+      this.tone({
+        frequency: 185,
+        duration: 0.18,
+        type: "sawtooth",
+        gain: 0.075,
+        slide: -75,
+        pan,
+      });
+      this.tone({
+        frequency: 120,
+        duration: 0.22,
+        type: "triangle",
+        gain: 0.07,
+        delay: 0.1,
+        slide: -40,
+        pan,
+      });
+      return;
+    }
+    if (type === "miss") {
+      this.tone({ frequency: 247, duration: 0.14, type: "sawtooth", gain: 0.065, slide: -40, pan: -0.25 });
+      this.tone({ frequency: 185, duration: 0.22, type: "sawtooth", gain: 0.07, delay: 0.12, slide: -55, pan: 0.25 });
+      return;
+    }
+    if (type === "frame") {
+      const count = clamp(Number(detail.count) || 1, 1, 9);
+      const base = 392 + count * 22;
+      this.tone({ frequency: base, duration: 0.1, type: "square", gain: 0.065, pan: -0.2 });
+      this.tone({ frequency: base * 1.25, duration: 0.14, type: "triangle", gain: 0.065, delay: 0.08, slide: 40, pan: 0.2 });
+      return;
+    }
+    if (type === "spare") {
+      const notes = [440, 554, 659, 880];
+      notes.forEach((frequency, index) => {
+        const notePan = index % 2 === 0 ? -0.55 : 0.55;
+        this.tone({
+          frequency,
+          duration: 0.13,
+          type: "square",
+          gain: 0.085,
+          delay: index * 0.085,
+          slide: 35,
+          pan: notePan,
+        });
+      });
+      this.tone({ frequency: 1109, duration: 0.26, type: "triangle", gain: 0.07, delay: 0.34, slide: 60, pan: 0 });
+      return;
+    }
+    if (type === "strike") {
+      this.playBowlingStrike();
+      return;
+    }
+    if (type === "gameover") {
+      this.playBowlingGameOver();
+    }
+  }
+
+  startBowlingMusic() {
+    this.stopBowlingMusic();
+    this.bowlingMusicStep = 0;
+    const bass = [110, 110, 147, 165, 131, 131, 165, 196];
+    const chords = [440, 0, 523, 659, 392, 0, 494, 587];
+    const tick = () => {
+      if (this.muted || !this.context || this.context.state !== "running") return;
+      const step = this.bowlingMusicStep % bass.length;
+      const groovePan = step % 2 === 0 ? -0.32 : 0.32;
+      this.tone({
+        frequency: bass[step],
+        duration: 0.18,
+        type: "triangle",
+        gain: 0.04,
+        pan: -groovePan * 0.5,
+      });
+      if (chords[step]) {
+        this.tone({
+          frequency: chords[step],
+          duration: 0.12,
+          type: "square",
+          gain: 0.022,
+          delay: 0.03,
+          slide: 14,
+          pan: groovePan,
+        });
+      }
+      this.bowlingMusicStep += 1;
+    };
+    tick();
+    this.bowlingMusicTimer = window.setInterval(tick, 250);
+  }
+
+  stopBowlingMusic() {
+    if (!this.bowlingMusicTimer) return;
+    window.clearInterval(this.bowlingMusicTimer);
+    this.bowlingMusicTimer = null;
+  }
+
+  playBowlingStrike() {
+    this.noise({ duration: 0.2, gain: 0.06, pan: 0 });
+    const fanfare = [523, 659, 784, 1047, 1319, 1568];
+    fanfare.forEach((frequency, index) => {
+      const bounce = index % 2 === 0 ? -0.75 : 0.75;
+      this.tone({
+        frequency,
+        duration: 0.12,
+        type: "square",
+        gain: 0.095,
+        delay: 0.05 + index * 0.075,
+        slide: 45,
+        pan: bounce,
+      });
+      this.tone({
+        frequency: frequency * 1.5,
+        duration: 0.07,
+        type: "triangle",
+        gain: 0.04,
+        delay: 0.065 + index * 0.075,
+        pan: -bounce * 0.6,
+      });
+    });
+    [523, 659, 784, 1047].forEach((frequency, index) => {
+      this.tone({
+        frequency,
+        duration: 0.45,
+        type: "square",
+        gain: 0.07,
+        delay: 0.54,
+        pan: (index - 1.5) * 0.28,
+      });
+    });
+  }
+
+  playBowlingGameOver() {
+    const finale = [523, 659, 784, 659, 784, 1047];
+    finale.forEach((frequency, index) => {
+      const pan = index % 2 === 0 ? -0.55 : 0.55;
+      this.tone({
+        frequency,
+        duration: 0.14,
+        type: "square",
+        gain: 0.085,
+        delay: index * 0.09,
+        slide: 30,
+        pan,
+      });
+    });
+    this.tone({ frequency: 523, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: -0.25 });
+    this.tone({ frequency: 784, duration: 0.48, type: "triangle", gain: 0.08, delay: 0.58, pan: 0.25 });
+    this.tone({ frequency: 1047, duration: 0.55, type: "square", gain: 0.09, delay: 0.62, slide: 50, pan: 0 });
   }
 
   playPongWin(pan) {
