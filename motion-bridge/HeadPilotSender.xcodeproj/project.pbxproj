@@ -191,7 +191,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "HeadPilot Sender";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMotionUsageDescription = "Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local HeadPilot Arcade game.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local AIRCADE game.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -220,7 +220,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "HeadPilot Sender";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMotionUsageDescription = "Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local HeadPilot Arcade game.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Reads AirPods headphone motion and sends yaw, pitch, and acceleration to the local AIRCADE game.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

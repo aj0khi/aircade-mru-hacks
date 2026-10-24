@@ -8,7 +8,7 @@ AIRCADE is a browser-based arcade collection that revitalizes familiar games wit
 
 The goal is to transform familiar arcade games into an accessible, social gaming experience using consumer hardware that players may already own. The shared cabinet brings together classic Pong, Snake, and Breakout presentations with 3D Bowling and Neon Tanks.
 
-The default bowling cabinet is our first-party Canvas game, **HeadPilot
+The default bowling cabinet is our first-party Canvas game, **AIRCADE
 Bowling**. It uses our own renderer and game shell, while adapting selected
 physics structures from the borrowed Three.js/Ammo.js lane: lane dimensions,
 ball and pin mass/inertia values, rigid-body shapes, friction, gravity, fixed
@@ -77,6 +77,35 @@ AIRCADE is intentionally **macOS-only for live motion controls**.
 Do not plan cross-platform motion support for the current milestone. Keeping
 the native bridge focused on macOS lets the team validate the core experience
 without adding unrelated platform complexity.
+
+## Run on another Mac
+
+Everything needed is in this repo (`main` branch). There is no prebuilt `.app` in git.
+
+**Prerequisites:** macOS 14+, [Node.js](https://nodejs.org/) 18+, and Xcode (only required for AirPods motion).
+
+```bash
+git clone https://github.com/aj0khi/revitilization-hacks.git
+cd revitilization-hacks
+git checkout main
+git pull
+npm install
+npm run dev
+```
+
+Open the URL Vite prints (usually `http://localhost:5173/`). Keyboard play works immediately.
+
+For AirPods motion on that Mac:
+
+1. Pair AirPods to **this** Mac (Bluetooth), not the iPhone.
+2. Open `motion-bridge/HeadPilotSender.xcodeproj` in Xcode.
+3. Select the **HeadPilotSender** scheme, destination **My Mac**.
+4. Signing & Capabilities: choose your Apple ID team.
+5. Run. Allow **Motion** if macOS asks.
+6. Wear the buds. Samples in the sender window should increase.
+7. In the arcade, click **Connect motion**.
+
+Look straight ahead and click **Recenter** in the sender if nod/look feels stuck at ±1.
 
 ## 2. Core Features
 
