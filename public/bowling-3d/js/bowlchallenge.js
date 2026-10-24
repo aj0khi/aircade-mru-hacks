@@ -290,22 +290,22 @@ function setBowlingStatus(label) {
 	if (statusLabel) {
 		statusLabel.textContent = label;
 	}
+}
 
-	function updateHud(player) {
-		if (!player || !scoreLabel) return;
-		var frame = Math.min(player.scores.frameNumber + 1, FRAME_COUNT);
-		scoreLabel.innerHTML = "FRAME " + String(frame).padStart(2, "0")
-				+ " &nbsp;·&nbsp; SCORE <strong>" + player.scores.totalScore + "</strong>";
-		if (frame !== lastFrameNumber) {
-			lastFrameNumber = frame;
-			setBowlingStatus("AIMING");
-		}
+function updateHud(player) {
+	if (!player || !scoreLabel) return;
+	var frame = Math.min(player.scores.frameNumber + 1, FRAME_COUNT);
+	scoreLabel.innerHTML = "FRAME " + String(frame).padStart(2, "0")
+			+ " &nbsp;·&nbsp; SCORE <strong>" + player.scores.totalScore + "</strong>";
+	if (frame !== lastFrameNumber) {
+		lastFrameNumber = frame;
+		setBowlingStatus("AIMING");
 	}
+}
 
-	function updatePowerMeter(value) {
-		if (powerMeter) {
-			powerMeter.style.width = (clampMotionValue(value, 0.0, 1.0) * 100.0) + "%";
-		}
+function updatePowerMeter(value) {
+	if (powerMeter) {
+		powerMeter.style.width = (clampMotionValue(value, 0.0, 1.0) * 100.0) + "%";
 	}
 }
 
