@@ -3,25 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gyro Pong</title>
+    <title>Soccer Pong</title>
   </head>
   <body>
     <main class="arcade">
       <header class="header">
         <div>
           <p class="eyebrow">HEADPILOT ARCADE</p>
-          <h1>GYRO PONG</h1>
+          <h1>SOCCER PONG</h1>
         </div>
         <div id="mode-label" class="mode-label">1P // VS AI</div>
       </header>
 
-      <section class="game-shell" aria-label="Gyro Pong game">
+      <section class="game-shell" aria-label="Soccer Pong game">
         <div class="scoreboard" aria-live="polite">
           <span id="player-score">0</span>
           <span class="score-divider">:</span>
           <span id="opponent-score">0</span>
         </div>
-        <canvas id="game-canvas" width="960" height="540" aria-label="Pong playing field"></canvas>
+        <canvas id="game-canvas" width="960" height="540" aria-label="Horizontal soccer pitch"></canvas>
         <div id="message" class="message">PRESS START</div>
       </section>
 
@@ -32,9 +32,9 @@
       </section>
 
       <p class="instructions">
-        <strong>Player 1</strong> W / S
+        <strong>Player 1</strong> A / D
         <span aria-hidden="true">·</span>
-        <strong>Player 2</strong> ↑ / ↓
+        <strong>Player 2</strong> J / L
         <span aria-hidden="true">·</span>
         First to 7 wins
       </p>
