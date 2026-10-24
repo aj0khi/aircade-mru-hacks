@@ -3,3 +3,5 @@
 .swift-version
 .DS_Store
 swiftly-x86_64.tar.gz
+node_modules/
+dist/

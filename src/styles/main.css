@@ -1,0 +1,46 @@
+:root {
+  color: #ecf9ff;
+  background: #03050d;
+  font-family: "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: radial-gradient(circle at 50% 0%, #17203d 0, #03050d 60%);
+}
+
+.arcade {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.header, .controls, .instructions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow, .mode-label { color: #64f4ff; letter-spacing: 0.18em; font-size: 0.75rem; }
+h1 { margin: 4px 0 0; font-size: clamp(2rem, 6vw, 4.5rem); letter-spacing: 0.12em; text-shadow: 0 0 20px #64f4ff; }
+.mode-label { color: #ff64d8; }
+.game-shell { position: relative; margin: 30px 0 18px; }
+canvas { display: block; width: 100%; height: auto; border: 1px solid #29405e; border-radius: 8px; box-shadow: 0 0 36px rgba(100, 244, 255, 0.14); }
+.scoreboard { position: absolute; z-index: 1; top: 16px; left: 50%; transform: translateX(-50%); font-size: clamp(2rem, 6vw, 4rem); font-weight: bold; letter-spacing: 0.15em; }
+.score-divider { color: #52647d; }
+.message { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: clamp(1rem, 3vw, 1.5rem); letter-spacing: 0.2em; opacity: 0; transition: opacity 0.2s; }
+.message.visible { opacity: 1; }
+button { border: 1px solid #38506f; border-radius: 4px; padding: 12px 18px; color: #ecf9ff; background: #0d1628; font: inherit; cursor: pointer; }
+button:hover, button:focus-visible { border-color: #64f4ff; box-shadow: 0 0 12px rgba(100, 244, 255, 0.35); }
+button.primary { color: #03050d; background: #64f4ff; border-color: #64f4ff; font-weight: bold; }
+.instructions { justify-content: center; flex-wrap: wrap; color: #8fa6be; font-size: 0.8rem; }
+.instructions strong { color: #ecf9ff; }
+@media (max-width: 620px) {
+  .header, .controls { align-items: flex-start; flex-direction: column; }
+  .controls { width: 100%; }
+  button { width: 100%; }
+}

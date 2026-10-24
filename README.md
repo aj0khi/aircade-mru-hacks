@@ -366,3 +366,14 @@ The ideal demonstration:
 6. Explain how the project revitalizes a familiar arcade game by giving it a new physical interaction model.
 
 **Final principle:** Make the core experience fun before adding complexity. The project succeeds if the motion controls make people want to play another round, not merely because the technology works.
+
+## 14. Run the browser game
+
+The playable Canvas game is independent of the Swift motion bridge and can be run with keyboard controls:
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
