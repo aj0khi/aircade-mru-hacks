@@ -175,6 +175,113 @@ h1 {
   animation: cabinet-hum 6.5s ease-in-out infinite;
 }
 
+.game-shell.awaiting-choice {
+  min-height: min(540px, 54vw);
+}
+
+.game-menu {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  min-height: min(540px, 54vw);
+  place-content: center;
+  padding: 42px 8%;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(123, 77, 255, 0.18), transparent 45%),
+    #0d0a1e;
+  text-align: center;
+}
+
+.menu-kicker,
+.menu-hint {
+  margin: 0;
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-menu h2 {
+  margin: 11px 0 24px;
+  color: var(--yellow);
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0 var(--pink);
+}
+
+.game-menu-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: min(760px, 100%);
+  margin: 0 auto 22px;
+}
+
+.game-choice {
+  display: flex;
+  min-height: 132px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 14px;
+  color: #fff;
+  border-color: #584a8d;
+  background: #1a1535;
+  text-align: left;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.1), 4px 4px 0 #080614;
+}
+
+.game-choice strong,
+.game-choice small {
+  display: block;
+}
+
+.game-choice strong {
+  margin-top: 2px;
+  color: var(--yellow);
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-size: 1.18rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.game-choice small {
+  margin-top: 10px;
+  color: #bdb5d3;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.choice-number {
+  color: var(--blue);
+  font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.choice-snake strong {
+  color: var(--blue);
+}
+
+.choice-bowling strong {
+  color: var(--pink);
+}
+
+.game-menu[hidden] {
+  display: none;
+}
+
+.game-shell.awaiting-choice > canvas,
+.game-shell.awaiting-choice > #bowling-3d-frame,
+.game-shell.awaiting-choice > .scoreboard,
+.game-shell.awaiting-choice > .message {
+  display: none;
+}
+
 .game-shell::before {
   position: absolute;
   top: 0;
@@ -229,7 +336,9 @@ canvas {
 canvas[hidden],
 #bowling-3d-frame[hidden],
 .message[hidden],
-button[hidden] {
+button[hidden],
+.controls[hidden],
+.instructions[hidden] {
   display: none;
 }
 
@@ -504,6 +613,24 @@ button.primary {
 
   .status {
     align-self: flex-start;
+  }
+
+  .game-shell.awaiting-choice,
+  .game-menu {
+    min-height: 0;
+  }
+
+  .game-menu {
+    padding: 34px 18px;
+  }
+
+  .game-menu-options {
+    grid-template-columns: 1fr;
+  }
+
+  .game-choice {
+    min-height: 0;
+    align-items: center;
   }
 
   .controls,

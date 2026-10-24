@@ -22,7 +22,26 @@
         </div>
       </header>
 
-      <section class="game-shell" aria-label="Soccer Pong game">
+      <section class="game-shell" aria-label="HeadPilot game selection">
+        <div id="game-menu" class="game-menu" aria-labelledby="game-menu-title">
+          <p class="menu-kicker">HEADPILOT ARCADE // SELECT A CABINET</p>
+          <h2 id="game-menu-title">Choose your game</h2>
+          <div class="game-menu-options">
+            <button class="game-choice choice-pong" type="button" data-game="pong">
+              <span class="choice-number">01</span>
+              <span><strong>Soccer Pong</strong><small>Fast feet. First to seven.</small></span>
+            </button>
+            <button class="game-choice choice-snake" type="button" data-game="snake">
+              <span class="choice-number">02</span>
+              <span><strong>Neon Snake</strong><small>Grow the longest line.</small></span>
+            </button>
+            <button class="game-choice choice-bowling" type="button" data-game="bowling-3d">
+              <span class="choice-number">03</span>
+              <span><strong>3D Bowling</strong><small>Roll with your whole arm.</small></span>
+            </button>
+          </div>
+          <p class="menu-hint">Use the buttons or press 1, 2, or 3</p>
+        </div>
         <div class="scoreboard" aria-live="polite">
           <span id="player-score">0</span>
           <span id="score-divider" class="score-divider">:</span>
@@ -39,7 +58,7 @@
         <div id="message" class="message">PRESS START</div>
       </section>
 
-      <section class="controls" aria-label="Game controls">
+      <section id="game-controls" class="controls" aria-label="Game controls">
         <div class="control-group primary-actions">
           <button id="start-button" class="primary" type="button">Start game</button>
           <button id="pause-button" type="button">Pause</button>

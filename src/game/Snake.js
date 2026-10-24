@@ -96,9 +96,9 @@ export class Snake {
     const ctx = this.context;
     const cellWidth = this.canvas.width / this.columns;
     const cellHeight = this.canvas.height / this.rows;
-    ctx.fillStyle = "#101b14";
+    ctx.fillStyle = "#101327";
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.strokeStyle = "rgba(184, 255, 202, 0.08)";
+    ctx.strokeStyle = "rgba(123, 77, 255, 0.2)";
     ctx.lineWidth = 1;
     for (let x = 1; x < this.columns; x += 1) {
       ctx.beginPath(); ctx.moveTo(x * cellWidth, 0); ctx.lineTo(x * cellWidth, this.canvas.height); ctx.stroke();
@@ -106,8 +106,8 @@ export class Snake {
     for (let y = 1; y < this.rows; y += 1) {
       ctx.beginPath(); ctx.moveTo(0, y * cellHeight); ctx.lineTo(this.canvas.width, y * cellHeight); ctx.stroke();
     }
-    this.drawCell(ctx, this.food, cellWidth, cellHeight, "#f7d774");
-    this.snake.forEach((segment, index) => this.drawCell(ctx, segment, cellWidth, cellHeight, index === 0 ? "#64f4ff" : "#34b878"));
+    this.drawCell(ctx, this.food, cellWidth, cellHeight, "#ffe44a");
+    this.snake.forEach((segment, index) => this.drawCell(ctx, segment, cellWidth, cellHeight, index === 0 ? "#22d8ff" : "#ff3fba"));
   }
 
   drawCell(ctx, cell, width, height, color) {

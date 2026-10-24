@@ -16,13 +16,16 @@ const playerScore = document.querySelector("#player-score");
 const opponentScore = document.querySelector("#opponent-score");
 const scoreDivider = document.querySelector("#score-divider");
 const instructions = document.querySelector("#instructions");
+const controls = document.querySelector("#game-controls");
 const gameShell = document.querySelector(".game-shell");
+const gameMenu = document.querySelector("#game-menu");
+const gameChoices = [...document.querySelectorAll(".game-choice")];
 const bowling3dFrame = document.querySelector("#bowling-3d-frame");
 const pressedKeys = new Set();
 const pong = new Game(canvas);
 const snake = new Snake(canvas);
-let activeGame = pong;
-let gameType = "pong";
+let activeGame = null;
+let gameType = null;
 let lastTime = performance.now();
 let seenGoalSequence = 0;
 let latestBowling3dSample = null;
@@ -166,6 +169,12 @@ function updateKeyboardInput() {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (!gameType && ["Digit1", "Digit2", "Digit3"].includes(event.code)) {
+    event.preventDefault();
+    const gameByKey = { Digit1: "pong", Digit2: "snake", Digit3: "bowling-3d" };
+    selectGame(gameByKey[event.code]);
+    return;
+  }
   if (gameType === "pong" && keyToInput[event.code]) {
     event.preventDefault();
     pressedKeys.add(event.code);
@@ -226,23 +235,48 @@ modeButton.addEventListener("click", () => {
   updateModeUI();
 });
 gameButton.addEventListener("click", () => {
-  gameType = gameType === "pong"
+  const nextGame = gameType === "pong"
     ? "snake"
     : gameType === "snake"
       ? "bowling-3d"
       : "pong";
+  selectGame(nextGame);
+});
+gameChoices.forEach((choice) => {
+  choice.addEventListener("click", () => selectGame(choice.dataset.game));
+});
+
+function selectGame(nextGame) {
+  gameType = nextGame;
   activeGame = gameType === "pong" ? pong : gameType === "snake" ? snake : null;
   if (activeGame) activeGame.reset();
   bowling3dPaused = false;
+  gameMenu.hidden = true;
+  gameShell.classList.remove("awaiting-choice");
+  controls.hidden = false;
   bowling3dFrame.hidden = gameType !== "bowling-3d";
   bowling3dFrame.src = gameType === "bowling-3d" ? "/bowling-3d/index.html" : "about:blank";
   canvas.hidden = gameType === "bowling-3d";
   document.querySelector(".scoreboard").hidden = gameType === "bowling-3d";
   message.hidden = gameType === "bowling-3d";
   updateModeUI();
-});
+}
 
 function updateModeUI() {
+  if (!gameType) {
+    gameTitle.textContent = "HeadPilot Arcade";
+    gameSubtitle.textContent = "Pick a cabinet and start playing.";
+    modeLabel.textContent = "INSERT COIN // CHOOSE A GAME";
+    modeButton.hidden = true;
+    gameButton.hidden = true;
+    controls.hidden = true;
+    instructions.hidden = true;
+    gameShell.setAttribute("aria-label", "HeadPilot game selection");
+    instructions.innerHTML = "<strong>Choose a game</strong> above to begin";
+    return;
+  }
+  instructions.hidden = false;
+  gameShell.setAttribute("aria-label", `${gameType} game`);
   const twoPlayer = pong.mode === "two-player";
   const snakeMode = gameType === "snake";
   const bowling3dMode = gameType === "bowling-3d";
@@ -271,6 +305,12 @@ function updateModeUI() {
 }
 
 function updateUI() {
+  if (!gameType) {
+    startButton.disabled = true;
+    pauseButton.disabled = true;
+    restartButton.disabled = true;
+    return;
+  }
   const isSnake = gameType === "snake";
   if (gameType === "bowling-3d") {
     startButton.disabled = false;
@@ -336,6 +376,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+gameShell.classList.add("awaiting-choice");
 updateModeUI();
 requestAnimationFrame(frame);
 
