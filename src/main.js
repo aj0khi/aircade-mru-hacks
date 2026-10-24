@@ -95,7 +95,7 @@ function celebrateGoal() {
     piece.style.setProperty("--y", `${120 + Math.random() * 260}px`);
     piece.style.setProperty("--r", `${Math.random() * 720 - 360}deg`);
     piece.style.setProperty("--delay", `${Math.random() * 120}ms`);
-    piece.style.backgroundColor = index % 2 ? "#ff64d8" : "#64f4ff";
+    piece.style.backgroundColor = index % 3 === 0 ? "#f7d774" : index % 2 ? "#ffffff" : "#64f4ff";
     gameShell.append(piece);
     window.setTimeout(() => piece.remove(), 1100);
   }
