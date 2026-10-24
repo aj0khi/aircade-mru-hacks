@@ -2,7 +2,7 @@
 
 **Classic cabinets. AirPods as the controller. Arcade joy, revitalized.**
 
-Hackathon theme: **Revitalize**. Arcade games used to be physical — you walked up, grabbed a stick, and played with your whole body. AIRCADE brings that feeling back by turning **AirPods** into a motion controller for five familiar games, using hardware people already own.
+Hackathon theme: **Revitalize**. Arcade games used to be physical, you walked up, grabbed a stick, and played with your whole body. AIRCADE brings that feeling back by turning **AirPods** into a motion controller for five familiar games, using hardware people already own.
 
 ---
 
