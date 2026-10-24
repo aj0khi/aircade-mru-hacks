@@ -1,0 +1,5 @@
+.build/
+.swiftpm/
+.swift-version
+.DS_Store
+swiftly-x86_64.tar.gz
