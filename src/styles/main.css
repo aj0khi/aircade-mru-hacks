@@ -398,48 +398,74 @@ h1.marquee-sign {
   position: relative;
   overflow: hidden;
   display: flex;
-  min-height: 178px;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 14px;
+  min-height: 204px;
+  align-items: stretch;
+  gap: 10px;
+  padding: 22px 14px 30px;
   color: #fff;
-  border-color: #584a8d;
+  border: 2px solid #726d79;
+  border-radius: 11px 11px 5px 5px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 32%),
-    linear-gradient(160deg, #211b45, #15112d 72%);
+    radial-gradient(circle at 13px 15px, #c4c0c7 0 3px, #4b4852 3.5px 5px, transparent 5.5px),
+    radial-gradient(circle at calc(100% - 13px) 15px, #c4c0c7 0 3px, #4b4852 3.5px 5px, transparent 5.5px),
+    linear-gradient(90deg, transparent 0 8%, rgba(255, 255, 255, 0.14) 9%, transparent 10% 90%, rgba(0, 0, 0, 0.28) 91%, transparent 92%),
+    linear-gradient(160deg, #5c5965, #302e38 74%);
   text-align: left;
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.1), 4px 4px 0 var(--shadow), 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -8px 0 rgba(0, 0, 0, 0.22),
+    4px 5px 0 #11101a,
+    0 12px 24px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   animation: choice-arrive 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .game-choice::before {
   position: absolute;
-  top: 0;
-  right: -30%;
-  bottom: 0;
-  width: 48%;
+  top: 8px;
+  right: 8px;
+  left: 8px;
+  height: 9px;
   content: "";
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.09), transparent);
-  transform: translateX(-140%);
-  transition: transform 500ms ease;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.16);
+  transform: none;
+  transition: background 180ms ease;
+}
+
+.game-choice::after {
+  position: absolute;
+  right: 18px;
+  bottom: -1px;
+  left: 18px;
+  height: 13px;
+  content: "";
+  border: 2px solid #17151d;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  background: repeating-linear-gradient(90deg, #111018 0 7px, #5d5964 7px 10px);
+  box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.1);
 }
 
 .game-choice:hover,
 .game-choice:focus-visible {
   z-index: 1;
-  border-color: var(--blue);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 32%),
-    linear-gradient(160deg, #2d2558, #191333 72%);
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.16), 5px 7px 0 var(--shadow), 0 0 24px rgba(34, 216, 255, 0.2);
+  border-color: var(--cartridge-accent, var(--blue));
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -8px 0 rgba(0, 0, 0, 0.22),
+    5px 7px 0 #11101a,
+    0 0 24px color-mix(in srgb, var(--cartridge-accent, var(--blue)) 35%, transparent);
+  filter: brightness(1.1);
   transform: translateY(-5px);
 }
 
 .game-choice:hover::before,
 .game-choice:focus-visible::before {
-  transform: translateX(270%);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .game-choice strong,
@@ -447,46 +473,124 @@ h1.marquee-sign {
   display: block;
 }
 
+.game-choice > span:last-child {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  padding: 18px 10px 12px;
+  border: 3px solid #17151d;
+  border-radius: 3px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 25%),
+    var(--cartridge-label, #3e8ab0);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 3px 0 rgba(0, 0, 0, 0.25);
+  transform: rotate(-1deg);
+}
+
 .game-choice strong {
-  margin-top: 2px;
-  color: var(--yellow);
+  margin-top: 0;
+  color: #fff8d2;
   font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
-  font-size: 1.18rem;
+  font-size: 1.08rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.42);
 }
 
 .game-choice small {
   margin-top: 10px;
-  color: #bdb5d3;
+  color: rgba(255, 255, 255, 0.88);
   font-size: 0.7rem;
   line-height: 1.35;
 }
 
 .choice-number {
-  color: var(--blue);
+  position: absolute;
+  top: 24px;
+  left: 22px;
+  z-index: 2;
+  color: #1d1824;
   font-family: "Arial Narrow", "Franklin Gothic Heavy", Arial, sans-serif;
-  font-size: 1.25rem;
+  font-size: 0.66rem;
   font-weight: 900;
-  text-shadow: 0 0 12px currentColor;
+  letter-spacing: 0.08em;
+  text-shadow: none;
+}
+
+.choice-pong {
+  --cartridge-accent: #ff5f91;
+  --cartridge-label: #b83d67;
+}
+
+.choice-snake {
+  --cartridge-accent: #8cf58d;
+  --cartridge-label: #3f9855;
+}
+
+.choice-bowling {
+  --cartridge-accent: #ff7dc5;
+  --cartridge-label: #994d85;
+}
+
+.choice-breakout {
+  --cartridge-accent: #ffe44a;
+  --cartridge-label: #b2762f;
+}
+
+.choice-tank {
+  --cartridge-accent: #22d8ff;
+  --cartridge-label: #276f9a;
+}
+
+.choice-pong strong,
+.choice-snake strong,
+.choice-bowling strong,
+.choice-breakout strong,
+.choice-tank strong {
+  color: #fff8d2;
+}
+
+.choice-pong .choice-number,
+.choice-snake .choice-number,
+.choice-bowling .choice-number,
+.choice-breakout .choice-number,
+.choice-tank .choice-number {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.choice-number::after {
+  content: " AIRCADE";
+  display: block;
+  margin-top: 2px;
+  font-size: 0.42rem;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
 }
 
 .choice-snake strong {
-  color: var(--blue);
+  color: #efffec;
 }
 
 .choice-bowling strong {
-  color: var(--pink);
+  color: #fff0fa;
 }
 
 .choice-breakout strong {
-  color: var(--yellow);
+  color: #fff9d8;
 }
 
-/* Tank Arena game selection */
 .choice-tank strong {
-  color: var(--blue);
+  color: #e8fbff;
+}
+
+.choice-pong strong {
+  color: #fff0f5;
 }
 .game-choice:nth-child(5) {
   grid-column: 2 / 3;
