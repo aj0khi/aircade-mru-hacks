@@ -152,24 +152,61 @@ export class Game {
   draw() {
     const ctx = this.context;
     ctx.clearRect(0, 0, this.width, this.height);
-    ctx.fillStyle = "#080d1b";
+    ctx.fillStyle = "#167343";
     ctx.fillRect(0, 0, this.width, this.height);
-    ctx.setLineDash([10, 18]);
-    ctx.strokeStyle = "rgba(137, 237, 255, 0.28)";
+    this.drawPitch(ctx);
+    this.drawGoal(ctx, 0, "#64f4ff");
+    this.drawGoal(ctx, this.width, "#ff64d8");
+    this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
+    this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
+    this.drawSoccerBall(ctx);
+  }
+
+  drawPitch(ctx) {
+    ctx.strokeStyle = "rgba(229, 255, 235, 0.72)";
     ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.strokeRect(18, 18, this.width - 36, this.height - 36);
     ctx.beginPath();
     ctx.moveTo(this.width / 2, 0);
     ctx.lineTo(this.width / 2, this.height);
     ctx.stroke();
-    ctx.setLineDash([]);
-    this.drawGlowRect(ctx, this.paddles[1].x, this.paddles[1].y, "#64f4ff");
-    this.drawGlowRect(ctx, this.paddles[2].x, this.paddles[2].y, "#ff64d8");
+    ctx.beginPath();
+    ctx.arc(this.width / 2, this.height / 2, 78, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.width / 2, this.height / 2, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#e5ffeb";
+    ctx.fill();
+    ctx.strokeRect(18, this.height / 2 - 145, 110, 290);
+    ctx.strokeRect(this.width - 128, this.height / 2 - 145, 110, 290);
+    ctx.strokeRect(18, this.height / 2 - 72, 48, 144);
+    ctx.strokeRect(this.width - 66, this.height / 2 - 72, 48, 144);
+  }
+
+  drawGoal(ctx, x, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 8;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = color;
+    ctx.strokeRect(x === 0 ? 2 : this.width - 2, this.height / 2 - 72, x === 0 ? 30 : -30, 144);
+    ctx.shadowBlur = 0;
+  }
+
+  drawSoccerBall(ctx) {
+    const { x, y } = this.ballState;
     ctx.shadowBlur = 20;
     ctx.shadowColor = "#ffffff";
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.arc(this.ballState.x, this.ballState.y, this.ball.radius, 0, Math.PI * 2);
+    ctx.arc(x, y, this.ball.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = "#18252b";
+    for (const angle of [0, Math.PI * 0.4, Math.PI * 0.8, Math.PI * 1.2, Math.PI * 1.6]) {
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(angle) * 4, y + Math.sin(angle) * 4, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.shadowBlur = 0;
   }
 
