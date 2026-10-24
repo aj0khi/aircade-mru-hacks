@@ -665,8 +665,9 @@ button[hidden],
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  height: 42px;
   min-height: 42px;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border: 2px solid #5a4b8f;
   border-radius: 2px;
   background:
@@ -1062,7 +1063,8 @@ button.muted {
     align-items: stretch;
   }
 
-  button {
+  button,
+  .soundbar {
     flex: 1;
     padding-inline: 8px;
   }
