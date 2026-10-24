@@ -42,6 +42,7 @@ let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
 let seenGoalSequence = 0;
+let seenTankWinSequence = 0;
 let latestBowling3dSample = null;
 let bowling3dPaused = false;
 let bowling3dReady = false;
@@ -57,6 +58,11 @@ const keyToInput = {
   ArrowUp: [2, -1],
   ArrowDown: [2, 1],
 };
+
+const tankKeys = new Set([
+  "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+  "KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyF",
+]);
 
 function sendBowling3dMotion(sample) {
   latestBowling3dSample = sample;
@@ -240,11 +246,11 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     breakout.setPaddleInput(event.code === "ArrowLeft" ? -1 : 1);
   }
-  if (gameType === "tank" && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyW", "KeyS", "KeyA", "KeyD", "KeyF"].includes(event.code)) {
+  if (gameType === "tank" && tankKeys.has(event.code)) {
     event.preventDefault();
     tank.handleKeyDown(event.code);
   }
-  if (event.code === "Space" && gameType !== "bowling-3d" && !activeGame.running) {
+  if (event.code === "Space" && gameType !== "bowling-3d" && activeGame && !activeGame.running) {
     unlockAudio();
     activeGame.start();
   }
@@ -253,7 +259,7 @@ window.addEventListener("keydown", (event) => {
       bowling3dPaused = !bowling3dPaused;
       sendBowling3dCommand(bowling3dPaused ? "pause" : "start");
     } else {
-      activeGame.togglePause();
+      activeGame?.togglePause();
     }
   }
 });
@@ -266,9 +272,15 @@ window.addEventListener("keyup", (event) => {
   if (gameType === "breakout" && ["ArrowLeft", "ArrowRight"].includes(event.code)) {
     breakout.setPaddleInput(0);
   }
-  if (gameType === "tank") {
+  if (gameType === "tank" && tankKeys.has(event.code)) {
     tank.handleKeyUp(event.code);
   }
+});
+
+window.addEventListener("blur", () => {
+  pressedKeys.clear();
+  tank.clearKeys();
+  updateKeyboardInput();
 });
 
 startButton.addEventListener("click", () => {
@@ -321,16 +333,9 @@ menuButton.addEventListener("click", () => {
   selectGame(null);
 });
 gameButton.addEventListener("click", () => {
-  const nextGame = gameType === "pong"
-    ? "snake"
-    : gameType === "snake"
-      ? "bowling-3d"
-      : gameType === "bowling-3d"
-        ? "breakout"
-        : gameType === "breakout"
-          ? "tank"
-          : "pong";
-  selectGame(nextGame);
+  const gameOrder = ["pong", "snake", "bowling-3d", "breakout", "tank"];
+  const nextIndex = (gameOrder.indexOf(gameType) + 1) % gameOrder.length;
+  selectGame(gameOrder[nextIndex]);
 });
 gameChoices.forEach((choice) => {
   choice.addEventListener("click", () => selectGame(choice.dataset.game));
@@ -357,6 +362,9 @@ function selectGame(nextGame) {
     arcadeAudio.silence();
   }
   if (nextGame === "bowling") nextGame = "bowling-3d";
+  pressedKeys.clear();
+  tank.clearKeys();
+  updateKeyboardInput();
   gameType = nextGame;
   activeGame = gameType === "pong"
     ? pong
@@ -522,6 +530,10 @@ function frame(now) {
   lastTime = now;
   if (gameType === "pong" && pong.goalSequence !== seenGoalSequence) {
     seenGoalSequence = pong.goalSequence;
+    celebrateGoal();
+  }
+  if (gameType === "tank" && tank.gameOver && tank.winSequence !== seenTankWinSequence) {
+    seenTankWinSequence = tank.winSequence;
     celebrateGoal();
   }
   if (activeGame) activeGame.draw();
