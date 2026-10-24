@@ -662,9 +662,7 @@ export class ArcadeAudio {
       return;
     }
     if (type === "lose-life") {
-      this.tone({ frequency: 680, duration: 0.16, type: "sine", gain: 0.08, slide: -460, pan });
-      this.tone({ frequency: 240, duration: 0.14, type: "triangle", gain: 0.075, delay: 0.15, slide: 180, pan: -pan * 0.6 });
-      this.tone({ frequency: 310, duration: 0.18, type: "sine", gain: 0.07, delay: 0.27, slide: -150, pan: 0 });
+      this.playSillyEwww(pan, false);
       return;
     }
     if (type === "die") {
@@ -714,21 +712,156 @@ export class ArcadeAudio {
     this.breakoutMusicTimer = null;
   }
 
+  playSillyEwww(pan = 0, full = false) {
+    const context = this.context;
+    if (!context || !this.bus) return;
+    const now = context.currentTime;
+    const duration = full ? 0.68 : 0.48;
+
+    // Formant-filtered sawtooth vocal synth: morphs from nasal "Ehhh" (/i/ /e/) -> "uuuuw" (/u/)
+    const carrier = context.createOscillator();
+    const sub = context.createOscillator();
+    const vibrato = context.createOscillator();
+    const vibratoGain = context.createGain();
+    const f1 = context.createBiquadFilter();
+    const f2 = context.createBiquadFilter();
+    const voiceGain = context.createGain();
+    const panner = context.createStereoPanner();
+
+    carrier.type = "sawtooth";
+    sub.type = "square";
+    // Nasal cartoon pitch: starts high "Eeee", bends down into "uuuuw"
+    carrier.frequency.setValueAtTime(340, now);
+    carrier.frequency.linearRampToValueAtTime(395, now + 0.07);
+    carrier.frequency.exponentialRampToValueAtTime(185, now + duration);
+
+    sub.frequency.setValueAtTime(170, now);
+    sub.frequency.linearRampToValueAtTime(197.5, now + 0.07);
+    sub.frequency.exponentialRampToValueAtTime(92.5, now + duration);
+
+    // Goofy wobble vibrato
+    vibrato.frequency.setValueAtTime(9.5, now);
+    vibratoGain.gain.setValueAtTime(14, now);
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(carrier.frequency);
+
+    // Formant 1: 420 Hz -> 290 Hz
+    f1.type = "bandpass";
+    f1.Q.setValueAtTime(7, now);
+    f1.frequency.setValueAtTime(430, now);
+    f1.frequency.exponentialRampToValueAtTime(280, now + duration);
+
+    // Formant 2: 2250 Hz ("eee") -> 780 Hz ("uuu")
+    f2.type = "bandpass";
+    f2.Q.setValueAtTime(9, now);
+    f2.frequency.setValueAtTime(2250, now);
+    f2.frequency.exponentialRampToValueAtTime(760, now + duration * 0.78);
+
+    voiceGain.gain.setValueAtTime(0.0001, now);
+    voiceGain.gain.exponentialRampToValueAtTime(0.24, now + 0.025);
+    voiceGain.gain.setValueAtTime(0.22, now + duration * 0.65);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    panner.pan.setValueAtTime(clamp(pan, -0.8, 0.8), now);
+
+    carrier.connect(f1);
+    carrier.connect(f2);
+    sub.connect(f1);
+    f1.connect(voiceGain);
+    f2.connect(voiceGain);
+    voiceGain.connect(panner);
+    panner.connect(this.bus);
+
+    carrier.start(now);
+    sub.start(now);
+    vibrato.start(now);
+    carrier.stop(now + duration + 0.03);
+    sub.stop(now + duration + 0.03);
+    vibrato.stop(now + duration + 0.03);
+    this.track(carrier);
+    this.track(sub);
+    this.track(vibrato);
+
+    // Quick cartoon nose-pinch "nyeh" harmonic on top
+    this.tone({
+      frequency: 1180,
+      duration: duration * 0.7,
+      type: "triangle",
+      gain: 0.045,
+      slide: -620,
+      pan: -pan * 0.5,
+    });
+  }
+
+  playRaspberrySplat(delay = 0, duration = 0.36, pan = 0) {
+    const context = this.context;
+    if (!context || !this.bus) return;
+    const startAt = context.currentTime + delay;
+
+    // Sputtering low sawtooth + flutter LFO ("pbbbbt!" raspberry/fart splat)
+    const osc = context.createOscillator();
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    const filter = context.createBiquadFilter();
+    const env = context.createGain();
+    const panner = context.createStereoPanner();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(92, startAt);
+    osc.frequency.exponentialRampToValueAtTime(46, startAt + duration);
+
+    lfo.type = "square";
+    lfo.frequency.setValueAtTime(28, startAt);
+    lfo.frequency.exponentialRampToValueAtTime(15, startAt + duration);
+    lfoGain.gain.setValueAtTime(320, startAt);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(420, startAt);
+    filter.Q.setValueAtTime(5, startAt);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    env.gain.setValueAtTime(0.0001, startAt);
+    env.gain.exponentialRampToValueAtTime(0.14, startAt + 0.015);
+    env.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+    panner.pan.setValueAtTime(clamp(pan, -0.8, 0.8), startAt);
+
+    osc.connect(filter);
+    filter.connect(env);
+    env.connect(panner);
+    panner.connect(this.bus);
+
+    osc.start(startAt);
+    lfo.start(startAt);
+    osc.stop(startAt + duration + 0.02);
+    lfo.stop(startAt + duration + 0.02);
+    this.track(osc);
+    this.track(lfo);
+
+    this.noise({ duration: duration * 0.75, gain: 0.045, delay, pan });
+  }
+
   playBreakoutLose(pan) {
-    // Silly slide-whistle drop + "wah-wah-wah-waaaah" sad trombone + cartoon boing
-    this.tone({ frequency: 880, duration: 0.18, type: "sine", gain: 0.085, slide: -620, pan });
+    // 1. Nasal cartoon "Ewwwww!" groan
+    this.playSillyEwww(pan, true);
+
+    // 2. Wet sputtering raspberry / fart splat ("pbbbbt!")
+    this.playRaspberrySplat(0.62, 0.42, -pan * 0.6);
+
+    // 3. Goofy "wah-wah-waaaah" sad horn + spring boing
     const wahNotes = [
-      { freq: 392, slide: -28, delay: 0.18, dur: 0.22, pan: -0.45 },
-      { freq: 370, slide: -28, delay: 0.42, dur: 0.22, pan: 0.45 },
-      { freq: 349, slide: -28, delay: 0.66, dur: 0.22, pan: -0.45 },
-      { freq: 330, slide: -120, delay: 0.9, dur: 0.52, pan: 0 },
+      { freq: 370, slide: -35, delay: 1.06, dur: 0.19, pan: -0.5 },
+      { freq: 349, slide: -35, delay: 1.26, dur: 0.19, pan: 0.5 },
+      { freq: 311, slide: -145, delay: 1.46, dur: 0.48, pan: 0 },
     ];
     wahNotes.forEach(({ freq, slide, delay, dur, pan: notePan }) => {
       this.tone({
         frequency: freq,
         duration: dur,
         type: "sawtooth",
-        gain: 0.075,
+        gain: 0.08,
         delay,
         slide,
         pan: notePan,
@@ -743,9 +876,10 @@ export class ArcadeAudio {
         pan: -notePan * 0.5,
       });
     });
-    // Goofy spring boing at the end
-    this.tone({ frequency: 190, duration: 0.12, type: "sine", gain: 0.08, delay: 1.44, slide: 340, pan: -0.3 });
-    this.tone({ frequency: 530, duration: 0.14, type: "sine", gain: 0.07, delay: 1.54, slide: -280, pan: 0.3 });
+
+    // 4. Final silly cartoon boing-oing
+    this.tone({ frequency: 180, duration: 0.13, type: "sine", gain: 0.085, delay: 1.96, slide: 420, pan: -0.35 });
+    this.tone({ frequency: 600, duration: 0.15, type: "sine", gain: 0.075, delay: 2.07, slide: -360, pan: 0.35 });
   }
 
   playPongWin(pan) {
