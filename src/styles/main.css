@@ -234,9 +234,12 @@ h1.marquee-sign {
 
 .game-menu-options {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(170px, 1fr)
+  );
   gap: 12px;
-  width: min(920px, 100%);
+  width: min(1020px, 100%);
   margin: 0 auto 22px;
 }
 
@@ -296,6 +299,20 @@ h1.marquee-sign {
 
 .game-menu[hidden] {
   display: none;
+}
+/* Tank Arena game selection */
+
+.choice-tank strong {
+  color: #ff9672;
+}
+
+.choice-tank {
+  border-color: #a85b72;
+}
+
+.choice-tank:hover,
+.choice-tank:focus-visible {
+  border-color: #ff9672;
 }
 
 .game-shell.awaiting-choice > canvas,
