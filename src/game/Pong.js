@@ -196,7 +196,27 @@ export class Game {
     ctx.lineTo(this.width / 2, this.height);
     ctx.stroke();
     ctx.setLineDash([]);
+    this.drawCenterTally(ctx);
     this.drawSoccerBall(ctx);
+  }
+
+  drawCenterTally(ctx) {
+    const center = this.width / 2;
+    const top = 28;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 13px Arial, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("P1", center - 42, top);
+    ctx.fillText("P2", center + 42, top);
+    ctx.font = "900 30px Arial, sans-serif";
+    ctx.fillText(String(this.scores[1]), center - 42, top + 31);
+    ctx.fillText(String(this.scores[2]), center + 42, top + 31);
+    ctx.font = "900 10px Arial, sans-serif";
+    ctx.fillStyle = "#a8a8a8";
+    ctx.fillText("SCORE", center, top + 31);
+    ctx.restore();
   }
 
   drawNeonGrid(ctx) {
