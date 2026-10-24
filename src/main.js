@@ -48,6 +48,9 @@ breakout.onEvent = (type, detail) => {
   arcadeAudio.play("breakout", type, detail);
   if (type === "win") celebrateGoal();
 };
+tank.onEvent = (type, detail) => {
+  arcadeAudio.play("tank", type, detail);
+};
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
