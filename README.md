@@ -377,3 +377,5 @@ npm run dev
 ```
 
 Open the local URL printed by Vite. Use **W/S** for Player 1, **Up/Down** for Player 2, and choose **2P MODE** for local multiplayer. In single-player mode, Player 2 is controlled by the built-in AI. The browser integration point is `window.gyroPong.setPaddleInput(playerId, verticalValue)`, where `verticalValue` is normalized to `-1...1`.
+
+After each goal, play pauses briefly while the scoring player is shown, with a screen shake and confetti celebration before the next serve.
