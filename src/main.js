@@ -4,6 +4,7 @@ import { Snake } from "./game/Snake.js";
 import { Breakout } from "./game/Breakout.js";
 import { Tank } from "./game/Tank.js";
 import { ArcadeAudio } from "./audio/ArcadeAudio.js";
+import { BlinkShooting, LONG_BLINK_DURATION_MS } from "./input/BlinkShooting.js";
 import "./styles/main.css";
 
 const canvas = document.querySelector("#game-canvas");
@@ -21,6 +22,17 @@ const motionConnectButton = document.querySelector("#motion-connect-button");
 const motionCalibrateButton = document.querySelector("#motion-calibrate-button");
 const motionMeterFill = document.querySelector("#motion-meter-fill");
 const motionMeterValue = document.querySelector("#motion-meter-value");
+const blinkPanel = document.querySelector("#blink-panel");
+const blinkStatus = document.querySelector("#blink-status");
+const blinkEnableButton = document.querySelector("#blink-enable-button");
+const blinkDisableButton = document.querySelector("#blink-disable-button");
+const blinkCamera = document.querySelector("#blink-camera");
+const blinkEyes = document.querySelector("#blink-eyes");
+const blinkCharge = document.querySelector("#blink-charge");
+const blinkFire = document.querySelector("#blink-fire");
+const blinkChargeFill = document.querySelector("#blink-charge-fill");
+const blinkError = document.querySelector("#blink-error");
+const blinkVideo = document.querySelector("#blink-video");
 const gameTitle = document.querySelector("#game-title");
 const gameSubtitle = document.querySelector("#game-subtitle");
 const message = document.querySelector("#message");
@@ -53,6 +65,33 @@ breakout.onEvent = (type, detail) => {
 tank.onEvent = (type, detail) => {
   arcadeAudio.play("tank", type, detail);
 };
+
+const blinkShooting = new BlinkShooting({
+  video: blinkVideo,
+  onFire: () => tank.fire(tank.tanks[1]),
+  isAllowed: () =>
+    gameType === "tank" &&
+    tank.running &&
+    !tank.paused &&
+    !tank.gameOver &&
+    !tank.tanks[1].destroyed,
+  onStatus: updateBlinkUI,
+});
+
+function updateBlinkUI(status = blinkShooting.getStatus()) {
+  if (!blinkStatus) return;
+  blinkStatus.textContent = status.enabled ? "BLINK SHOOTING: ENABLED" : "BLINK SHOOTING: OFF";
+  blinkStatus.classList.toggle("connected", status.enabled && status.camera === "ACTIVE");
+  blinkCamera.textContent = `CAMERA: ${status.camera}`;
+  blinkEyes.textContent = `EYES: ${status.eyes}`;
+  blinkCharge.textContent = `CHARGE: ${status.chargeMs} / ${LONG_BLINK_DURATION_MS} ms`;
+  blinkChargeFill.style.width = `${(status.chargeMs / LONG_BLINK_DURATION_MS) * 100}%`;
+  blinkFire.hidden = !status.fireFlash;
+  blinkError.hidden = !status.error;
+  blinkError.textContent = status.error || "";
+  blinkEnableButton.disabled = status.enabled || status.camera === "REQUESTING" || status.camera === "LOADING";
+  blinkDisableButton.disabled = !status.enabled && status.camera === "OFF";
+}
 let activeGame = null;
 let gameType = null;
 let lastTime = performance.now();
@@ -126,7 +165,6 @@ function sendBowling3dMotion(sample) {
 
 const MOTION_DEADZONE = 0.08;
 let motionNeedsCalibrate = true;
-let tankFireArmed = true;
 let rollStartArmed = true;
 
 function clampAxis(value) {
@@ -190,14 +228,8 @@ function forwardBowlingMotion(sample = {}) {
   }
 
   if (gameType === "tank") {
-    const tilt = clampAxis(Number(sample.roll) - (motionNeutral.tilt ?? 0));
     updateMotionPanel(Math.abs(y) >= Math.abs(x) ? y : x);
     tank.setMotionInput(y, x);
-    if (Math.abs(tilt) <= 0.22) tankFireArmed = true;
-    if (tankFireArmed && Math.abs(tilt) >= 0.36) {
-      tankFireArmed = false;
-      tank.fire(tank.tanks[1]);
-    }
     return true;
   }
 
@@ -329,7 +361,6 @@ function connectMotionBridge(url = "ws://127.0.0.1:8787") {
   disconnectMotionBridge();
 
   motionNeedsCalibrate = true;
-  tankFireArmed = true;
   motionSocketUrl = url;
   motionSocket = new WebSocket(url);
 
@@ -358,7 +389,6 @@ function disconnectMotionBridge() {
   motionSocketUrl = null;
   lastMotionTimestamp = 0;
   tank.setMotionInput(0, 0);
-  tankFireArmed = true;
 
   if (motionStaleTimer) {
     window.clearInterval(motionStaleTimer);
@@ -775,6 +805,13 @@ function selectGame(nextGame) {
 
   canvas.hidden = gameType === "bowling-3d";
 
+  if (blinkPanel) {
+    blinkPanel.hidden = gameType !== "tank";
+  }
+  if (gameType !== "tank") {
+    blinkShooting.disable();
+  }
+
   document.querySelector(".scoreboard").hidden =
     gameType === "bowling-3d";
 
@@ -889,7 +926,7 @@ function updateModeUI() {
       : breakoutMode
         ? '<strong>Move</strong> ← / → or A / D, or look left/right <span aria-hidden="true">·</span> P / Esc pauses'
         : tankMode
-          ? "<strong>Player 1</strong> arrows + Space, or nod to drive, look left/right to turn, tilt to shoot <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
+          ? "<strong>Player 1</strong> arrows + Space, or look/nod to move, long-blink or Space to shoot <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> W / A / S / D + F <span aria-hidden=\"true\">·</span> P / Esc pauses"
         : "<strong>Player 1</strong> W / S or arrows, or nod <span aria-hidden=\"true\">·</span> <strong>Player 2</strong> ↑ / ↓ <span aria-hidden=\"true\">·</span> P / Esc pauses";
 }
 
@@ -1147,6 +1184,16 @@ window.gyroBreakout = {
   setPaddleInput: (rollValue) =>
     breakout.setPaddleInput(rollValue),
 };
+
+blinkEnableButton?.addEventListener("click", () => {
+  unlockAudio();
+  void blinkShooting.enable();
+});
+blinkDisableButton?.addEventListener("click", () => {
+  blinkShooting.disable();
+});
+window.addEventListener("pagehide", () => blinkShooting.disable());
+updateBlinkUI();
 
 window.gyroTank = {
   game: tank,

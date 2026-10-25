@@ -194,6 +194,100 @@ body::after {
   text-align: right;
 }
 
+.blink-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 24px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 2px solid var(--line);
+  background: rgba(18, 14, 38, 0.82);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.blink-panel[hidden] {
+  display: none;
+}
+
+.blink-panel h2 {
+  margin: 0;
+  color: var(--yellow);
+  font-family: "Arcade Normal", "Arial Narrow", sans-serif;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.blink-panel p:not(.motion-kicker) {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.blink-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.blink-readout {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 14px;
+}
+
+#blink-video {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  background: #05040c;
+  border: 1px solid var(--line);
+  transform: scaleX(-1);
+}
+
+.blink-stats {
+  flex: 1;
+  min-width: 0;
+}
+
+.blink-stats p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blink-fire {
+  color: var(--yellow);
+  text-shadow: 0 0 10px var(--yellow);
+}
+
+.blink-error {
+  color: #ff8d9a;
+}
+
+.blink-track {
+  position: relative;
+  width: min(280px, 100%);
+  height: 8px;
+  margin-top: 6px;
+  border: 1px solid var(--line);
+  background: rgba(34, 216, 255, 0.12);
+}
+
+#blink-charge-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--blue), var(--yellow));
+}
+
 .header {
   position: relative;
   align-items: flex-start;
@@ -1190,7 +1284,8 @@ button.muted {
     width: 100%;
   }
 
-  .motion-panel {
+  .motion-panel,
+  .blink-panel {
     grid-template-columns: 1fr;
   }
 

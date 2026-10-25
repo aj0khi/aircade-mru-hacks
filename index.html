@@ -85,6 +85,30 @@
         </div>
       </section>
 
+      <section id="blink-panel" class="blink-panel" hidden aria-labelledby="blink-title">
+        <div>
+          <p class="motion-kicker">AIRCADE INPUT // WEBCAM BLINK</p>
+          <h2 id="blink-title">Blink to shoot</h2>
+          <p>Keep both eyes closed for 1 second to fire Player 1. Processed in the browser — nothing is recorded.</p>
+        </div>
+        <div class="blink-actions">
+          <span id="blink-status" class="motion-status" role="status">BLINK SHOOTING: OFF</span>
+          <button id="blink-enable-button" type="button">Enable Blink Shooting</button>
+          <button id="blink-disable-button" type="button" disabled>Disable Blink Shooting</button>
+        </div>
+        <div class="blink-readout">
+          <video id="blink-video" playsinline muted></video>
+          <div class="blink-stats">
+            <p id="blink-camera">CAMERA: OFF</p>
+            <p id="blink-eyes">EYES: --</p>
+            <p id="blink-charge">CHARGE: 0 / 1000 ms</p>
+            <p id="blink-fire" class="blink-fire" hidden>FIRE!</p>
+            <div class="blink-track" aria-hidden="true"><span id="blink-charge-fill"></span></div>
+            <p id="blink-error" class="blink-error" hidden></p>
+          </div>
+        </div>
+      </section>
+
       <section class="motion-panel" aria-labelledby="motion-title">
         <div>
           <p class="motion-kicker">AIRCADE INPUT // AIRPODS MOTION</p>
